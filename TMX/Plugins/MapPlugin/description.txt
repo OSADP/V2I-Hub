@@ -1,0 +1,43 @@
+/**
+* \defgroup MAPPlugin  MAP Plugin
+  \brief Brief description 
+  \details Detailed description
+*/
+
+/**
+ \page ivpplugins IVP Plugins
+ - \subpage mapplugin
+ 
+ \page mapplugin MAP Plugin
+\tableofcontents
+
+The MAP Plugin publishes a Battelle SPaT MAP Message containing data to describe 
+complex intersections, curve outlines, and roadway segments which are used 
+by a variety of other J2735 messages.
+
+\section mapdesign Design
+
+The MAP Plugin reads a local xml file, which is controlled by a configuration parameter, to create the 
+Battelle SPaT MAP message that is sent to the IVP system.  The xml file format is described in the 
+XXXXXX document.  The XMLMapParser class contains methods to read the xml file, parse the data from
+the xml file, and populate a map structure.  The map structure is encoded into bytes, which are the payload
+of the Battelle SPaT MAP message.  That payload is sent as a hex string in a json formatted IVP Message to the 
+IVP system and eventually out the DSRC radio.  The MAP plugin receives action information from the Traffic 
+Signal Controller plugin, and loads different map xml information based on the configuration pairing of 
+action to map file in the configuration.  If the action number in the configuration is set to -1, 
+that map is used for all actions.  If an action number is missing from the confiugration, the default map
+xml files is used.
+
+\section mapexternals External Resources
+
+- ivpapi
+- xercesc
+
+\section mapconfig Configuration Parameters
+
+- Frequency: The frequency in ms in which messages a published from the plugin.
+- MapFiles: A json string containing an array of map file information which includes a mapping between action and filename.  Ex: { "MapFiles": [  {"Action":1, "FilePath":"GID_Test.xml"}] }
+
+\section mappublish Published Messages
+- Battelle SPaT MAP Message (J2735 Extended)
+*/

@@ -1,0 +1,98 @@
+{
+	"name":"Generic Gps",
+	"description":"Exposes GPS data from a device's NMEA stream.  Also has the ability to spoof a NMEA stream using configurable lat/long values",
+	"version":"1.0.4",
+	"exeLocation":"/Debug/GenericGpsPlugin",
+	"coreIpAddr":"127.0.0.1",
+	"corePort":24601,
+	"messageTypes":[
+		{
+			"type":"NMEA",
+			"subtype":"GGA",
+			"description":"Global Positioning System Fix Data. Time, position and fix related data for a GPS receiver."
+		},
+		{
+			"type":"NMEA",
+			"subtype":"GGL",
+			"description":"Geographic position, latitude / longitude"
+		},
+		{
+			"type":"NMEA",
+			"subtype":"GSA",
+			"description":"GPS DOP and active satellites"
+		},
+		{
+			"type":"NMEA",
+			"subtype":"GSV",
+			"description":"GPS Satellites in view"
+		},
+		{
+			"type":"NMEA",
+			"subtype":"RMC",
+			"description":"Recommended minimum specific GPS/Transit data"
+		},
+		{
+			"type":"Decoded",
+			"subtype":"LocationMessage",
+			"description":"Location Message"
+		}
+	],
+	"configuration":[
+		{
+			"key":"Device Stream File",
+			"default":"/dev/ttyACM0",
+			"description":"The device stream file of the gps device."
+		},
+		{
+			"key":"Mode",
+			"default":"SPOOFED",
+			"description":"Options are: 'SPOOFED' or 'LIVE'.  The field is NOT case sensitive."
+		},
+		{
+			"key":"Spoofed Latitude",
+			"default":"0.0000",
+			"description":"+- decimal degrees"
+		},
+		{
+			"key":"Spoofed Longitude",
+			"default":"0.0000",
+			"description":"+- decimal degrees"
+		},
+		{
+			"key":"Spoofed Elevation",
+			"default":"0.0000",
+			"description":"+- meters"
+		},
+		{
+			"key":"Spoofed Speed",
+			"default":"0.0000",
+			"description":"m/s"
+		},
+		{
+			"key":"Spoofed Course",
+			"default":"0.0000",
+			"description":"degrees"
+		},
+		{
+			"key":"Spoofed Quality",
+			"default":"0",
+			"description":"0, 1, 2, or 3 for no signal, fix, differential, or sensitive"
+		},
+		{
+			"key":"Spoofed Fix",
+			"default":"0",
+			"description":"1, 2, or 3 for no fix, 2D, or 3D"
+		},
+		{
+			"key":"Spoofed HDOP",
+			"default":"0.0000",
+			"description":"Dilution of Precision"
+		},
+		{
+			"key":"Spoofed Sat Num",
+			"default":"0",
+			"description":"Number of satellites in use"
+		}
+		
+	]
+}

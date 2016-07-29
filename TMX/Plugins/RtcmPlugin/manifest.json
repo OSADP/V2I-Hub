@@ -1,0 +1,47 @@
+{
+	"name":"RTCM",
+	"description":"",
+	"version":"1.0.1",
+	"exeLocation":"/Debug/NtripPlugin",
+	"coreIpAddr":"192.168.25.20",
+	"corePort":24601,
+	"messageTypes":[
+		{
+			"type":"RTCM",
+			"subtype":"2.3"
+		},
+		{
+			"type":"J2735",
+			"subtype":"RTCM"
+		}
+		
+	],
+	"configuration":[
+		{
+			"key":"Endpoint IP",
+			"default":"156.63.133.118",
+			"description":"NTRIP caster endpoint IP address"
+		},
+		{
+			"key":"Endpoint Port",
+			"default":"2101",
+			"description":"NTRIP caster endpoint port"
+		},
+		{
+			"key":"Username",
+			"default":"username",
+			"description":"NTRIP caster authentication username"
+		},
+		{
+			"key":"Password",
+			"default":"password",
+			"description":"NTRIP caster authentication password"
+		},
+		{
+			"key":"Mountpoint",
+			"default":"ODOT_RTCM23",
+			"description":"NTRIP caster mountpoint"
+		}
+		
+	]
+}

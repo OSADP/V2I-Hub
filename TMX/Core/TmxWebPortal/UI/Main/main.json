@@ -1,0 +1,12 @@
+/*
+topNav = 	[{"location": "Overview", "name": "Overview", "lnkname" : "http://192.168.5.30/Overview/Overview.html"},
+			 {"location": "SMC", "name": "SMC", "lnkname" : "http://192.168.5.20/SMC/smcUI.html"},
+			 {"location": "VSM", "name": "VSM", "lnkname" : "http://192.168.0.50/VSM/vsmUI.html"},
+			 {"location": "HPU", "name": "HPU", "lnkname" : "http://192.168.5.30/HPU/hpuUI.html"},
+			 {"location": "MVP", "name": "MVP", "lnkname" : "http://192.168.5.29/VP/vpUI.html"},
+			 {"location": "AP", "name": "AP", "lnkname" : "http://192.168.5.30/AP/apUI.html"},
+			 {"location": "LOG", "name": "Log", "lnkname" : "http://192.168.5.20/logging/main.php"}];
+*/
+topNav = 	[{"location": "Vehicle", "name": "Vehicle", "lnkname" : "http://127.0.0.1/InVehicle/InVehicle.html"},
+			 {"location": "Debug", "name": "Debug", "lnkname" : "http://127.0.0.1/TMX/tmxUI.html"}
+		 ];

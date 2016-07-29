@@ -1,0 +1,31 @@
+#!/bin/sh -e
+
+MANIFEST=@CPACK_DEBIAN_PACKAGE_INSTALL_PREFIX@/manifest.json
+NAME=`grep "\"name\":" ${MANIFEST} | head -1 | awk -F, '{print $1}' | awk -F: '{print $2}' | sed -e 's/\"//g'`
+
+if [ -z "${NAME}" ]; then
+  echo "ERROR: Unknown plugin.  You must manually clean up" >&2
+  exit 0
+fi
+
+# See if MySQL is even on this machine. If not, then skip DB deletes
+set +e
+dpkg -l mysql-server >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+  exit 0
+fi
+set -e
+
+DBUSER="IVP"
+DBPASS="ivp"
+mysql -u$DBUSER -p$DBPASS -e "DELETE FROM IVP.installedPlugin WHERE pluginId IN (SELECT ID from IVP.plugin WHERE name = '${NAME}')"
+mysql -u$DBUSER -p$DBPASS -e "DELETE FROM IVP.plugin WHERE name = '${NAME}'"
+
+
+if [ "$1" = "purge" -a -e /usr/share/debconf/confmodule ]; then
+    # Source debconf library.
+    . /usr/share/debconf/confmodule
+    
+    # Remove my changes to the db.
+    db_purge
+fi

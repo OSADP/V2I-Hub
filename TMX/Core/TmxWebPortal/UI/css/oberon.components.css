@@ -1,0 +1,540 @@
+/* -------------------- LEDs ----------------------- */
+.led,.inverseled, .inverseswd{
+    width: 1.3em;
+    height: 1.3em;
+    border-radius: 50%;
+    float: left;    
+    background-color: #2D2D2D;    
+    box-shadow: rgba(0, 0, 0, 0) 0 -1px 7px 1px, inset #575757 0 -1px 9px, rgba(0, 0, 0, 0) 0 2px 12px;
+}
+
+.led[data-state="disabled"],.inverseled[data-state="disabled"],.inverseswd[data-state="disabled"]{
+    background-color: #2D2D2D;    
+    box-shadow: rgba(0, 0, 0, 0) 0 -1px 7px 1px, inset #575757 0 -1px 9px, rgba(0, 0, 0, 0) 0 2px 12px;
+}
+
+.led[data-state="red"],.inverseled[data-state="red"],.inverseswd[data-state="red"]{
+    background-color: #BA0000;
+    box-shadow: #000 0 -1px 7px 1px, inset #F00 0 -1px 9px, #F00 0 2px 12px;
+}
+
+.led[data-state="yellow"],.inverseled[data-state="yellow"],.inverseswd[data-state="yellow"]{
+    background-color: #CAB600;
+    box-shadow: #000 0 -1px 7px 1px, inset #ABAB00 0 -1px 9px, #FF0 0 2px 12px;
+}
+
+.led[data-state="green"],.inverseled[data-state="green"],.inverseswd[data-state="green"]{
+/*    background-color: #22B224; 
+      box-shadow: #000 0 -1px 7px 1px, inset #00FF03 0 -1px 9px, #00FF03 0 2px 12px;
+
+*/
+    background-color: #178C19;
+    box-shadow: #000 0 -1px 7px 1px, inset #22B224 0 -1px 9px, #22B224 0 2px 12px;
+}
+
+.led[data-state="off"],.inverseled[data-state="off"],.inverseswd[data-state="off"]{
+    background-color: #000000;
+    box-shadow: rgba(0, 0, 0, 0) 0 -1px 7px 1px, inset #575757 0 -1px 9px, rgba(0, 0, 0, 0) 0 2px 12px;
+}
+
+.led-small,.inverseled-small,inverseswd-small{
+    width: 0.9em;
+    height: 0.9em;
+}
+
+/* ------------------ End LEDs --------------------- */
+/* ------------------ Ledbars ---------------------- */
+.ledbar{
+    display: block;
+    height: 1.0em;
+    width: 88%;
+    margin: 3% 6% 6% 6%;
+}
+
+.ledbar[data-state="red"]{
+    background-color: #BA0000;
+    box-shadow: #000 0 -1px 7px 1px, inset #F00 0 -1px 9px, #F00 0 2px 12px;
+}
+.ledbar[data-state="yellow"]{
+    background-color: #F5FC32;
+    box-shadow: #000 0 -1px 7px 1px, inset #ABAB00 0 -1px 9px, #FF0 0 2px 12px;
+}
+
+.ledbar[data-state="green"]{
+    background-color: #178C19;
+    box-shadow: #000 0 -1px 7px 1px, inset #0BA50D 0 -1px 9px, #0BA50D 0 2px 12px;
+}
+
+.ledbar[data-state="disabled"]{
+    background-color: #2D2D2D;
+    box-shadow: rgba(0, 0, 0, 0) 0 -1px 7px 1px, inset #575757 0 -1px 9px, rgba(0, 0, 0, 0) 0 2px 12px;
+}
+
+.ledbar[data-state="off"]{
+    background-color: #000000;
+    box-shadow: rgba(0, 0, 0, 0) 0 -1px 7px 1px, inset #575757 0 -1px 9px, rgba(0, 0, 0, 0) 0 2px 12px;
+}
+/* ---------------- End Ledbars -------------------- */
+
+/* --------------- Telemetry Meter ------------------*/
+.telem-meter-label{
+    width:35% !important;
+    text-align:right;
+    padding-right:2%;
+    margin:0;
+    vertical-align: middle;
+    font-size: 1em;
+}
+
+.telem-meter{
+    width:50% !important;
+    margin:0;
+    vertical-align: middle;
+    font-size: 1em !important;
+    color: #ffff00;
+    position: relative;
+}
+
+.telem-meter-value{
+    width:10% !important;
+    text-align:left;
+    padding-left:.7em;
+    margin:0;
+    vertical-align: middle;
+    font-size: 1.2em !important;
+}
+
+.telem-meter-units{
+    width: 5% !important;
+    vertical-align: middle;
+}
+
+.ui-small-margin-div{
+    margin: .2em 0;
+}
+
+.telem-meter-marks{
+    width: 82%;
+    min-height: 1.3em;
+    vertical-align: middle;
+    position: absolute;
+    margin-left: 33%;
+    z-index: 1;
+    margin-top: -0.605em;
+}
+
+.telem-marks{
+    width: 0.2em;
+    min-height: .55em;
+    float: left;
+    margin-right: 5.65%;
+    background-color: black;
+}
+
+.metercontainer{
+    display: flex;
+    text-align: center;
+    font-size: 1em;
+}
+
+.mtrlabel{
+    text-align: right;
+    margin-right: .3em;
+    font-size: 1.5em;
+    margin-top: -.3em;
+}
+
+.meter{
+    height: 1.4em;
+    position: relative;
+    background: #222;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    display: flex;
+    margin-top: -1.5em; 
+}
+
+.meter > span {
+    display: flex;
+    height: 100%;
+    -webkit-border-top-right-radius: 4px;
+    -webkit-border-bottom-right-radius: 4px;
+    -moz-border-radius-topright: 4px;
+    -moz-border-radius-bottomright: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    -webkit-border-top-left-radius: 4px;
+    -webkit-border-bottom-left-radius: 4px;
+    -moz-border-radius-topleft: 4px;
+    -moz-border-radius-bottomleft: 4px;
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+    background-color: rgb(43, 194, 83);
+    background-color:  #178C19; /* #B0B0B0;  "#0F0"; */
+    background-image: -webkit-gradient(linear, left bottom, left top, color-stop(0, rgb(43, 194, 83)), color-stop(1, rgb(84, 240, 84)));
+    background-image: -moz-linear-gradient(center bottom, rgb(43, 194, 83) 37%, rgb(84, 240, 84) 69%);
+    -webkit-box-shadow: inset 0 2px 9px rgba(255, 255, 255, 0.3), inset 0 -2px 6px rgba(0, 0, 0, 0.4);
+    -moz-box-shadow: inset 0 2px 9px rgba(255, 255, 255, 0.3), inset 0 -2px 6px rgba(0, 0, 0, 0.4);
+    box-shadow: inset 0 2px 9px rgba(255, 255, 255, 0.3), inset 0 -2px 6px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+}
+
+.output{
+    margin-left: 5px;
+    font-size: 1.5vw;
+
+}
+
+.mtrread{
+    width: 60%;
+    float: left;
+}
+
+.metermarks{
+    position: relative;
+    z-index: 1;
+    display: flex;
+    height: 1.3em;
+    margin-right: 0%;
+    margin-left: 0%;
+    margin-top: .4em;
+}
+
+.mark{
+    width: 1px;
+    height: 110%;
+    margin-left: auto;
+    background-color: #555555;
+    position: relative;
+    z-index: 1;
+    margin-top: -.2em;
+}
+
+.numdivcontainer{
+    position: relative;    
+    display: flex; 
+    margin-top: 0px;
+}
+
+.firstnumdiv{
+    margin-right: auto;
+    margin-top: -0.3em;
+    font-size: .75em !important;
+}
+
+.numdiv{
+    margin-right: auto;
+    margin-left: auto;
+    margin-top: -0.3em;
+    font-size: .75em !important;
+}
+
+.lastnumdiv{
+    margin-left: auto;
+    margin-top: -0.3em;
+    font-size: .75em !important;
+}
+
+ .outer{
+    width: 33%;
+    font-family: Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+/* ------------ End Telemetry Meter ---------------- */
+
+/* ------------- Telemetry Display ----------------- */
+  .templateinfo{
+    display: table;
+    font-family: Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    width: 100%;
+    table-layout: fixed;
+    overflow: hidden; 
+  }
+  
+.templateinfo02{
+    display: table;
+    font-family: Helvetica, Arial, sans-serif;
+    font-size:85%;
+    -webkit-font-smoothing: antialiased;
+    width: 100%;
+    table-layout: fixed;
+    overflow: hidden; 
+  }
+  
+  .templateLabel{
+    display: table-cell;
+    padding-right: 10px;
+    color: #f9f9f9;
+    font-size: 1em;
+    text-align: right;
+    width: 45%; 
+    font-weight: normal;
+  }
+
+  .templateValue{
+    box-shadow: inset 0 1px 3px  rgba(0,0,0,.2);
+    box-sizing: border-box;
+    background: #2e2e2e;
+
+    border-color: #444;
+    border-radius: 5px;
+    border-width: 1px;
+    border-style: solid;
+    color: #f9f9f9 ;
+    text-shadow: 0  1px 0  #111 ;
+    
+    font-size: 1em !important;
+    text-align: center;
+    margin: 0 0 3px 0;
+    min-height: 1.8em;
+    font-weight: normal;
+    
+  }
+
+  .templateUnits{
+    display: table-cell;
+    color: #f9f9f9;
+    font-size: 1em;
+    padding-left: 10px;
+    text-align: left;
+    width: 15%;
+    font-weight: normal;
+  }
+/* ----------- End Telemetry Display --------------- */
+.vertmetercontainer{
+    margin-bottom: -2em;
+}
+
+.verticalmeter{
+    height:12vw;
+    min-height:12vw;
+    max-width: 2vw; 
+    position: relative;
+    background: #222;
+    -moz-border-radius: 4px;
+    -webkit-border-radius: 4px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    display: flex;
+    margin-top: 0vw;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.verticalmeter > span{
+    display: flex;
+    height: 100%;
+    width: 100%;
+    background-color: #178C19; 
+    -webkit-border-top-right-radius: 4px;
+    -webkit-border-bottom-right-radius: 4px;
+    -moz-border-radius-topright: 4px;
+    -moz-border-radius-bottomright: 4px;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+    -webkit-border-top-left-radius: 4px;
+    -webkit-border-bottom-left-radius: 4px;
+    -moz-border-radius-topleft: 4px;
+    -moz-border-radius-bottomleft: 4px;
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+    box-shadow: inset 2px 0 15px rgba(255, 255, 255, 0.3), inset -2px 0 9px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    z-index:0;
+    align-self:flex-end;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.telem-vertmeter-value{
+    position:relative;
+    top: -2.5em;
+    font-size: 1em !important;
+    min-height: 1em;
+    width:75% !important;
+}
+
+.telem-vertmeter-units {
+    position:relative;
+    top: -2.5em;
+    margin-left: .25em;
+    font-size: 1em !important;
+    min-height: 1em;
+    width:25% !important;
+}
+
+.telem-vertmeter-label{
+    position:relative;
+    top: -2.0em;
+    left: 0em;
+    font-size: 1em;
+    height: 3em;
+    width: 100% !important;
+    text-align: center !important;
+    padding: 0 !important;
+    line-height: 1em !important;
+}
+
+.verticalmetermarks{
+    position: relative;
+    display: flex;
+    width: 2vw;
+    margin-bottom:0em;
+    max-height:0em;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    z-index: 1;
+}
+
+.verticalmtrread{
+    max-height: 50%;
+}
+
+.verticalmark{
+    width: 100%;
+    height: 1px;
+/*    background-color: gray; */
+    background-color: #555555;
+    position:relative;
+    top: -9.3em;
+/*    margin: 0em 0em 150% 0.03em; */
+    margin: 0em 0em 150% 0em;
+    z-index: 1;
+}
+
+.verticalnumdivcontainer{
+    position: relative;    
+    display: flex;
+    max-height:0em;
+    display:block;
+    margin-left: 70%;
+    z-index: 0;
+}
+
+.verticalnumdiv{
+    position: relative;    
+    top:-12.8em;
+    padding: auto;
+    margin-top: -3.35em;
+    margin-bottom: 4.35em;
+    font-size: 0.75em !important;
+    max-width:4em;
+    z-index: 0;
+}
+
+/* ------------- End Vertical Meter ---------------- */
+
+/* -------------------- Gauges --------------------- */
+/*
+ * TODO: Citation
+ * Modified
+ */
+
+.cssgauge{
+  display:inline-block;
+  position:relative;
+  width: 150%; /* 10em; */
+  height: 150%; /* 5em; */
+  overflow:hidden;
+  margin: 10% 0% 0% 10%;/*2em 1em 0.25em 0.25em;  *//* 2em; */
+}
+
+.cssgauge:before, .cssgauge:after, .meter-cssgauge{
+  position:absolute;
+  display:block;
+  content:"";
+  box-shadow: inset -.2em .5em 1em rgba(0, 0, 0, 0.3);
+}
+
+.cssgauge:before, .meter-cssgauge{ width: 100%; /* 14em; *//*10em;*/ height: 100.01%;/* 7em; *//*5em;*/ }
+.cssgauge:before{ 
+    border-radius: 50em 50em 0.05% 0.05%; /* 13em 13em 0.05em 0.05em; *//*:5em 5em 0 0; */  
+    background:#E0E0E0; /* #2a2a2a; */ 
+    /*box-shadow: inset -.2em .5em 1em rgba(0, 0, 0, 0.3); */
+}
+
+.cssgauge:after{
+  position:absolute;
+  bottom:-1%;
+  left: 25%; /* 2.5em; */
+  width: 50%; /* 5em; */
+  height: 50%; /* 2.5em; */
+  background: #393939; /* #222; */
+  border-radius: 5em 5em 0 0; /* 2.5em 2.5em 0 0; */
+}
+
+.meter-cssgauge{
+  top:100%;
+/*  transition:.2s; */
+  transform-origin:center top;
+  border-radius: 0 0 12em 12em; /* 0 0 6em 6em; */
+  background: #178C19; /* #B0B0B0; /* #0F0; */ /*deepskyblue; */
+  box-shadow: inset -.5em 1em 3.5em rgba(0, 0, 0, 0.25);
+}
+
+.overload { transform-origin:center center; }
+.overload:hover {
+  animation:overload .15s .5s infinite;
+}
+.overload .meter-cssgauge { background:limegreen; } 
+@keyframes overload {
+  25%{ transform:translateX(2px); }
+  50%{ transform:rotate(-1deg); }
+  75%{ transform:translateX(1px); }
+}
+
+figure-cssgauge{ 
+  flex:1; 
+}
+
+figcaption-cssgauge{ 
+  display:block; 
+  font-size:20pt; 
+  font-family: sans-serif; 
+  color:white; 
+  user-select:none;
+  margin-top: -5em; /* -65px; */
+}
+
+.gaugetext{
+    position:relative;   
+}
+
+.belowgauge{
+    display:inline-block;
+    top:-3.0em;
+    z-index:0;
+}
+
+.startnumber{
+    left: -10%; /*-4.75em; */
+}
+
+.endnumber{
+    right: -90%; /* -4.75em; */
+}
+
+.ongauge{ 
+    display:block;
+    width:50%;
+    left: 60%; /* -0.5em; */
+    top: -60%; /* -3.0em; */
+    z-index:1;
+}
+/* ------------------ End Gauges ------------------- */
+
+/* -------------------- Alarms --------------------- */
+/* ----------------- End Alarms -------------------- */
+.swdLabel 
+{
+    display:inline-block;
+    margin-left: 0.5em !important;
+    margin-right: 0em;
+}

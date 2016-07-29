@@ -1,0 +1,12 @@
+{
+	"name":"Dsrc Receiver Plugin (Arada 1.8)",
+	"description":"...",
+	"version":"0.0.2",
+	"exeLocation":"/Debug/DsrcReceiverPluginArada",
+	"coreIpAddr":"192.168.25.20",
+	"corePort":24601,
+	"messageTypes":[
+	],
+	"configuration":[
+	]
+}

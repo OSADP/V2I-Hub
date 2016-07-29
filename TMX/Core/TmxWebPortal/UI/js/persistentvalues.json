@@ -1,0 +1,4 @@
+var persistentCommonMemory = [
+								{"tag":"volume", "value": "0.58"},
+								{"tag":"mainHtmlPageLink", "value":"http://192.168.5.30/main/main.html"} 
+];

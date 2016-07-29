@@ -1,0 +1,14 @@
+Template: tmxcore/mysql_root_login
+Type: string
+Default: root
+Description: What is the login name for the MySQL admin user?
+
+Template: tmxcore/mysql_root_password
+Type: password
+Default: B@ttelle
+Description: What is the password for the MySQL admin user?
+
+Template: tmxcore/mysql_setupdb
+Type: note
+Description: Please wait.
+	MySQL database schema is being created

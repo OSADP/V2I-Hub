@@ -1,0 +1,46 @@
+#!/bin/sh -e
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+MANIFEST=@CPACK_DEBIAN_PACKAGE_INSTALL_PREFIX@/manifest.json
+NAME=`grep "\"name\":" ${MANIFEST} | head -1 | awk -F, '{print $1}' | awk -F: '{print $2}' | sed -e 's/\"//g'`
+VER=`grep "\"version\":" ${MANIFEST} | head -1 | awk -F, '{print $1}' | awk -F: '{print $2}' | sed -e 's/\"//g'`
+DESC=`grep "\"description\":" ${MANIFEST} | head -1 | awk -F, '{print $1}' | awk -F: '{print $2}' | sed -e 's/\"//g'`
+EXE=`grep "\"exeLocation\":" ${MANIFEST} | head -1 | awk -F, '{print $1}' | awk -F: '{print $2}' | sed -e 's/\"//g'`
+
+if [ -z "${NAME}" ]; then
+  echo "ERROR: Unknown plugin." >&2
+  exit 1
+fi
+
+# See if MySQL is even on this machine. If not, then skip DB inserts
+set +e
+dpkg -l mysql-server >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+  exit 0
+fi
+set -e
+
+DBUSER="IVP"
+DBPASS="ivp"
+
+SQL="SELECT count(*) FROM IVP.plugin WHERE name = '${NAME}'"
+INSTALLED=`mysql -s -N -u$DBUSER -p$DBPASS -e "${SQL}"`
+
+if [ ${INSTALLED} -eq 0 ]; then
+  # First install
+  SQL="INSERT INTO IVP.plugin ( name, version, description ) VALUES ( '${NAME}', '${VER}', '${DESC}' )"
+  mysql -u$DBUSER -p$DBPASS -e "${SQL}"
+  
+  SQL="INSERT INTO IVP.installedPlugin ( pluginID, path, exeName, manifestName, commandLineParameters, enabled, maxMessageInterval )"
+  SQL="${SQL} VALUES ( (SELECT ID FROM IVP.plugin WHERE name = '${NAME}'), '@CPACK_DEBIAN_PACKAGE_INSTALL_PREFIX@',"
+  SQL="${SQL} '${EXE}', 'manifest.json', '', 0, 5000 )"
+  mysql -u$DBUSER -p$DBPASS -e "${SQL}"
+else
+  # Just an update, update the version
+  SQL="UPDATE IVP.plugin SET version = '${VER}', description = '${DESC}' WHERE name = '${NAME}'"
+  mysql -u$DBUSER -p$DBPASS -e "${SQL}"
+fi
+
+exit 0

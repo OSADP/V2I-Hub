@@ -1,0 +1,137 @@
+
+/*html {
+  font-size:150%;
+}
+*/
+.cssgauge {
+  display:inline-block;
+  position:relative;
+  width: 14em; /* 10em; */
+  height: 7em; /* 5em; */
+  overflow:hidden;
+  margin: 2em 1em 0.25em 0.25em; /* 2em; */
+}
+
+.cssgauge:before, .cssgauge:after, .meter-cssgauge {
+  position:absolute;
+  display:block;
+  content:"";
+}
+
+.cssgauge:before, .meter-cssgauge { width: 14em; /*10em;*/ height: 7em; /*5em;*/ }
+.cssgauge:before { border-radius: 13em 13em 0.05em 0.05em;/*:5em 5em 0 0; */  background:#E0E0E0; /* #2a2a2a; */ }
+
+.cssgauge:after {
+  position:absolute;
+  bottom:0;
+  left: 3em; /* 2.5em; */
+  width: 8em; /* 5em; */
+  height: 4em; /* 2.5em; */
+  background: #393939; /* #222; */
+  border-radius: 5em 5em 0 0; /* 2.5em 2.5em 0 0; */
+}
+
+.meter-cssgauge {
+  top:100%;
+  transition:0.1s;
+  transform-origin:center top;
+  border-radius: 0 0 12em 12em; /* 0 0 6em 6em; */
+  background: #0F0; /*deepskyblue; */
+}
+
+/* .cssgauge:hover .meter-cssgauge { transform:rotate(.5turn); } */
+
+ /* Overload effect ==================== */
+.overload { transform-origin:center center; }
+.overload .meter-cssgauge { background:limegreen; }
+
+/* Demo code ==================== */
+
+/*.meter-cssgauge { animation:empty 1.5s linear both; }
+  @keyframes empty { 0%{ transform:rotate(180deg); } 
+ .overload .meter-cssgauge { animation-delay: .4s; }
+*//*
+html {
+  position:relative;
+  height:100%;
+}
+
+html, body { 
+  display:-webkit-flex; 
+  display:flex; 
+}
+
+body { 
+  width:100%; 
+  align-self:center; 
+  text-align:center; 
+  overflow:hidden; 
+  background:#222; 
+}
+*/
+figure-cssgauge { 
+  flex:1; 
+}
+
+figcaption-cssgauge { 
+  display:block; 
+  font-size:20pt; 
+  font-family: sans-serif; 
+  color:white; 
+  user-select:none;
+  margin-top: -5em; /* -65px; */
+}
+/*
+.meterreading-cssgauge {
+  font-size: 20pt;
+  font-family: sans-serif; 
+  color:white;
+  margin-top: -2em; /* -56px; */
+/*  text-align: left;
+}
+
+.startnumber-cssgauge {
+  font-size: 10pt;
+  font-family: sans-serif; 
+  color:white;
+  margin-left: -2em; *//* -182px; */
+  /*margin-top: -2em; /* -28px; */
+/*}
+
+.endnumber-cssgauge {
+  font-size: 10pt;
+  font-family: sans-serif; 
+  color:white;
+  margin-right: -70em; *//* -177px; */
+  /*margin-top: -1em; *//* -15px; */
+/*}*/
+
+.gaugetext 
+{
+    position:relative;   
+}
+
+.belowgauge
+{
+    display:inline-block;
+    top:-3.0em;
+    z-index:0;
+}
+
+.startnumber
+{
+    left:-4.75em;
+}
+
+.endnumber
+{
+    right:-4.75em;
+}
+
+.ongauge
+{ 
+    display:block;
+    left:-0.5em;
+    top:-3.0em;
+    z-index:1;
+}

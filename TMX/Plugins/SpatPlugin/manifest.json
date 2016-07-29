@@ -1,0 +1,47 @@
+{
+	"name":"SPAT r41",
+	"description":"Plugin that reads PTLM data from a configuration file, receives live data from the signal controller, and publishes a J2735 r41 SPAT message.",
+	"version":"1.0.0",
+	"exeLocation":"/Debug/SpatGeneratorPluginR41",
+	"coreIpAddr":"127.0.0.1",
+	"corePort":24601,
+	"messageTypes":[
+		{
+			"type":"J2735",
+			"subtype":"SPAT-P",
+			"description":"Signal Phase and Timing (SPAT) status for the signalized intersection."
+		},
+		{
+			"type":"SIGCONT",
+			"subtype":"ACT",
+			"description":"Current signal controller action"
+		}
+	],
+	"configuration":[
+		{
+			"key":"PTLM_Files",
+			"default":"{ \"PtlmFiles\": [\n  {\"Action\":1, \"FilePath\":\"twelve_mile-telegraph-PTLMMapping.xml\"}\n] }",
+			"description":"JSON data defining a list of PTLM files.  One PTLM file for each action set specified by the TSC."
+		},
+		{
+			"key":"Local_IP",
+			"default":"192.168.25.20",
+			"description":"The IPv4 address of the local computer for receiving Traffic Signal Controller Broadcast Messages."
+		},
+		{
+			"key":"Local_UDP_Port",
+			"default":"6053",
+			"description":"The local UDP port for reception of Traffic Signal Controller Broadcast Messages from the TSC."
+		},
+		{
+			"key":"TSC_IP",
+			"default":"192.168.25.50",
+			"description":"The IPv4 address of the destination Traffic Signal Controller (TSC)."
+		},
+		{
+			"key":"TSC_Remote_SNMP_Port",
+			"default":"501",
+			"description":"The destination port on the Traffic Signal Controller (TSC) for SNMP NTCIP communication."
+		}
+	]
+}

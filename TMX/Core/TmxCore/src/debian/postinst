@@ -1,0 +1,59 @@
+#!/bin/sh -e
+
+# Source debconf library.
+. /usr/share/debconf/confmodule
+
+chown -h root:root /usr/local/bin/tmxcore /usr/local/lib/libmysqlcppconn.so*
+
+mkdir -p /var/log/tmx
+chmod 755 /var/log/tmx
+
+mkdir -p /var/www/plugins
+chmod 755 /var/www/plugins
+echo "<?PHP header(\"location:tmx\") ?>" > /var/www/index.php
+chmod 644 /var/www/index.php
+chown -R www-data:www-data /var/www
+
+# Get the MySQL login and password
+db_input medium tmxcore/mysql_root_login || true
+db_go
+
+db_get tmxcore/mysql_root_login
+DBROOTUSER="${RET}"
+
+db_input high tmxcore/mysql_root_password || true
+db_go
+
+db_get tmxcore/mysql_root_password
+DBROOTPASS="${RET}"
+
+DBUSER="IVP"
+DBPASS="ivp"
+mysql -u$DBROOTUSER -p$DBROOTPASS -e "CREATE DATABASE IF NOT EXISTS $DBUSER; GRANT ALL PRIVILEGES ON $DBUSER.* To '$DBUSER'@'localhost' IDENTIFIED BY '$DBPASS';"
+if [ -f /var/www/tmx/localhost.sql ]; then
+	mysql -u$DBUSER -p$DBPASS < /var/www/tmx/localhost.sql
+	rm -f /var/www/tmx/localhost.sql
+fi
+db_stop
+
+set +e
+id plugin >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+	adduser --system --disabled-login --disabled-password --gecos --no-create-home plugin
+fi
+set -e
+
+sed '/short_open_tag/s/Off/On/g' -i /etc/php5/apache2/php.ini
+rm -f /etc/apache2/sites-enabled/*
+ln -s /etc/apache2/sites-available/default-site /etc/apache2/sites-enabled/default-site
+
+set +e
+php5enmod mcrypt
+#pecl install zip
+set -e
+
+initctl reload-configuration
+service apache2 restart
+service tmxcore start
+sleep 1
+service websockify start

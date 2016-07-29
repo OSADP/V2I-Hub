@@ -1,0 +1,22 @@
+#!/bin/sh -e
+
+service websockify stop
+sleep 1
+service tmxcore stop
+
+set +e
+rm -f /var/www/index.php 2>/dev/null
+rmdir -p /var/www/plugins 2>/dev/null
+set -e
+
+DBUSER="IVP"
+DBPASS="ivp"
+mysql -u$DBUSER -p$DBPASS -e "DROP DATABASE IF EXISTS $DBUSER;"
+
+if [ "$1" = "purge" -a -e /usr/share/debconf/confmodule ]; then
+    # Source debconf library.
+    . /usr/share/debconf/confmodule
+    
+    # Remove my changes to the db.
+    db_purge
+fi

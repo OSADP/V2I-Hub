@@ -1,0 +1,974 @@
+/* -------------------- Page ------------------------ */
+.page{
+    font-family: Helvetica, Sans-Serif;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-transform: translate3d(0, 0, 0);
+}
+
+.page[data-state="active"]
+{
+    display: block !important;
+}
+
+.page[data-state="disabled"]
+{
+    display: none !important;
+}
+
+.ui-page-theme-a {
+    padding-top: 4.25em;
+}
+
+body{
+    font-size: 1.3vw !important;
+}
+
+.headercontainer{
+    display: table;
+    width: 100%;
+    position: fixed;
+    height:2.8em;
+}
+
+.fill-width
+{
+    width: 100%  !important;
+}
+
+li > a {
+  font-size: 1.2em !important;
+  text-align: center;
+  vertical-align: middle;
+}
+/* ------------------ End Page --------------------- */
+/* ------------------ Keyboard --------------------- */
+
+.ui-keyboard
+{
+   position:absolute;
+   width: 20em !important;
+   background : #303030 !important;
+   top: 10em !important;
+   left: 20em !important;
+}
+
+.ui-keyboard-button
+{
+    background: #555 !important;
+}
+
+.ui-keyboard-actionkey
+{
+    background: #FF4500 !important;
+}
+
+.ui-keyboard-text 
+{
+    color: #FFFFFF !important;
+}
+/* ---------------- End Keyboard ------------------- */
+
+/* -------------------- Display -------------------- */
+.hidden, ::-webkit-scrollbar, .noTitleBar .ui-dialog-titlebar {
+    display:none !important;
+}
+
+.inline{
+    display: inline;
+}
+
+.inline-block{
+    display: inline-block;
+}
+
+.block{
+    display: block;
+}
+
+.vertical-align-middle{
+    vertical-align:middle !important;
+}
+
+.vertical-align-top{
+    vertical-align:top !important;
+}
+
+
+.opacity-0{
+    opacity: 0;
+}
+
+.light-gray-bkgnd{
+    background: #595959;
+}
+/* ----------------- End Display ------------------- */
+
+/* ------------------ Popup Box -------------------- */
+.opverifypopup, .dangerpopup, .warningpopup{
+    font-size: 1.6vw !important;
+    position: fixed;
+    z-index: 16004;
+    padding: 5px;
+    top: 5em !important;
+    margin-left: 20em !important;
+    border: thick outset #666666;
+    height: 23em;
+    width: 23em;
+    text-align: center;
+}
+
+.opverifypopup[data-state="active"],.dangerpopup[data-state="active"],.warningpopup[data-state="active"]
+{
+    visibility: visible !important;
+}
+
+.opverifypopup[data-state="disabled"],.dangerpopup[data-state="disabled"],.warningpopup[data-state="disabled"]
+{
+    visibility: hidden !important;
+}
+
+.opverifypopup{
+    background: #292929;
+}
+
+.dangerpopup{
+    background: #FF0000;
+}
+
+.warningpopup{
+    background: #FFED00;
+}
+
+.popupmsgbox{
+    background: #2F2F2F;
+    border: thick inset #666666;
+    word-wrap: break-word;
+    padding: 5%;
+    margin: 5% 5% 5% 5%;
+    display: block;
+}
+/* ---------------- End Popup Box ------------------ */
+
+/* --------------------- Table --------------------- */
+.table-fixed{
+    table-layout: fixed;
+}
+
+.swdTableCell{
+    padding: 0em !important;
+    width: 20%;
+}
+/* ------------------- End Table ------------------- */
+
+/* -------------------- Button --------------------- */
+.confirmbutton
+{
+    background-color: #303030 !important;
+    box-sizing: border-box;
+    border: outset #666;
+    color: #FFFFFF;
+    width: 10em !important;
+    padding: 2em !important;
+    margin: 0.5em 1em 0em 0.5em;
+    text-align: center;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+.headbtn{
+    width: 15% !important;
+    font-size: 1em !important;
+}
+
+.selectbutton{
+    position:relative;
+    margin: 4%;
+}
+
+.setupbutton{
+    width: 90%;
+    height: 100%;
+}
+
+.setuppagebtn
+{
+    width: 10em !important;
+    height: 3.5em !important;
+    margin: 0.5em 0em 0.5em 0.5em;
+}
+/* ----------------- End Button -------------------- */
+
+/* --------------------- Text ---------------------- */
+.center{
+    text-align: center !important;
+}
+
+.margin-auto { 
+    margin:auto; 
+}
+
+.nounderline{
+    text-decoration:none !important;
+}
+
+.underline{
+    text-decoration:underline;
+}
+
+.bold{
+    font-weight:bold;
+}
+
+.heading{
+    font-weight: bold;
+    text-align: center !important;
+}
+
+.fontsize-8{
+    font-size: 0.5em;
+}
+
+.fontsize-10{
+    font-size: 0.625em !important;
+}
+
+.fontsize-12{
+    font-size: 0.75em !important;
+}
+
+.fontsize-14{
+    font-size: 0.875em !important;
+}
+
+.fontsize-16, .ui-mobile label{
+    font-size: 1em !important;
+}
+
+.fontsize-18{
+    font-size: 1.11em !important;
+}
+
+.fontsize-19{
+    font-size: 1.05em !important;
+}
+
+.fontsize-22{
+    font-size: 1.375em !important;
+}
+
+.fontsize-24{
+    font-size: 1.5em !important;
+}
+
+.fontsize-26{
+    font-size: 1.626em !important;
+}
+/* ------------------- End Text -------------------- */
+
+/* --------------------- Width --------------------- */
+.width-2em{
+    width: 2em !important;
+}
+
+.width-5em{
+    width: 5em !important;
+}
+
+.width-6em{
+    width: 6em !important;
+}
+
+.width-7em{
+    width: 7em !important;
+}
+
+.width-8em{
+    width: 8em !important;
+}
+
+.width-9em{
+    width: 9em !important;
+}
+
+.width-10em{
+    width: 10em !important;
+}
+
+.width-12em {
+    width: 12em !important;
+}
+
+.width-15em {
+    width: 15em !important;
+}
+
+.width-18em{
+    width: 18em !important;
+}
+
+.width-24em {
+    width: 24em !important;
+}
+
+.width-27em{
+    width: 27em !important;
+}
+
+.width-30em{
+    width: 30em !important;
+}
+
+.width-33em{
+    width: 33em !important;
+}
+
+.width-36_5em{
+    width: 36.5em !important;
+}
+
+.width-38_5em {
+    width: 38.5em !important;
+}
+
+.width-54em {
+    width: 54em !important;
+}
+
+.width-68em {
+    width: 68em !important;
+}
+
+.width-72em{
+    width: 72em !important;
+}
+
+.width-76_5em{
+    width: 76.5em !important;
+}
+
+.width-77em{
+    width: 77em !important;
+}
+
+module{
+    width: 100% !important;
+}
+/* ------------------- End Width ------------------- */
+
+/* -------------------- Height --------------------- */
+.height-0_1em{
+    height:0.1em;
+}
+
+.height-3em{
+    height:3em !important;
+}
+
+.height-4em{
+    height:4em !important;
+}
+/* ------------------ End Height ------------------- */
+
+
+/* -------------------- Float ---------------------- */
+.float-left{
+    float: left;
+}
+.float-right{
+    float: right;
+}
+/* ------------------ End Float -------------------- */
+
+/* ------------------- Margins --------------------- */
+.margin-0em{
+    margin: 0em !important;
+}
+
+.margin-0_1em{
+    margin: 0.1em !important;
+}
+
+
+.margin-0_5em{
+    margin: 0.5em !important;
+}
+
+.margin-1em{
+    margin: 1em !important;
+}
+
+.margin-2em{
+    margin: 2em !important;
+}
+
+.margin-top--1_75em{
+    margin-top: -1.75em !important;
+}
+
+.margin-top--0_75em {
+    margin-top: -0.75em !important;
+}
+
+.margin-top-0em{
+    margin-top: 0em !important;
+}
+
+.margin-top-0_5em{
+    margin-top: 0.5em !important;
+}
+.margin-top-0_8em{
+    margin-top: 0.8em !important;
+}
+.margin-top-1em{
+    margin-top:1em !important;
+}
+
+.margin-top-1_25em{
+    margin-top:1.25em !important;
+}
+
+.margin-top-1_75em{
+    margin-top:1.75em !important;
+}
+.margin-top-1_8em{
+    margin-top:1.8em !important;
+}
+
+.margin-top-2em{
+    margin-top: 2em !important;
+}
+
+.margin-top-2_5em{
+    margin-top: 2.5em !important;
+}
+
+.margin-top-3em{
+    margin-top: 3em !important;
+}
+
+.margin-top-5em{
+    margin-top: 5em !important;
+}
+
+.margin-left--1em{
+    margin-left: -1em !important;
+}
+
+.margin-left-0em{
+    margin-left: 0em !important;
+}
+
+
+.margin-left-0_25em{
+    margin-left: 0.25em !important;
+}
+
+.margin-left-0_1em{
+    margin-left: 0.1em !important;
+}
+
+
+.margin-left-0_2em{
+    margin-left: 0.2em !important;
+}
+
+.margin-left-0_4em{
+    margin-left: 0.4em !important;
+}
+
+.margin-left-0_5em{
+    margin-left: 0.5em !important;
+}
+
+.margin-left-0_75em{
+    margin-left: 0.75em !important;
+}
+
+.margin-left-0_9em{
+    margin-left: 0.9em !important;
+}
+
+.margin-left-1em
+{
+    margin-left: 1em !important;
+}
+
+.margin-left-1_1em{
+    margin-left: 1.1em !important;
+}
+
+.margin-left-1_25em{
+    margin-left: 1.25em !important;
+}
+
+.margin-left-1_4em{
+    margin-left: 1.4em !important;
+}
+
+.margin-left-1_5em{
+    margin-left: 1.5em !important;
+}
+
+.margin-left-2em{
+    margin-left: 2em !important;
+}
+
+.margin-left-2_15em{
+    margin-left: 2.15em !important;
+}
+
+.margin-left-2_75em{
+    margin-left: 2.75em !important;
+}
+
+.margin-left-3_25em{
+    margin-left: 3.25em !important;
+}
+
+.margin-left-3_75em{
+    margin-left: 3.75em !important;
+}
+
+.margin-left-5em{
+    margin-left: 5em !important;
+}
+
+.margin-left-13_5em {
+    margin-left: 13.5em;
+}
+
+.margin-left-30{
+    margin-left: 30% !important;
+}
+
+.margin-right-0em {
+    margin-right: 0em !important;
+}
+
+.margin-right-0_25em {
+    margin-right: 0.25em !important;
+}
+
+.margin-right-0_4em{
+    margin-right: 0.4em !important;
+}
+
+.margin-right-1em{
+    margin-right: 1em !important;
+}
+
+.margin-right-2em{
+    margin-right: 2em !important;
+}
+
+.margin-bottom-0_5em
+{
+    margin-bottom: 0.5em !important;
+}
+
+/* ----------------- End Margins ------------------- */
+
+/* ------------------- Padding --------------------- */
+.padding-0em{
+    padding: 0em;
+}
+
+.padding-0_4em{
+    padding: 0.4em;
+}
+
+.padding-top-1em{
+    padding: 1em;
+}
+
+.padding-top-0_75em{
+    padding-bottom: 0.75em !important;
+}
+
+.padding-bottom-0_75em{
+    padding-bottom: 0.75em !important;
+}
+/* ----------------- End Padding ------------------- */
+
+/* ------------------- Containers ------------------ */
+.buttoncontainer{
+    vertical-align: middle;
+    display: table-cell;
+    width: 100%;
+    margin-right: -23em;
+    float: left;
+    margin-left: 9em;
+ /*   background:#002c77; */
+
+}
+
+.container{
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    margin: -2em 0em 0em 0em; 
+}
+
+.containerborders{
+    box-shadow: inset 0 1px 3px  rgba(0,0,0,.2);
+    box-sizing: border-box;
+    background: #2e2e2e;
+
+    border-color: #444;
+    border-radius: 0.2em;
+    border-width: 1px;
+    border-style: solid;
+    color: #f9f9f9 ;
+    text-shadow: 0  1px 0  #111 ;
+        
+    font-size: 1em;
+    text-align: center;
+}
+
+#eventtable
+{
+    font-size: .8em;
+}
+
+#eventtable td{
+    background-color: #515151;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover, 
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled:active,
+.dataTables_wrapper .dataTables_paginate .paginate_button,
+.dataTables_info,
+.dataTables_length
+{
+    color: #FFFFFF !important;
+    font-size: 0.65em !important;
+}
+
+.ledcontainer{
+    margin-left: -8em;
+    margin-right: auto; 
+    margin-top: 0.5em;
+    position: fixed;
+    width: 100%;
+    height: 40px;
+    z-index: 1;
+    padding-top: 10px;
+    text-align: center;
+}
+
+.logoContainer{
+    margin-left: -7em;
+    margin-right: auto;
+    margin-top: .5em;
+    position: fixed;
+    height: 40px;
+    z-index: 1;
+    text-align: center;
+
+}
+
+.logoImage{
+    margin-left: -15% !important;
+    height: 2.0em !important;
+    /*
+    transform: scale(0.6, 0.6);
+    -ms-transform: scale(0.6, 0.6);
+    -webkit-transform: scale(0.6, 0.6);
+    */
+}
+
+.tcledcontainer{
+    width: 100%;
+    text-align: center;
+}
+
+.selectdiv{
+  /*  margin: auto;*/
+    width: 80%;
+    height: 3em !important;
+}
+
+.setupcontainer{
+    width:33%;
+    display:inline-block;
+    padding: 1% 1% 1% 1%; 
+}
+
+.setuptable{  
+    margin-top: 52px;
+    width: 100%;
+    min-height: 60%;
+}
+
+.telemcontainer{
+    display: inline-block;
+    background: #2e2e2e;
+    border-color: #444;
+    border-radius: 5px;
+    border-width: 1px;
+    border-style: solid;
+    color: #f9f9f9 ;
+    text-shadow: 0  1px 0  #111 ;
+}
+
+.table-stroke td{
+    margin: 0em !important;
+    padding: 0em !important;
+}
+
+#trendchart {
+    width: 35em !important;
+    height: 25em !important;
+    /*margin-top: -4em !important;*/
+    margin-left: 17.5em !important;
+    z-index: 1 !important;
+}
+
+.absoluteForefront 
+{
+    z-index: 1000 !important;
+}
+/* ---------------- End Containers ------------------ */
+
+/* -------------------- Labels  --------------------- */
+.label{
+    background-color: #2C2C2C;
+}
+
+.connectedlabel{
+      margin-left: 3% !important;
+      padding-top: 3px;
+      position: fixed;
+}
+
+.headerlabel{
+    font-size: 1.3em !important;
+    vertical-align: middle !important;
+    float: right;
+    margin-right: 2% !important;
+    margin-top: 1.0% !important;
+/*    color: #0073CF;*/
+    color: #002C77;
+
+}
+
+.pageContainer
+{
+    color: #002C77;
+}
+
+.ledlabel{
+    float: left;
+    margin-left: .5em !important;
+    margin-right: .5em !important;
+}
+
+.modulelabel{
+    font-size: 80%;
+    margin: 1% 2.5% 1% -1.5%;
+    display:inline-block;
+}
+.alarmStatelabel{
+    font-size: 80%;
+    margin: 1% 2.5% 1% -1.5%;
+}
+.modelabel{
+    font-size: 80%;
+    margin: 1% 2.5% 1% -1.5%;
+}
+/* ------------------- End Labels ------------------- 
+AUTOMATIC
+MANUAL
+SW_MANUAL
+INDETERMINANT
+DISABLED
+*/
+.vertmetercontainer[data-mode="MANUAL"] > .verticalmtrread > .verticalmeter
+{
+    border-color: #FF8000;
+    border-radius: 10px;
+    border-width: 2px;
+}
+
+.vertmetercontainer[data-mode="SW_MANUAL"] > .verticalmtrread > .verticalmeter
+{
+    border-color: #FF8080;
+    border-radius: 10px;
+    border-width: 2px;
+}
+
+.vertmetercontainer[data-mode="INDETERMINANT"] > .verticalmtrread > .verticalmeter
+{
+    border-color: #2609CE;
+    border-radius: 10px;
+    border-width: 2px;
+}
+
+.vertmetercontainer[data-mode="DISABLED"] > .verticalmtrread > .verticalmeter
+{
+    border-color: #FFFFFF;
+    border-radius: 10px;
+    border-width: 2px;
+}
+
+.metercontainer[data-mode="MANUAL"] > .mtrread > .meter
+{
+    border-color: #FF8000;
+    border-radius: 10px;
+    border-width: 2px;
+}
+
+.metercontainer[data-mode="SW_MANUAL"] > .mtrread > .meter
+{
+    border-color: #FF8080;
+    border-radius: 10px;
+    border-width: 2px;
+}
+
+.metercontainer[data-mode="INDETERMINANT"] > .mtrread > .meter
+{
+    border-color: #2609CE;
+    border-radius: 10px;
+    border-width: 2px;
+}
+
+.metercontainer[data-mode="DISABLED"] > .mtrread > .meter
+{
+    border-color: #FFFFFF;
+    border-radius: 10px;
+    border-width: 2px;
+}
+.telemDisplay[data-mode="MANUAL"] > .templateValue
+{
+    border-color: #FF8000;
+    border-radius: 10px;
+    border-width: 2px;
+}
+
+.telemDisplay[data-mode="SW_MANUAL"] > .templateValue
+{
+    border-color: #FF8080;
+    border-radius: 10px;
+    border-width: 2px;
+}
+
+.telemDisplay[data-mode="INDETERMINANT"] > .templateValue
+{
+    border-color: #2609CE;
+    border-radius: 10px;
+    border-width: 2px;
+}
+
+.telemDisplay[data-mode="DISABLED"] > .templateValue
+{
+    border-color: #FFFFFF;
+    border-radius: 10px;
+    border-width: 2px;
+}
+
+.telemDprDptDisplay[data-mode="MANUAL"] > .templateValue
+{
+    border-color: #FF8000;
+    border-radius: 10px;
+    border-width: 2px;
+}
+
+.telemDprDptDisplay[data-mode="SW_MANUAL"] > .templateValue
+{
+    border-color: #FF8080;
+    border-radius: 10px;
+    border-width: 2px;
+}
+
+.telemDprDptDisplay[data-mode="INDETERMINANT"] > .templateValue
+{
+    border-color: #2609CE;
+    border-radius: 10px;
+    border-width: 2px;
+}
+
+.telemDprDptDisplay[data-mode="DISABLED"] > .templateValue
+{
+    border-color: #FFFFFF;
+    border-radius: 10px;
+    border-width: 2px;
+}
+
+.setupTable thead {
+  display: none;
+}
+
+/*
+.setupTable tr.even td:hover {
+    background-color: red;
+}
+
+
+.setupTable tr.even td{
+    background-color: red;
+}
+
+table.display tr.odd td {
+    background-color: blue;
+}
+*/
+.setupPage
+{
+    margin-left: .5em !important;
+    margin-right: .5em !important;
+}
+
+#versiontable td{
+    background-color: #303030;
+}
+
+.in, .out {
+    -webkit-animation-timing-function: ease-in-out;
+    -webkit-animation-duration: 1ms;
+}
+
+.vert_stack {
+    position:relative; 
+}
+/* Android Overrides 
+@media (max-width: 1080px) {
+    body{
+        font-size: 1.5vw !important;
+    }
+}
+*/
+
+#topDiv{
+    height:10% !important;
+    text-align:center;
+    font-size: 2em !important;
+}
+
+#middleDiv{
+    height:100% !important; 
+    margin-top: -1.3em;
+/*    background: #000; */
+    background: #212121;
+}
+
+#UIPage
+{
+    background: #212121;
+}
+
+#bottomDiv{
+    height:10% !important;
+    min-height: 4em;
+    text-align:center;
+    font-size: 2em !important;
+    color: #FFF;
+}
+
+#ActiveImage{
+    display: block;
+    height:26em;
+    margin-left: auto;
+    margin-right: auto 
+}

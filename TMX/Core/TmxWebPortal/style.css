@@ -1,0 +1,187 @@
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 300;
+  src: local('Open Sans Light'), local('OpenSans-Light'), url(http://themes.googleusercontent.com/static/fonts/opensans/v6/DXI1ORHCpsQm3Vp6mXoaTRa1RVmPjeKy21_GQJaLlJI.woff) format('woff');
+}
+@font-face {
+  font-family: 'Open Sans';
+  font-style: italic;
+  font-weight: 300;
+  src: local('Open Sans Light Italic'), local('OpenSansLight-Italic'), url(http://themes.googleusercontent.com/static/fonts/opensans/v6/PRmiXeptR36kaC0GEAetxrsuoFAk0leveMLeqYtnfAY.woff) format('woff');
+}
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Open Sans'), local('OpenSans'), url(http://themes.googleusercontent.com/static/fonts/opensans/v6/u-WUoqrET9fUeobQW7jkRT8E0i7KZn-EPnyo3HZu7kw.woff) format('woff');
+}
+@font-face {
+  font-family: 'Open Sans';
+  font-style: italic;
+  font-weight: 400;
+  src: local('Open Sans Italic'), local('OpenSans-Italic'), url(http://themes.googleusercontent.com/static/fonts/opensans/v6/xjAJXh38I15wypJXxuGMBtIh4imgI8P11RFo6YPCPC0.woff) format('woff');
+}
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 600;
+  src: local('Open Sans Semibold'), local('OpenSans-Semibold'), url(http://themes.googleusercontent.com/static/fonts/opensans/v6/MTP_ySUJH_bn48VBG8sNSha1RVmPjeKy21_GQJaLlJI.woff) format('woff');
+}
+@font-face {
+  font-family: 'Open Sans';
+  font-style: italic;
+  font-weight: 600;
+  src: local('Open Sans Semibold Italic'), local('OpenSans-SemiboldItalic'), url(http://themes.googleusercontent.com/static/fonts/opensans/v6/PRmiXeptR36kaC0GEAetxmWeb5PoA5ztb49yLyUzH1A.woff) format('woff');
+}
+@font-face {
+  font-family: 'Open Sans';
+  font-style: normal;
+  font-weight: 700;
+  src: local('Open Sans Bold'), local('OpenSans-Bold'), url(http://themes.googleusercontent.com/static/fonts/opensans/v6/k3k702ZOKiLJc3WVjuplzBa1RVmPjeKy21_GQJaLlJI.woff) format('woff');
+}
+@font-face {
+  font-family: 'Open Sans';
+  font-style: italic;
+  font-weight: 700;
+  src: local('Open Sans Bold Italic'), local('OpenSans-BoldItalic'), url(http://themes.googleusercontent.com/static/fonts/opensans/v6/PRmiXeptR36kaC0GEAetxoUt79146ZFaIJxILcpzmhI.woff) format('woff');
+}
+body {
+	background-image:url(media/BattelleHeader.png);
+	background-repeat:repeat-x;
+	height: 100%;
+	margin: 0;
+}
+
+h1 {
+	font-size: 36px;
+}
+
+h2 {
+	margin-bottom: 7px;
+}
+
+h3 {
+	margin-bottom: 5px;
+}
+
+html, #container {
+	height: 100%;
+	margin: 0;
+}
+
+body > #container {
+	height: auto; 
+	min-height: 100%;
+	margin: 10px;
+	font-family: 'Segoe UI Semilight', 'Open Sans', Verdana, Arial, Helvetica, sans-serif;
+}
+
+#messageBox {
+	height: auto; 
+	text-align: left;
+	vertical-align: center;
+	border-radius: 5px;
+	width: 90%;
+	margin: 5px;
+	padding: 10px;
+	font-family: 'Segoe UI Semilight', 'Open Sans', Verdana, Arial, Helvetica, sans-serif;
+	background: #aaffaa;
+}
+
+table {
+	background: transparent;
+	border-collapse: collapse;
+	border-style: none;
+	border-width: 0px;
+}
+table td {
+	background: transparent;
+	border-style: none;
+}
+
+table.data {
+	border-collapse: collapse;
+	border-style: solid;
+	border-width: 2px;
+	border-color:#595A5C;
+	padding:2px;
+	color:#000000;
+}
+table.data td, table.data th {
+	padding:3px;
+	border-style: solid;
+	border-width: 1px;
+	border-color:#595A5C;
+}
+table.data th {
+	background: #dddddd;
+}
+
+#footer {
+	clear: both;
+	position: relative;
+	z-index: 10;
+	margin-top: -4em;
+	height: 4em;
+	background: #565A5C;
+	color:#ffffff;
+	padding: 10px;
+	text-align: center;
+}
+
+#footer a:link {
+	color: #dddddd;
+}
+#footer a:visited {
+	color: #dddddd;
+}
+#footer a:active {
+	color: #dddddd;
+}
+#footer a:hover {
+	color: #ffffff;
+}
+
+#content { 
+	padding-bottom: 4em;
+}
+
+table.menu {
+	background:#dddddd;
+	font-size:16px;
+	border-collapse: collapse;
+	border-style: solid;
+	border-width: 2px;
+	border-color:#595A5C;
+	padding:2;
+	color:#000000;
+}
+table.menu td {
+	padding:3px;
+}
+table.menu th {
+	font-size:18px;
+	background:#002899;
+	color:#ffffff;
+	padding:1px;
+}
+
+a:link {
+	font-style: ;
+	color: #000000;
+}
+
+a:visited {
+	font-style: ;
+	color: #000000;
+}
+
+a:active {
+	font-style: ;
+	color: #000000;
+}
+
+a:hover {
+	color: #333333;
+}

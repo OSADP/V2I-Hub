@@ -1,0 +1,660 @@
+<J2735.GID.blob>
+  <Version>1</Version>
+  <IntersectionID>1001</IntersectionID>
+  <Elevation>false</Elevation>
+  <Resolution>decimeter</Resolution>
+  <Geometry>
+    <ReferencePoint>
+      <Latitude>42.501109</Latitude>
+      <Longitude>-83.285180</Longitude>
+    </ReferencePoint>
+    <Approach>
+      <Lane Number="1">
+        <Type>Vehicle</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <Nodes>
+          <Node Number="1">
+            <Eastern>-338</Eastern>
+            <Nothern>-18</Nothern>
+          </Node>
+          <Node Number="2">
+            <Eastern>-506</Eastern>
+            <Nothern>-15</Nothern>
+          </Node>
+          <Node Number="3">
+            <Eastern>-468</Eastern>
+            <Nothern>-14</Nothern>
+          </Node>
+          <Node Number="4">
+            <Eastern>-356</Eastern>
+            <Nothern>-15</Nothern>
+          </Node>
+          <Node Number="5">
+            <Eastern>-339</Eastern>
+            <Nothern>-15</Nothern>
+          </Node>
+        </Nodes>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>26</LaneNumber>
+        		<Maneuver>2048</Maneuver>
+        		<SignalGroup>1</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="2">
+        <Type>Computed</Type>
+        <Attributes>2560</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>1</LaneNumber>
+          <YOffset>-35</YOffset>
+          <XOffset>0</XOffset>
+        </ReferenceLane>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>27</LaneNumber>
+        		<Maneuver>2048</Maneuver>
+        		<SignalGroup>1</SignalGroup>
+        	</Connection>
+        	<Connection>
+        		<LaneNumber>24</LaneNumber>
+        		<Maneuver>512</Maneuver>
+        		<SignalGroup>1</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="3">
+        <Type>Computed</Type>
+        <Attributes>512</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>1</LaneNumber>
+          <YOffset>-70</YOffset>
+          <XOffset>0</XOffset>
+        </ReferenceLane>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>25</LaneNumber>
+        		<Maneuver>512</Maneuver>
+        		<SignalGroup>1</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="4">
+        <Type>Vehicle</Type>
+        <Attributes>2048</Attributes>
+        <Width>457</Width>
+        <Nodes>
+          <Node Number="1">
+            <Eastern>79</Eastern>
+            <Nothern>-227</Nothern>
+          </Node>
+          <Node Number="2">
+            <Eastern>4</Eastern>
+            <Nothern>-221</Nothern>
+          </Node>
+          <Node Number="3">
+            <Eastern>2</Eastern>
+            <Nothern>-545</Nothern>
+          </Node>
+        </Nodes>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>28</LaneNumber>
+        		<Maneuver>2048</Maneuver>
+        		<SignalGroup>3</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="5">
+        <Type>Vehicle</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <Nodes>
+          <Node Number="1">
+            <Eastern>118</Eastern>
+            <Nothern>-225</Nothern>
+          </Node>
+          <Node Number="2">
+            <Eastern>4</Eastern>
+            <Nothern>-221</Nothern>
+          </Node>
+          <Node Number="3">
+            <Eastern>2</Eastern>
+            <Nothern>-545</Nothern>
+          </Node>
+          <Node Number="4">
+            <Eastern>-13</Eastern>
+            <Nothern>-776</Nothern>
+          </Node>
+        </Nodes>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>29</LaneNumber>
+        		<Maneuver>2048</Maneuver>
+        		<SignalGroup>3</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="6">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>5</LaneNumber>
+          <XOffset>35</XOffset>
+          <YOffset>0</YOffset>
+        </ReferenceLane>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>30</LaneNumber>
+        		<Maneuver>2048</Maneuver>
+        		<SignalGroup>3</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="7">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>5</LaneNumber>
+          <XOffset>70</XOffset>
+          <YOffset>0</YOffset>
+        </ReferenceLane>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>31</LaneNumber>
+        		<Maneuver>2048</Maneuver>
+        		<SignalGroup>3</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="8">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>5</LaneNumber>
+          <XOffset>105</XOffset>
+          <YOffset>0</YOffset>
+        </ReferenceLane>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>32</LaneNumber>
+        		<Maneuver>2048</Maneuver>
+        		<SignalGroup>3</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="9">
+        <Type>Computed</Type>
+        <Attributes>512</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>5</LaneNumber>
+          <XOffset>140</XOffset>
+          <YOffset>0</YOffset>
+        </ReferenceLane>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>27</LaneNumber>
+        		<Maneuver>512</Maneuver>
+        		<SignalGroup>3</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="10">
+        <Type>Vehicle</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <Nodes>
+          <Node Number="1">
+            <Eastern>340</Eastern>
+            <Nothern>42</Nothern>
+          </Node>
+          <Node Number="2">
+            <Eastern>641</Eastern>
+            <Nothern>13</Nothern>
+          </Node>
+          <Node Number="3">
+            <Eastern>514</Eastern>
+            <Nothern>11</Nothern>
+          </Node>
+        </Nodes>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>20</LaneNumber>
+        		<Maneuver>2048</Maneuver>
+        		<SignalGroup>2</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="11">
+        <Type>Computed</Type>
+        <Attributes>2560</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>10</LaneNumber>
+          <YOffset>35</YOffset>
+          <XOffset>0</XOffset>
+        </ReferenceLane>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>19</LaneNumber>
+        		<Maneuver>2048</Maneuver>
+        		<SignalGroup>2</SignalGroup>
+        	</Connection>
+        	<Connection>
+        		<LaneNumber>31</LaneNumber>
+        		<Maneuver>512</Maneuver>
+        		<SignalGroup>2</SignalGroup>
+        	</Connection>        	
+        </Connections>
+      </Lane>
+      <Lane Number="12">
+        <Type>Computed</Type>
+        <Attributes>512</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>10</LaneNumber>
+          <YOffset>70</YOffset>
+          <XOffset>0</XOffset>
+        </ReferenceLane>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>32</LaneNumber>
+        		<Maneuver>512</Maneuver>
+        		<SignalGroup>2</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="13">
+        <Type>Vehicle</Type>
+        <Attributes>2048</Attributes>
+        <Width>457</Width>
+        <Nodes>
+          <Node Number="1">
+            <Eastern>-80</Eastern>
+            <Nothern>194</Nothern>
+          </Node>
+          <Node Number="2">
+            <Eastern>-9</Eastern>
+            <Nothern>296</Nothern>
+          </Node>
+        </Nodes>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>21</LaneNumber>
+        		<Maneuver>2048</Maneuver>
+        		<SignalGroup>4</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="14">
+        <Type>Vehicle</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <Nodes>
+          <Node Number="1">
+            <Eastern>-117</Eastern>
+            <Nothern>194</Nothern>
+          </Node>
+          <Node Number="2">
+            <Eastern>-9</Eastern>
+            <Nothern>296</Nothern>
+          </Node>
+          <Node Number="3">
+            <Eastern>-33</Eastern>
+            <Nothern>1215</Nothern>
+          </Node>
+        </Nodes>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>22</LaneNumber>
+        		<Maneuver>2048</Maneuver>
+        		<SignalGroup>4</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="15">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>14</LaneNumber>
+          <XOffset>-35</XOffset>
+          <YOffset>0</YOffset>
+        </ReferenceLane>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>23</LaneNumber>
+        		<Maneuver>2048</Maneuver>
+        		<SignalGroup>4</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="16">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>14</LaneNumber>
+          <XOffset>-70</XOffset>
+          <YOffset>0</YOffset>
+        </ReferenceLane>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>24</LaneNumber>
+        		<Maneuver>2048</Maneuver>
+        		<SignalGroup>4</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="17">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>14</LaneNumber>
+          <XOffset>-105</XOffset>
+          <YOffset>0</YOffset>
+        </ReferenceLane>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>25</LaneNumber>
+        		<Maneuver>2048</Maneuver>
+        		<SignalGroup>4</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="18">
+        <Type>Computed</Type>
+        <Attributes>512</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>14</LaneNumber>
+          <XOffset>-140</XOffset>
+          <YOffset>0</YOffset>
+        </ReferenceLane>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>19</LaneNumber>
+        		<Maneuver>512</Maneuver>
+        		<SignalGroup>4</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="101">
+        <Type>Pedestrian</Type>
+        <Attributes>2048</Attributes>
+        <Width>260</Width>
+        <Nodes>
+          <Node Number="1">
+            <Eastern>-291</Eastern>
+            <Nothern>131</Nothern>
+          </Node>
+          <Node Number="2">
+            <Eastern>-87</Eastern>
+            <Nothern>-237</Nothern>
+          </Node>
+        </Nodes>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>102</LaneNumber>
+        		<SignalGroup>7</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="102">
+        <Type>Pedestrian</Type>
+        <Attributes>2048</Attributes>
+        <Width>260</Width>
+        <Nodes>
+          <Node Number="1">
+            <Eastern>-237</Eastern>
+            <Nothern>-245</Nothern>
+          </Node>
+          <Node Number="2">
+            <Eastern>195</Eastern>
+            <Nothern>25</Nothern>
+          </Node>
+        </Nodes>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>103</LaneNumber>
+        		<SignalGroup>5</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="103">
+        <Type>Pedestrian</Type>
+        <Attributes>2048</Attributes>
+        <Width>260</Width>
+        <Nodes>
+          <Node Number="1">
+            <Eastern>63</Eastern>
+            <Nothern>-219</Nothern>
+          </Node>
+          <Node Number="2">
+            <Eastern>225</Eastern>
+            <Nothern>10</Nothern>
+          </Node>
+        </Nodes>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>104</LaneNumber>
+        		<SignalGroup>5</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>      
+      <Lane Number="104">
+        <Type>Pedestrian</Type>
+        <Attributes>2048</Attributes>
+        <Width>260</Width>
+        <Nodes>
+          <Node Number="1">
+            <Eastern>319</Eastern>
+            <Nothern>-140</Nothern>
+          </Node>
+          <Node Number="2">
+            <Eastern>-23</Eastern>
+            <Nothern>263</Nothern>
+          </Node>
+        </Nodes>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>105</LaneNumber>
+        		<SignalGroup>8</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>      
+      <Lane Number="105">
+        <Type>Pedestrian</Type>
+        <Attributes>2048</Attributes>
+        <Width>260</Width>
+        <Nodes>
+          <Node Number="1">
+            <Eastern>273</Eastern>
+            <Nothern>136</Nothern>
+          </Node>
+          <Node Number="2">
+            <Eastern>-223</Eastern>
+            <Nothern>0</Nothern>
+          </Node>
+        </Nodes>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>106</LaneNumber>
+        		<SignalGroup>6</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>
+      <Lane Number="106">
+        <Type>Pedestrian</Type>
+        <Attributes>2048</Attributes>
+        <Width>260</Width>
+        <Nodes>
+          <Node Number="1">
+            <Eastern>-53</Eastern>
+            <Nothern>136</Nothern>
+          </Node>
+          <Node Number="2">
+            <Eastern>-225</Eastern>
+            <Nothern>0</Nothern>
+          </Node>
+        </Nodes>
+        <Connections>
+        	<Connection>
+        		<LaneNumber>101</LaneNumber>
+        		<SignalGroup>6</SignalGroup>
+        	</Connection>
+        </Connections>
+      </Lane>            
+    </Approach>
+    <Egress>
+      <Lane Number="19">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>        
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>1</LaneNumber>
+          <YOffset>94</YOffset>
+          <XOffset>0</XOffset>
+        </ReferenceLane>
+      </Lane>
+      <Lane Number="20">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>1</LaneNumber>
+          <YOffset>59</YOffset>
+          <XOffset>0</XOffset>
+        </ReferenceLane>
+      </Lane>
+      <Lane Number="21">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>4</LaneNumber>
+          <XOffset>-145</XOffset>
+          <YOffset>0</YOffset>
+        </ReferenceLane>
+      </Lane>
+      <Lane Number="22">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>4</LaneNumber>
+          <XOffset>-181</XOffset>
+          <YOffset>0</YOffset>
+        </ReferenceLane>
+      </Lane>
+      <Lane Number="23">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>4</LaneNumber>
+          <XOffset>-217</XOffset>
+          <YOffset>0</YOffset>
+        </ReferenceLane>
+      </Lane>
+      <Lane Number="24">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>4</LaneNumber>
+          <XOffset>-253</XOffset>
+          <YOffset>0</YOffset>
+        </ReferenceLane>
+      </Lane>
+      <Lane Number="25">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>4</LaneNumber>
+          <XOffset>-289</XOffset>
+          <YOffset>0</YOffset>
+        </ReferenceLane>
+      </Lane>
+      <Lane Number="26">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>10</LaneNumber>
+          <YOffset>-59</YOffset>
+          <XOffset>0</XOffset>
+        </ReferenceLane>
+      </Lane>
+      <Lane Number="27">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>10</LaneNumber>
+          <YOffset>-94</YOffset>
+          <XOffset>0</XOffset>
+        </ReferenceLane>
+      </Lane>
+      <Lane Number="28">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>13</LaneNumber>
+          <XOffset>145</XOffset>
+          <YOffset>0</YOffset>
+        </ReferenceLane>
+      </Lane>
+      <Lane Number="29">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>13</LaneNumber>
+          <XOffset>181</XOffset>
+          <YOffset>0</YOffset>
+        </ReferenceLane>
+      </Lane>
+      <Lane Number="30">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>13</LaneNumber>
+          <XOffset>217</XOffset>
+          <YOffset>0</YOffset>
+        </ReferenceLane>
+      </Lane>
+      <Lane Number="31">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>13</LaneNumber>
+          <XOffset>253</XOffset>
+          <YOffset>0</YOffset>
+        </ReferenceLane>
+      </Lane>      
+      <Lane Number="32">
+        <Type>Computed</Type>
+        <Attributes>2048</Attributes>
+        <Width>350</Width>
+        <ReferenceLane>
+          <LaneNumber>13</LaneNumber>
+          <XOffset>289</XOffset>
+          <YOffset>0</YOffset>
+        </ReferenceLane>
+      </Lane>
+    </Egress>
+  </Geometry>
+</J2735.GID.blob>
