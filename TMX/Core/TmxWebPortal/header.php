@@ -2,8 +2,8 @@
 <?
 session_start();
 $c_PathPrefix = '/tmx';
-$c_BattelleUser = "_battelle";
-$c_BattellePass = "b9a33441149b5bf052efc0b9673f643e"; //B@ttelle
+$c_BattelleUser = "ivpadmin";
+$c_BattellePass = "bcfc7791fbdf1acc8348e5edae9217a6";
 
 require('classes/LoginFormKey.class.php');
 require('dbconnection.php');
