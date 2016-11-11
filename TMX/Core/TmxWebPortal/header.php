@@ -2,8 +2,6 @@
 <?
 session_start();
 $c_PathPrefix = '/tmx';
-$c_BattelleUser = "ivpadmin";
-$c_BattellePass = "bcfc7791fbdf1acc8348e5edae9217a6";
 
 require('classes/LoginFormKey.class.php');
 require('dbconnection.php');
@@ -47,20 +45,7 @@ if (!isset($_SESSION['accessLevel'])) { $_SESSION['accessLevel'] = 0; }
 //Validate the form key and check login
 if(isset($_POST['_login_formKey']) && $loginFormKey->validate())
 {
-	if ($_POST['_login_username'] == $c_BattelleUser)
-	{
-		if($_POST['_login_password'] == md5($_POST['_login_formKey'] . $c_BattellePass))
-		{
-			$_SESSION['username'] = $_POST['_login_username'];
-			$_SESSION['accessLevel'] = 3;
-		}
-		else
-		{
-			$loginError = "Incorrect Login";
-		}
-	}
-	else
-	{
+
 		$query = "SELECT * FROM `user`";
 		$result = mysqli_query($con, $query);
 		if (mysqli_errno($con) != '')
@@ -87,7 +72,7 @@ if(isset($_POST['_login_formKey']) && $loginFormKey->validate())
 				}
 			}
 		}
-	}
+	
 }
 
 ?>

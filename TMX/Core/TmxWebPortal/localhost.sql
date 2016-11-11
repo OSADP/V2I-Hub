@@ -187,6 +187,8 @@ CREATE TABLE IF NOT EXISTS `user` (
   UNIQUE KEY `UQ_user_username` (`username`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='The list of accounts that can access the IVP platform via the administrative portal is held in the users table.' AUTO_INCREMENT=2 ;
 
+INSERT INTO `IVP`.`user` (`id`, `username`, `password`, `accessLevel`) VALUES (NULL, 'ivpadmin', 'bcfc7791fbdf1acc8348e5edae9217a6', '3');
+
 --
 -- Constraints for dumped tables
 --
