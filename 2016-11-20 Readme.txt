@@ -8,8 +8,6 @@ V2I Hub is a software platform that utilizes plugins to translate messages betwe
 and run transportation management and connected vehicle applications on roadside equipment.
 
 
-Please see the V2I Hub Application Description.docx for more information.
-
 Security and Passwords
 ----------------------
 V2I Hub is middleware that runs on Linux Ubuntu 14.04 LTS. It is recommended that appropriate
@@ -39,7 +37,7 @@ permissions and limitations under the License.
 
 
 System Requirements
--------------------------
+-------------------
 The V2I Hub software can run on most Linux based computers with 
 Pentium core processers, with at least two gigabits of RAM and at least 64GB of drive space.
 Performance of the software will be based on the computing power and available RAM in 
@@ -93,7 +91,20 @@ J2735r41 (2015)
 	./setupAsnJ2735_r41.sh
 
 
-Documentation
--------------
-Please refer to the V2I Hub Application Description.docx document for information on compiling and depolying IVP.
+Compilation Instructions
+------------------------
+Each project contains its own cmake file.  Downloaders  will need to compile the projects in TMX/Core first. 
+Start with the TmxUtils project, then the TmxApi, followed by the TmxCore.  After those are built, you can 
+compile any of the projects from the Plugins directory.
 
+To compile a project:
+	• Change directory to the Debug or Release subfolder for the project (cd Debug)
+	• Run cmake (cmake ..)
+	• Run make (make)
+		o This will compile the project
+	• To create a deployment package type make package
+
+
+Set Up and Configuration Instructions
+-------------------------------------
+Instructions can be found in the V2I Hub Sample Set-up Guide.
