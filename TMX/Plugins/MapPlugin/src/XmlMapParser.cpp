@@ -174,7 +174,28 @@ void XmlMapParser::ReadRoot(DOMElement* root, map* message)
 		if (MatchTagName(currentElement, "IntersectionID"))
 		{
 			message->intersectionid = atoi(XMLString::transcode(currentElement->getTextContent()));
-			//cout << "IntersectionID: " << message->intersectionid << endl;
+		}
+		else if (MatchTagName(currentElement, "MapId"))
+		{
+			message->mapid = atoi(XMLString::transcode(currentElement->getTextContent()));
+		}
+		else if (MatchTagName(currentElement, "MapType"))
+		{
+			if (MatchTextContent(currentElement, "Roadway"))
+				message->mapType = roadway;
+			else if (MatchTextContent(currentElement, "Intersection"))
+				message->mapType = intersection;
+			else
+				message->mapType = intersection;
+		}
+		else if (MatchTagName(currentElement, "MapName"))
+		{
+			char* xmlName = XMLString::transcode(currentElement->getTextContent());
+			strncpy ( (char*)message->mapName, (char*)xmlName, sizeof(message->mapName) );
+			//XMLString::copyString((char*)message->mapName, (char*)xmlName);
+			XMLString::release(&xmlName);
+
+			printf("Map Name = %s\n", message->mapName);
 		}
 		else if (MatchTagName(currentElement, "Elevation"))
 		{
@@ -334,6 +355,15 @@ void XmlMapParser::ReadLane(DOMElement* laneElement, map_lane* lane)
 				lane->type = trackedVehicle;
 			else if (MatchTextContent(currentElement, "parking"))
 				lane->type = parking;
+		}
+		else if (MatchTagName(currentElement, "LaneName"))
+		{
+			char* xmlName = XMLString::transcode(currentElement->getTextContent());
+			strncpy ( (char*)lane->laneName, (char*)xmlName, sizeof(lane->laneName) );
+			//XMLString::copyString((char*)lane->laneName, (char*)xmlName);
+			XMLString::release(&xmlName);
+
+			printf("Lane Name = %s\n", lane->laneName);
 		}
 		else if (MatchTagName(currentElement, "Attributes"))
 		{

@@ -12,6 +12,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <time.h>
+#include <atomic>
 #include <map>
 #include <tmx/tmx.h>
 #include <tmx/IvpPlugin.h>
@@ -36,7 +37,7 @@ uint64_t _vehicleTimeout = 1000;
 
 TravelerInformation _tim;
 std::string _mapFile;
-bool _isMapFileNew = false;
+atomic<bool> _isMapFileNew{false};
 bool _isTimLoaded = false;
 unsigned int _speedLimit = 0;
 int _lastMsgIdSent = -1;

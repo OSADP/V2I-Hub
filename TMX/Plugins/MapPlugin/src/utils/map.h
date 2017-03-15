@@ -8,6 +8,7 @@
 #define MAP_H_
 
 /* Constants */
+#define map_maxstringlen 63
 #define map_maxgeometries 10
 #define map_maxbarriers 20
 #define map_maxnodes 20
@@ -32,6 +33,7 @@
 namespace MapPlugin {
 
 /* MAP Enumerations */
+enum map_type {intersection=1, roadway=2};
 enum map_message_attributes {elevation=1, decimeter=2, geometric=4, navigational=8};
 enum map_node_attributes {width=1, packed=2};
 enum map_group_direction {approach=1, egress=2};
@@ -66,6 +68,7 @@ struct map_node
 struct map_lane
     {
     unsigned char number;
+    unsigned char laneName[map_maxstringlen];
     unsigned char type;
     unsigned short attributes;
     unsigned short width;
@@ -93,7 +96,7 @@ struct map_referencepoint
 struct map_geometry
     {
     map_referencepoint refpoint;
-    map_group approach;
+    map_group approach;//ingress
     map_group egress;
     map_barrier barrier[map_maxbarriers];
     };
@@ -105,7 +108,11 @@ struct map_geometry
 
 struct map
     {
+	map_type mapType;
+	unsigned char mapName[map_maxstringlen];
+	//Deprecated.  Use MapType and MapId instead.
     unsigned long intersectionid;
+    unsigned long mapid;
     unsigned char attributes;
     map_geometry geometry[map_maxgeometries];
     bblob payload;

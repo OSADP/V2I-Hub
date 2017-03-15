@@ -2,7 +2,7 @@
 	"name":"CSW",
 	"description":"Provides Curve Speed Warning (CSW).",
 	"version":"1.0.1",
-	"exeLocation":"/Debug/CswPlugin",
+	"exeLocation":"/bin/CswPlugin",
 	"coreIpAddr":"127.0.0.1",
 	"corePort":24601,
 	"messageTypes":[

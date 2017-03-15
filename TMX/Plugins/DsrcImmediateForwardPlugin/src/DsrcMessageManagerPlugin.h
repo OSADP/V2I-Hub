@@ -16,6 +16,9 @@
 #include "PluginClient.h"
 #include "UdpClient.h"
 
+#include <boost/chrono.hpp>
+#include <FrequencyThrottle.h>
+
 namespace DsrcMessageManager
 {
 
@@ -48,6 +51,7 @@ private:
 	std::mutex _mutexUdpClient;
 	std::array<tmx::utils::UdpClient*, 4> _udpClientList;
 	std::map<std::string, MessageConfig> _messageConfigMap;
+	std::map<std::string, int> _messageCountMap;
 	std::string _signature;
 
 	// Thread safe bool set to true the first time the configuration has been read.

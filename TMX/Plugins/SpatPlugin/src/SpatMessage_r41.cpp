@@ -73,10 +73,32 @@ int SpatMessage_r41::createSpat()
 		}
 		else
 		{
-			if (spatData->PTLMTable[m].state & DarkBall)		{ stateTimeSpeed->eventState = MovementPhaseState_dark; }
-			else if (spatData->PTLMTable[m].state & GreenBall)		{ stateTimeSpeed->eventState = MovementPhaseState_permissive_Movement_Allowed; }
-			else if (spatData->PTLMTable[m].state & YellowBall)		{ stateTimeSpeed->eventState = MovementPhaseState_permissive_clearance; }
-			else if (spatData->PTLMTable[m].state & RedBall)		{ stateTimeSpeed->eventState = MovementPhaseState_stop_And_Remain; }
+			if (spatData->PTLMTable[m].state == DarkBall)
+			{
+				stateTimeSpeed->eventState = MovementPhaseState_dark;
+			}
+			else if ((spatData->PTLMTable[m].state & GreenBall) ||
+					(spatData->PTLMTable[m].state & GreenLeftArrow) ||
+					(spatData->PTLMTable[m].state & GreenRightArrow)){
+				if(spatData->PTLMTable[m].PhaseType == protectedPhase)
+					stateTimeSpeed->eventState = MovementPhaseState_protected_Movement_Allowed;
+				else
+					stateTimeSpeed->eventState = MovementPhaseState_permissive_Movement_Allowed;
+			}
+			else if ((spatData->PTLMTable[m].state & YellowBall) ||
+					(spatData->PTLMTable[m].state & YellowLeftArrow) ||
+					(spatData->PTLMTable[m].state & YellowRightArrow)){
+				if(spatData->PTLMTable[m].PhaseType == protectedPhase)
+					stateTimeSpeed->eventState = MovementPhaseState_protected_clearance;
+				else
+					stateTimeSpeed->eventState = MovementPhaseState_permissive_clearance;
+			}
+			else if ((spatData->PTLMTable[m].state & RedBall) ||
+					(spatData->PTLMTable[m].state & RedLeftArrow) ||
+					(spatData->PTLMTable[m].state & RedRightArrow))
+			{
+				stateTimeSpeed->eventState = MovementPhaseState_stop_And_Remain;
+			}
 		}
 
 		if (iterations == 20)

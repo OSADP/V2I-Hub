@@ -20,6 +20,7 @@
 
 using namespace boost::property_tree;
 using namespace std;
+using namespace tmx;
 using namespace tmx::utils;
 
 namespace DsrcMessageManager
@@ -230,9 +231,28 @@ bool DsrcMessageManagerPlugin::ParseJsonMessageConfig(const std::string& json, u
 
 void DsrcMessageManagerPlugin::SendMessageToRadio(IvpMessage *msg)
 {
+	static FrequencyThrottle<std::string> _statusThrottle(chrono::milliseconds(2000));
+
 	lock_guard<mutex> lock(_mutexUdpClient);
 
 	std::map<std::string, MessageConfig>::iterator it = _messageConfigMap.find(msg->subtype);
+
+	int msgCount = 0;
+
+	std::map<std::string, int>::iterator itMsgCount = _messageCountMap.find(msg->subtype);
+
+	if(itMsgCount != _messageCountMap.end())
+	{
+		msgCount = (int)itMsgCount->second;
+		msgCount ++;
+	}
+
+	_messageCountMap[msg->subtype] = msgCount;
+
+
+	if (_statusThrottle.Monitor(msg->subtype)) {
+		SetStatus<int>(msg->subtype, msgCount);
+	}
 
 	if (it == _messageConfigMap.end())
 	{
@@ -262,9 +282,10 @@ void DsrcMessageManagerPlugin::SendMessageToRadio(IvpMessage *msg)
 
 	// Send the message using the configured UDP client.
 
-	//cout << _logPrefix << "Sending - TmxType: " << it->second.TmxType << ", SendType: " << it->second.SendType;
-	//cout << ", PSID: " << it->second.Psid << ", Client: " << it->second.ClientIndex;
-	//cout << ", Port: " << _udpClientList[it->second.ClientIndex]->GetPort() << endl;
+	cout << _logPrefix << "Sending - TmxType: " << it->second.TmxType << ", SendType: " << it->second.SendType;
+	cout << ", PSID: " << it->second.Psid << ", Client: " << it->second.ClientIndex;
+	cout << ", Port: " << _udpClientList[it->second.ClientIndex]->GetPort() << endl;
+	//cout << message << endl;
 
 	if (_udpClientList[it->second.ClientIndex] != NULL)
 	{

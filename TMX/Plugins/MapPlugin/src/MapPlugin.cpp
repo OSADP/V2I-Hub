@@ -337,9 +337,6 @@ bool MapPlugin::LoadMapFile(map *mapMessage, ConvertToJ2735r41 *mapConverter) {
 
 			if (mapConverter->createUPERframe_DERencoded_msg())
 			{
-				//test play kg. delete
-				//Decode((char *) mapConverter->encoded,	mapConverter->encodedBytes);
-				//end test play + above function
 				return true;
 			}
 		}

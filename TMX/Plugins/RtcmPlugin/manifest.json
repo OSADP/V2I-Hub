@@ -2,7 +2,7 @@
 	"name":"RTCM",
 	"description":"",
 	"version":"1.0.1",
-	"exeLocation":"/Debug/NtripPlugin",
+	"exeLocation":"/bin/RtcmPlugin",
 	"coreIpAddr":"192.168.25.20",
 	"corePort":24601,
 	"messageTypes":[

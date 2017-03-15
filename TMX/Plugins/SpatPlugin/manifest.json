@@ -1,8 +1,8 @@
 {
 	"name":"SPAT r41",
 	"description":"Plugin that reads PTLM data from a configuration file, receives live data from the signal controller, and publishes a J2735 r41 SPAT message.",
-	"version":"1.0.0",
-	"exeLocation":"/Debug/SpatGeneratorPluginR41",
+	"version":"1.0.2",
+	"exeLocation":"/bin/SpatPlugin",
 	"coreIpAddr":"127.0.0.1",
 	"corePort":24601,
 	"messageTypes":[

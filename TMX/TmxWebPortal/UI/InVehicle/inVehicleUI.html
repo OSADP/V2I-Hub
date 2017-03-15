@@ -1,0 +1,50 @@
+﻿<!DOCTYPE html> 
+<html>
+<head>
+	<title>In-Vehicle Display</title>
+    <script src="../js/loadtime.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" href="../css/jquery.mobile-1.4.5.min.css" />
+	<link rel="stylesheet" href="../css/style.css" />
+	<link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="../css/tmx.components.css" />
+	<link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+    
+    <script type="text/javascript" src="../js/MessageTypes.js"></script>
+    <script type="text/javascript" src="../js/jquery-1.11.2.min.js"></script>
+    <script type="text/javascript" src="../js/init-script.js"></script>
+    <script type="text/javascript" src="../js/jquery.mobile-1.4.5.min.js"></script>
+
+    <script type="text/javascript" src="js/tmx.initialization.js"></script>
+    <script type="text/javascript" src="../js/tmx.common.library.js" defer></script>
+    <script type="text/javascript" src="../js/tmx.vehicle.display.library.js" defer></script>
+    <script type="text/javascript" src="../js/tmx.components.library.js" defer></script>
+</head>
+<audio id="player"></audio>
+
+<body oncontextmenu="return false;">
+    <div id="pageContainer">
+    <div data-role="header" data-position="fixed" class="headercontainer hidden" data-tap-toggle="false" data-theme="a" data-fullscreen="true">
+        <div class="buttoncontainer" data-position="fixed">
+            <div class="logoContainer">
+                <img id="Logo" class="logoImage " src="../images/Battelle/BattelleLogoBlack.png" />
+            </div>
+        </div>
+        <!--div id="identifier_label" class="identifierlabel">Vehicle Display Type:Bus ID:1002 Mode:Operational</div-->
+    </div>
+    <div id="popup"></div>
+    <div data-role="page" class="ui-page-theme-a" id="Main" data-title="TMX">
+        <div id="middleDiv" class="ImageDiv">
+            <img id="ActiveImage" src="../images/Common/Splash_Screen.png" />
+            <img id="NearDirectionImage" src="" class="hidden" />
+            <img id="RightDirectionImage" src="" class="hidden" />
+            <img id="FarDirectionImage" src="" class="hidden" />
+            <img id="LeftDirectionImage" src="" class="hidden" />
+            <img id="CloakImage" src="../images/cloakmode.png" class="hidden" />
+            <div id="bottomDiv"></div>
+        </div>
+    </div>
+    </div>
+</body>
+</html>

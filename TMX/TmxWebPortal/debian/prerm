@@ -1,0 +1,15 @@
+#!/bin/sh -e
+
+set +e
+service websockify stop
+sleep 1
+
+# Clean up only for a real remove
+if [ "$1" != "remove" -a "$1" != "purge" ]; then
+  exit 0
+fi
+set -e
+
+set +e
+rm -f /var/www/index.php 2>/dev/null
+set -e

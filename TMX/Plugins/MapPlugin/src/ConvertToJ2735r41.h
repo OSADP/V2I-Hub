@@ -35,6 +35,10 @@ private:
 	uint16_t	createTrackedVehicleAttributes(unsigned short xmlAttributes);
 
 	void		printUINT16(uint16_t num);
+	void convertIntersectionMap(MapData* MapJ2735, map* mapMessage);
+	void convertRoadwayMap(MapData* MapJ2735, map* mapMessage);
+	void LoadGenericLaneData(int laneIter, int isEgress, GenericLane* lane,
+			map_group* geomMapGroup);
 };
 
 } /* End namespace MapPlugin */

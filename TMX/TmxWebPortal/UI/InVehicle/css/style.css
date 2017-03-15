@@ -1,0 +1,272 @@
+/* ======================== BODY ======================== */
+body{
+    font-size: 1.6vw !important;
+}
+/* ====================================================== */
+/* ======================= HEIGHT ======================= */
+.height-3em 
+{
+    height: 3em !important;
+}
+/* ====================================================== */
+/* ===================== MARGINS ======================== */
+.margin-left-2_5em 
+{
+    margin-left: 2.5em !important;
+}
+
+.margin-left-3_65em 
+{
+    margin-left: 3.65em !important;
+}
+
+.margin-left-8em
+{
+    margin-left:8em !important;
+}
+
+.margin-left-9em 
+{
+    margin-left: 9em !important;
+}
+/* ====================================================== */
+
+.divMainTelem 
+{
+    margin: 1.5em 0em 1.5em 0em;
+    position: relative;
+    left: -2.75em !important;
+}
+
+.telemgroup{
+    margin: 1.5em 0em 1.5em 0em;
+}
+
+#popupMenu 
+{
+    position: relative;
+    top: 3.5em !important;
+}
+
+#admin_mode_btn {
+    width: 95% !important;
+    margin-left: 2.5%;
+}
+/* ====================================================== */
+/* ==================== COMPONENTS ====================== */
+.telemDisplay
+{
+    font-size: 0.74em !important;
+    margin: 0.75em 0em 0.75em 0em;
+}
+
+.telemDisplay[data-nopopup="false"] > .templateValue
+{
+    border-color: #0099FF;
+    border-radius: 10px;
+}
+
+.powerButton > div > div > button
+{
+    width: 10em !important;
+    height: 3.5em !important;
+}
+
+.templateinfo03 {
+    display: table;
+    font-family: Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    width: 100%;
+    table-layout: fixed;
+    overflow: hidden;
+}
+
+.templateinfo03 > .templateLabel {
+    width: 30%;
+}
+
+.templateinfo03 > .templateUnits {
+    width: 20%;
+}
+
+/* ====================================================== */
+/* ===================== KEYBOARD ======================= */
+.ui-keyboard
+{
+    text-align: center;
+    width: 20em;
+    height: 20em;
+    top: 7.5em !important;
+}
+
+.ui-keyboard-button
+{
+    width: 3.5em;
+    height: 3em;
+}
+
+/* ====================================================== */
+
+
+/* ------------------ */
+/* --- TC Styling -----*/
+.vehicleImage
+{
+    height:3em !important; 
+    display: block;
+    margin: 0 auto !important;
+
+}
+.table_half_width
+{
+   width: 50% !important; 
+}
+.tczone
+{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 100% !important;
+    height: 3em !important; 
+    text-align: center;
+    vertical-align: middle !important;
+    padding: 0 !important;
+
+    border: 1px solid #32AFFF;
+    border-spacing: 0;
+    border-collapse:collapse;
+
+    margin: 0 auto !important;
+}
+
+.tcHeader
+{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    text-align: center;
+    font-size: 1.5em !important;
+
+}
+.tcData
+{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    width: 100% !important;
+    height: 2em !important; 
+    text-align: center;
+    vertical-align: middle !important;
+    padding: 0 !important;
+
+    border: 1px solid #32AFFF;
+    border-spacing: 0;
+    border-collapse:collapse;
+    font-size: 1.1em !important;
+
+    margin: 0 auto !important;
+}
+
+.tcledcontainer{
+    display: block;
+
+
+    height: 2em !important; 
+    width: 2em !important; 
+    text-align: center !important;
+    vertical-align: middle !important;
+    padding: 0 !important;
+    margin-left: 1.2em;
+
+
+}
+
+.tc-table
+{
+}
+
+.tc-data-table
+{
+    text-align: center !important;
+    font-size: 0.5em !important;
+}
+
+.bsmmap
+{
+    width: 100%;
+    height: 23em;
+}
+
+#tctable
+{
+     font-size: 0.74em !important;
+}
+
+.swd > .templateValue {
+    width: 10em !important}
+/* ------------------ */
+#topDiv{
+    height:10% !important;
+    text-align:center;
+    font-size: 2em !important;
+}
+
+#middleDiv{
+    height:100% !important; 
+    /*margin-top: -1.3em;*/
+    background: #000; 
+/*    background: #212121; */
+}
+
+#UIPage
+{
+    background: #212121;
+}
+
+#bottomDiv{
+    height:10% !important;
+    min-height: 5.5em;
+    text-align:center;
+    font-size: 2em !important;
+    color: #FFF;
+}
+
+#imageLayout{
+    margin:auto;
+}
+
+#ActiveImage{
+    z-index:0;
+}
+
+#NearDirectionImage{
+    z-index: 3;
+}
+
+#RightDirectionImage{
+    z-index: 4;
+}
+
+#FarDirectionImage{
+    z-index: 5;
+}
+
+#LeftDirectionImage{
+    z-index: 6;
+}
+
+#NearDirectionImage,
+#RightDirectionImage,
+#FarDirectionImage,
+#LeftDirectionImage {
+    position:absolute;
+    height:28.75em;
+    top: 1.25em;
+    left: 12em;
+}
+
+
+/* ====================================================== */

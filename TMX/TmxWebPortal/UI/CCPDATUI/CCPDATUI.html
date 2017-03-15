@@ -1,0 +1,216 @@
+﻿<!DOCTYPE html> 
+<html>
+<head>
+	<title>CCP Debug/Acceptance Test (DAT)</title>
+    <script src="../js/loadtime.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" href="../css/style.css" />
+	<link rel="stylesheet" href="css/style.css" />
+	<link rel="stylesheet" href="css/customStyle.css" />
+	<link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="stylesheet" href="css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/bootstrap-select.min.css" />
+    
+    <script type="text/javascript" src="../js/MessageTypes.js"></script>
+    <script type="text/javascript" src="js/jquery-3.1.1.js"></script>
+    <script type="text/javascript" src="../js/init-script.js"></script>
+    <script type="text/javascript" src="js/tether.min.js"></script>
+    <script type="text/javascript" src="js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="js/bootstrap-select.min.js"></script>
+	<script type="text/javascript" src="js/jquery.scrollbox.min.js"></script>
+    <script type="text/javascript" src="js/tmx.initialization.js"></script>
+    <script type="text/javascript" src="../js/tmx.common.library.js" defer></script>
+    <!--
+	<script type="text/javascript" src="../generated-code/js/tmx.messages.LocationMessageEnumTypes.js"></script>
+	-->    
+    <script type="text/javascript" src="../generated-code/js/tmx.messages.VehicleParameterEnumTypes.js"></script>
+    <script type="text/javascript" src="../generated-code/js/tmx.messages.ApplicationMessageEnumTypes.js"></script>
+    <script type="text/javascript" src="js/tmx.custom.library.js" defer></script>
+    <script type="text/javascript" src="js/moment.js" defer></script>
+	<style>
+
+	</style>
+</head>
+<audio id="player"></audio>
+
+<body oncontextmenu="return false;">
+    <div id="pageContainer">
+	    <div data-role="header" data-position="fixed" class="headercontainer hidden" data-tap-toggle="false" data-theme="a" data-fullscreen="true">
+	        <div class="buttoncontainer" data-position="fixed">
+	            <div class="logoContainer">
+	                <img id="Logo" class="logoImage " src="../images/Battelle/BattelleLogoBlack.png" />
+	            </div>
+	        </div>
+	        <!--div id="identifier_label" class="identifierlabel">Vehicle Display Type:Bus ID:1002 Mode:Operational</div-->
+	    </div>
+		<div data-role="page" class="ui-page-theme-a" id="Main" data-title="TMX">
+			<div class="container-fluid">
+			    <div class="row-fluid">
+			    	<div class="col-lg-12 center">
+			    		<h2>CCP Debug/Acceptance Test (DAT)</h2> 
+					</div>
+			    </div>			
+			  	<div class="row">
+				  	<div class="col-lg-4">
+						<div class="panel panel-info">
+						  <div class="panel-heading">
+						    <h3 class="panel-title">CAN</h3>
+						  </div>
+						  <div class="panel-body">
+							 <form>
+							 <div class="col-lg-6">
+							  <div class="form-group">
+							    <h4>Brake Status:</h4>
+							    <div class="form-control" id="vehicle_brakeapplied"></div>
+							  </div>						  
+							  <div class="form-group">
+							    <h4>Gear Position:</h4>
+							    <div class="form-control" id="vehicle_gearposition"></div>
+							  </div>
+							  <div class="form-group">
+							    <h4>Speed (MPH):</h4>
+							    <div class="form-control" id="vehicle_speedmph"></div>
+							  </div>								 
+							 </div>
+							 <div class="col-lg-6">
+							  <div class="form-group">
+							    <h4>Front Doors Open:</h4>
+							    <div class="form-control" id="vehicle_frontdoorsopen"></div>
+							  </div>						  
+							  <div class="form-group">
+							    <h4>Rear Doors Open:</h4>
+							    <div class="form-control" id="vehicle_reardoorsopen"></div>
+							  </div>
+							  <div class="form-group">
+							    <h4>Turn Signal Position:</h4>
+							    <div class="form-control" id="vehicle_turnsignalposition"></div>
+							  </div>							 
+							 </div>						  
+							</form>								
+						  </div>
+						</div>			  		
+				  	</div>
+				    <div class="col-lg-8">
+						<div class="panel panel-info">
+						  <div class="panel-heading">
+						    <h3 class="panel-title">GPS</h3>
+						  </div>
+						  <div class="panel-body">
+							 <form>
+							  <div class="col-lg-6">
+							  	  <div class="col-lg-6">
+									  <div class="form-group">
+									    <h4>Latitude:</h4>
+									    <div class="form-control" id="location_latitude"></div>
+									  </div>
+									  <div class="form-group">
+									    <h4>Longitude:</h4>
+									    <div class="form-control" id="location_longitude"></div>
+									  </div>
+									  <div class="form-group">
+									    <h4>Speed (MPH):</h4>
+									    <div class="form-control" id="location_speed"></div>
+									  </div>							  	  
+							  	  </div>
+							  	  <div class="col-lg-6">
+  	  								  <div class="form-group">
+									    <h4>Heading:</h4>
+									    <div class="form-control" id="location_heading"></div>
+									  </div>
+									  <div class="form-group">
+									    <h4>Altitude:</h4>
+									    <div class="form-control" id="location_altitude"></div>
+									  </div>
+									  <div class="form-group">
+									    <h4>Fix Quality:</h4>
+									    <div class="form-control" id="location_fixquality"></div>
+									  </div>
+							  	  </div>		
+							  </div>
+							  <div class="col-lg-6">
+							  	<div class="col-lg-6">			
+								  <div class="form-group">
+								    <h4>Horizontal DOP:</h4>
+								    <div class="form-control" id="location_horizontaldop"></div>
+								  </div>							  
+								  <div class="form-group">
+								    <h4>Number Of Satellites:</h4>
+								    <div class="form-control" id="location_numsatellites"></div>
+								  </div>
+								 <div class="form-group">
+								    <h4>Signal Quality:</h4>
+								    <div class="form-control" id="location_signalquality"></div>
+								  </div>				
+							  	</div>
+							  	<div class="col-lg-6">			  
+								  <div class="form-group">
+								    <h4>Time:</h4>
+								    <div class="form-control" id="location_time"></div>
+								  </div>							  	
+							  	</div>						  									  
+							  </div>							  					  
+							</form>						
+						  </div>
+						</div>			  		
+				  	</div>	
+		    	</div>   	
+		    	<hr/>
+			     <div class="row">
+			     <div class="col-lg-4" >
+					<div class="panel panel-info">
+					  <div class="panel-heading">
+					    <h3 class="panel-title">OTVP HIS Strobe and Sounder</h3>
+					  </div>
+					  <div class="panel-body">
+					  	<div class="col-lg-6">
+							  		<button type="button" id="his-strobe-sounder-start" class="btn btn-primary btn-block" aria-label="Left Align">
+							  <span class="glyphicon glyphicon-play"></span> Start
+							</button>
+					  	</div>
+						<div class="col-lg-6">
+							<button type="button" id="his-strobe-sounder-stop" class="btn btn-default btn-block" aria-label="Left Align">
+							  <span class="glyphicon glyphicon-stop"></span> Stop
+							</button>								
+						</div>
+					  </div>
+					</div>							     
+			     </div>	     
+			     <div class="col-lg-8">
+					<div class="panel panel-info">
+					  <div class="panel-heading">
+					    <h3 class="panel-title">DSRC RSSI</h3>
+					  </div>
+					  <div class="panel-body">			     
+		                <form>
+		           		  <div class="form-group">
+					        <h4>Select DSRC Configuration:</h4>
+					        <select id="DSRCState" class="selectpicker">
+					          <option value="-1" selected>Select Configuration...</option>
+							  <option value="1">DSRC 1 Only</option>
+							  <option value="2">DSRC 2 Only</option>
+							  <option value="3">Both DSRC 1 and 2</option>
+							</select>
+						  </div>
+						  <div class="form-group">
+					        <h4>DSRC Output</h4>			
+							<textarea class="form-control" id="dsrc_output" cols="40" rows="5"></textarea>		    
+						  </div>					  
+		                </form>
+	                   </div>
+					</div>		
+			     </div>
+			     </div>		    	
+		    </div>
+		</div>
+	</div>
+	<div id="result"></div>
+    <script type="text/javascript">
+    	$('#DSRCState').selectpicker({
+    	  width: 'auto',
+    	  noneSelectedText: 'Select DSRC Configuration',
+    	  showTick: true
+    	});
+    </script>
+</body>
+</html>

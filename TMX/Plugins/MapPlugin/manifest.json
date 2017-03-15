@@ -1,8 +1,8 @@
 {
 	"name":"MAP r41",
 	"description":"Plugin that reads intersection geometry from a configuration file and publishes a J2735 r41 MAP message.",
-	"version":"1.1.4",
-	"exeLocation":"/Debug/MapPluginR41",
+	"version":"1.1.6",
+	"exeLocation":"/bin/MapPlugin",
 	"coreIpAddr":"127.0.0.1",
 	"corePort":24601,
 	"messageTypes":[

@@ -1,0 +1,451 @@
+﻿<!DOCTYPE html> 
+<html>
+<head>
+	<title>Oberon</title>
+    <script src="../js/loadtime.js"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" href="../css/jquery.mobile-1.4.5.min.css" />
+    <!--link rel="stylesheet" href="../css/theme-classic.css" /-->
+    <link rel="stylesheet" href="../css/keyboard.css" />
+    <link rel="stylesheet" href="../css/jquery.dataTables.css" />
+	<link rel="stylesheet" href="../css/style.css" />
+	<link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="../css/tmx.components.css" />
+	<link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+    
+    <script type="text/javascript" src="../js/MessageTypes.js"></script>
+    <script type="text/javascript" src="../js/jquery-1.11.2.min.js"></script>
+    <script type="text/javascript" src="../js/init-script.js"></script>
+    <script type="text/javascript" src="../js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="../js/jquery.mobile-1.4.5.min.js"></script>
+
+    <script src="../js/Chart.min.js"></script>
+
+    <script type="text/javascript" src="js/tmx.initialization.js"></script>
+    <script type="text/javascript" src="../js/tmx.setuppage.library.js" defer></script>
+    <script type="text/javascript" src="../js/tmx.common.library.js" defer></script>
+    <script type="text/javascript" src="js/tmx.custom.library.js" defer></script>
+    <script type="text/javascript" src="../js/tmx.vehicle.display.library.js" defer></script>
+    <script type="text/javascript" src="../js/tmx.components.library.js" defer></script>
+    <script type="text/javascript" src="../js/jquery.keyboard.js" defer></script>
+    <!--script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAqCPFCmtDoTVv3qBGnM4rquV5Of4yHYYM" async defer></script-->
+    <!--script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAqCPFCmtDoTVv3qBGnM4rquV5Of4yHYYM&callback=initMap"
+    async defer></script>
+    <!--img id="test" src="../images/batmobile.png"/-->
+</head>
+
+<audio id="player"></audio>
+
+<body oncontextmenu="return false;">
+
+    <div data-role="header" data-position="fixed" class="headercontainer" data-tap-toggle="false" data-theme="a" data-fullscreen="true">
+        <div class="buttoncontainer" data-position="fixed">
+            <div class="logoContainer">
+                <img id="Logo" class="logoImage " src="../images/Battelle/BattelleLogoBlack.png" />
+            </div>
+
+            <button id="main_page_btn" class="ui-btn ui-btn-inline headbtn ui-corner-all ui-btn-active ui-state-persist" data-position="fixed" data-transition="none" onmousedown="location.href='#Main'">Display</button>
+            <button id="telem_page_btn" class="ui-btn ui-btn-inline headbtn ui-corner-all" data-position="fixed" data-transition="none" onmousedown="location.href='#Telemetry'">TC</button>
+            <!--button id="setup_page_btn" class="ui-btn ui-btn-inline headbtn ui-corner-all" data-transition="none" onmousedown="location.href='#Setup'">Setup</button-->
+        </div>
+        <div id="identifier_label" class="identifierlabel"></div>
+        <!--div id="mvp_page_label" class="headerlabel">TMX</div-->
+        <div data-demo-html="true">
+            <div data-role="popup" id="popupMenu" data-theme="a">
+                <ul data-role="listview" data-inset="true" class="width-12em" data-theme="a">
+                    <li data-role="divider" id="popupMenuHeader" data-theme="a">Choose an action</li>
+                    <li><a id="popupSetValue" data-rel="back">Set Value</a></li>
+                    <li><a id="popupCancelOption" href="#" data-rel="back">Cancel</a></li>
+                </ul>
+                <div class="hidden"><input id="manual_data_input" type="text" name="fname" value="0" class="center" /></div>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="popup"></div>
+
+    <!-- ============================================================= Main Page =================================================================== -->
+    <div data-role="page" class="ui-page-theme-a" id="Main" data-title="Display">
+        <div id="middleDiv">
+            <img id="ActiveImage" src="../images/battelle.png" />
+            <img id="CloakImage" src="../images/cloakmode.png" class="hidden" />
+            <div id="bottomDiv"></div>
+        </div>
+        <!--table data-role="table" data-mode="reflow" class="ui-responsive table-stroke padding-0em margin-left-0_25em table-fixed margin-right-0_25em">
+            <thead class="hidden"><tr><th colspan="6"></th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><div>SPAT-P Count</div></td>
+                    <td><div id="spat_count"></div></td>
+                    <td><div>Timestamp</div></td>
+                    <td><div id="spat_ts"></div></td>
+                    <td><div>Source</div></td>
+                    <td><div id="spat_source"></div></td>
+                </tr>
+                <tr>
+                    <td colspan="6">
+                        <textarea id="spat_payload" rows="20" cols="6">Payload</textarea>
+                    </td>
+                </tr>
+                <tr>
+                    <td><div>MAP-P Count</div></td>
+                    <td><div id="map_count"></div></td>
+                    <td><div>Timestamp</div></td>
+                    <td><div id="map_ts"></div></td>
+                    <td><div>Source</div></td>
+                    <td><div id="map_source"></div></td>
+                </tr>
+                <tr>
+                    <td colspan="6">
+                        <textarea id="map_payload" rows="20" cols="6">Payload</textarea>
+                    </td>
+                </tr>                
+
+            </tbody>
+        </table-->
+    </div>
+    <!-- =========================================================================================================================================== -->
+    <!-- =========================================================== Telemetry Page ================================================================ -->
+    <div data-role="page" class="ui-page-theme-a" id="Telemetry" data-title="TMX Map">
+        <table data-role="table" data-mode="reflow" class="ui-responsive tc-table table-fixed ">
+            <thead class="hidden"><tr><th colspan="2"></th></tr></thead>
+            <tbody>
+
+                <tr>
+                    <td colspan="26" class="table_half_width">    
+                        <table data-role="table" data-mode="reflow" class="ui-responsive tc-data-table table-fixed ">
+                            <thead class="hidden">
+                                <tr>
+                                    <th colspan="26"></th>
+                                </tr>
+                            </thead>
+
+<!--
+            "VehicleID":"e8417400721a",
+            "LastChanged":"1867987023",
+            "LastReceived":"1867987023",
+            "VectorLatDegrees":"39.9891",
+            "VectorLonDegrees":"-83.0207",
+            "VectorElevation":"23350",
+            "VectorHeading":"0",
+            "VectorCosHeading":"1.0000",
+            "VectorSinHeading":"0.0000",
+            "VectorSpeed":"0.0183",
+            "VectorLatAcceleration":"nan",
+            "VectorLonAcceleration":"-0.0000",
+            "VectorRadius":"nan",
+            "VectorNormalizedMinuteUnit":"60029",
+            "VectorAdvanceOK":"1",
+            "VectorSeparationX10":"442.7757",
+            "VectorSeparationY10":"-2024.9226",
+            "VectorSeparationE10":"70",
+            "VectorSeparationR10":"2072.7666",
+        "VectorSeparationV10":"0.0169",
+        "VectorSeparationA10":"0.0001",
+        "VectorSeparationB10":"30522",
+        "VectorSeparationH10":"0",
+        "VectorSeparationRB10":"30522",
+        "VectorSeparationT10":"0",
+            "LateralSeparation":"nan",
+            "LongitudinalSeparation":"nan",
+            "IsBehind":"1",
+            "IsSameElevation":"1",
+            "IsSimilarDirection":"1"
+
+-->                                                                        
+
+                            <tbody>
+                                <tr>
+                                    <th colspan="2">ID</th>
+                                    <th colspan="2">Seperation (m)</th>
+                                    <th colspan="2">Lateral Seperation (m)</th>
+                                    <th colspan="2">Longitudinal Seperation (m)</th>
+                                    <th colspan="2">RSSI</th>
+                                </tr>                            
+                                <tr>
+                                    <td colspan="2"><div class="tcData" id="tcID"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcSeperation"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcLatSep"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcLongSep"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcRSSI"></div></td>
+                                </tr>      
+                                <tr>
+                                    <th colspan="2">Long Acc</th>
+                                    <th colspan="2">Speed</th>
+                                    <th colspan="2">Latitude</th>
+                                    <th colspan="2">Longitude</th>
+                                    <th colspan="2">Lat Acc</th>
+                                </tr> 
+                                <tr>
+                                    <td colspan="2"><div class="tcData" id="tcLongAcc"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcSpeed"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcLat"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcLong"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcLatAcc"></div></td>
+                                </tr>                                   
+
+
+                                <!--tr>
+                                    <th colspan="2">ID</th>
+                                    <th colspan="2">Lateral Seperation</th>
+                                    <th colspan="2">Longitudinal Seperation</th>
+                                    <th colspan="2">RX Count</th>
+                                    <th colspan="2">SeqNumber</th>
+                                    <th colspan="2">Changed</th>
+                                    <th colspan="2">Received</th>
+                                    <th colspan="2">Expire</th>
+                                </tr>                            
+                                <tr>
+                                    <td colspan="2"><div class="tcData" id="tcID"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcLatSep"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcLongSep"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcRX"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcSeq"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcChanged"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcReceive"></div></td>
+                                    <td colspan="2"><div class="tcData" id="Expire"></div></td>
+                                </tr>        
+                                <tr>
+                                    <th colspan="2">Vec Latitude</th>
+                                    <th colspan="2">Vec Longitude</th>
+                                    <th colspan="2">Elevation</th>
+                                    <th colspan="2">Heading</th>
+                                    <th colspan="2">Cos Heading</th>
+                                    <th colspan="2">Sin Heading</th>
+                                    <th colspan="2">Speed</th>
+                                    <th colspan="2">Advance OK</th>
+                                </tr>                            
+                                <tr>
+                                    <td colspan="2"><div class="tcData" id="tcLat"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcLong"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcElevation"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcHeading"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcCosHeading"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcSinHeading"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcSpeed"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcAdvanceOK"></div></td>
+                                </tr>                                    
+                                <tr>
+                                    <th colspan="2">Lat Acceleration</th>
+                                    <th colspan="2">Long Acceleration</th>
+                                    <th colspan="2">Radius</th>
+                                    <th colspan="2">Normalized Minute Unit</th>
+                                    <th colspan="2">Sep X10</th>
+                                    <th colspan="2">Sep Y10</th>
+                                    <th colspan="2">Sep E10</th>
+                                    <th colspan="2">Sep R10</th>
+                                </tr>                            
+                                <tr>
+                                    <td colspan="2"><div class="tcData" id="tcLatAcc"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcLongAcc"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcRadius"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcNormalizedMinuteUnit"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcX10"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcY10"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcE10"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcR10"></div></td>
+                                </tr>                            
+                                <tr>
+                                    <th colspan="2">Sep V10</th>
+                                    <th colspan="2">Sep A10</th>
+                                    <th colspan="2">Sep B10</th>
+                                    <th colspan="2">Sep H10</th>
+                                    <th colspan="2">Sep RB10</th>
+                                    <th colspan="2">Sep T10</th>
+                                </tr>                            
+                                <tr>
+                                    <td colspan="2"><div class="tcData" id="tcV10"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcA10"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcB10"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcH10"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcRB10"></div></td>
+                                    <td colspan="2"><div class="tcData" id="tcT10"></div></td>
+                                </tr-->                            
+
+                                <tr>
+                                    <th colspan="1">Same Elevation</th>
+                                    <th colspan="1">Different Elevation</th>
+                                    <th colspan="1">Similar Direction</th>
+                                    <th colspan="1">Opposite Direction</th>
+                                    <th colspan="1">Closing</th>
+                                    <th colspan="1">Receding</th>
+                                    <th colspan="1">Ahead</th>
+                                    <th colspan="1">Behind</th>
+                                    <th colspan="1">Same Lane</th>
+                                    <th colspan="1">Near Lane</th>
+                                    <th colspan="1">Far Lane</th>
+                                    <th colspan="1">Left</th>
+                                    <th colspan="1">Right</th>
+                                    <th colspan="1">Xing</th>
+                                    <th colspan="1">Line Circ Xing</th>
+                                    <th colspan="1">Line Line Xing</th>
+                                    <th colspan="1">Circ Circ Xing</th>
+                                </tr>                            
+                                <tr>
+                                    <td colspan="1"><div class="led tcledcontainer" id="sameElev" data-auto="false"></div></td>
+                                    <td colspan="1"><div class="led tcledcontainer" id="diffElev" data-auto="false"></div></td>
+                                    <td colspan="1"><div class="led tcledcontainer" id="simDir" data-auto="false"></div></td>
+                                    <td colspan="1"><div class="led tcledcontainer" id="OppDir" data-auto="false"></div></td>
+                                    <td colspan="1"><div class="led tcledcontainer" id="Closing" data-auto="false"></div></td>
+                                    <td colspan="1"><div class="led tcledcontainer" id="Receding" data-auto="false"></div></td>
+                                    <td colspan="1"><div class="led tcledcontainer" id="Ahead" data-auto="false"></div></td>
+                                    <td colspan="1"><div class="led tcledcontainer" id="Behind" data-auto="false"></div></td>
+                                    <td colspan="1"><div class="led tcledcontainer" id="SameLane" data-auto="false"></div></td>
+                                    <td colspan="1"><div class="led tcledcontainer" id="NearLane" data-auto="false"></div></td>
+                                    <td colspan="1"><div class="led tcledcontainer" id="FarLane" data-auto="false"></div></td>
+                                    <td colspan="1"><div class="led tcledcontainer" id="Left" data-auto="false"></div></td>
+                                    <td colspan="1"><div class="led tcledcontainer" id="Right" data-auto="false"></div></td>
+                                    <td colspan="1"><div class="led tcledcontainer" id="Xing" data-auto="false"></div></td>
+                                    <td colspan="1"><div class="led tcledcontainer" id="LCXing" data-auto="false"></div></td>
+                                    <td colspan="1"><div class="led tcledcontainer" id="LLXing" data-auto="false"></div></td>
+                                    <td colspan="1"><div class="led tcledcontainer" id="CCXing" data-auto="false"></div></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="26" class="table_half_width">    
+                        <table data-role="table" data-mode="reflow" class="ui-responsive tc-table table-fixed ">
+                            <thead class="hidden"><tr><th colspan="5"></th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <td><div class="tczone" id="FFL">Far Front Left</div></td>
+                                    <td><div class="tczone" id="FL">Front Left</div></td>
+                                    <td><div class="tczone" id="F">Front</div></td>
+                                    <td><div class="tczone" id="FR">Front Right</div></td>
+                                    <td><div class="tczone" id="FFR">Far Front Right</div></td>
+                                </tr>
+                                <tr>
+                                    <td><div class="tczone" id="SFL">Far Left</div></td>
+                                    <td colspan="1"><div class="tczone" id="SL">Left</div></td>
+                                    <td><img class="vehicleImage" id="myVech" src="../images/batmobile.png" alt=""></td>
+                                    <td><div class="tczone" id="SR">Right</div></td>
+                                    <td><div class="tczone" id="SFR">Far Right</div></td>
+                                </tr>
+                                <tr>
+                                    <td><div class="tczone" id="BFL">Behind Far Left</div></td>
+                                    <td><div class="tczone" id="BL">Behind Left</div></td>
+                                    <td><div class="tczone" id="B">Behind</div></td>
+                                    <td><div class="tczone" id="BR">Behind Right</div></td>
+                                    <td><div class="tczone" id="BFR">Behing Far Right</div></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>                
+                <tr>
+                </tr>                
+            </tbody>
+        </table>                    
+    </div>
+    <!-- =========================================================================================================================================== -->
+    <!-- ============================================================= Page 3 Page =================================================================== -->
+    <!--div data-role="page" class="ui-page-theme-a" id="Page3" data-title="MVP">
+    </div-->
+    <!-- =========================================================================================================================================== -->
+    <!-- ========================= Setup PAGE ======================================================================================================== -->
+    <!--div data-role="page" class="ui-page-theme-a" id="Setup" data-title="Setup">
+
+        <table data-role="table" data-mode="reflow" class="ui-responsive tc-table table-fixed ">
+            <thead class="hidden"><tr><th colspan="2"></th></tr></thead>
+            <tbody>
+                <tr>
+                    <td colspan="26" class="table_half_width">    
+                        <table data-role="table" data-mode="reflow" class="ui-responsive tc-table table-fixed ">
+                            <thead class="hidden"><tr><th colspan="5"></th></tr></thead>
+                            <tbody>
+                                <tr>
+                                    <div id="map" class="bsmmap"></div>      
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="26" class="table_half_width">    
+                        <table data-role="table" data-mode="reflow" class="ui-responsive tc-data-table table-fixed ">
+                            <thead class="hidden">
+                                <tr>
+                                    <th colspan="26"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <th colspan="26">BSM</th>
+                                </tr>
+                                <tr>
+                                    <td colspan="26" class="table_half_width">    
+
+                                    <table id="bsmtable" class="compact stripe row-border cell-border">
+                                        <thead>
+                                            <tr>
+                                                <th class="heading">Latitude</th>
+                                                <th class="heading">Longitude</th>
+                                                <th class="heading">Elevation</th>
+                                                <th class="heading">Speed</th>
+                                                <th class="heading">Heading</th>
+                                                <th class="heading">Satellites</th>
+                                                <th class="heading">HDOP</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody></tbody>
+                                    </table>          
+                                    </td>                      
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                </tr>                
+            </tbody>
+        </table-->                      
+
+
+
+
+        <!--table data-role="table" data-mode="reflow" class="ui-responsive table-stroke setuptable table-fixed">
+            <thead class="hidden"><tr><th colspan="4" /></tr></thead>
+            <tbody>
+                <tr>
+                    <td class="fontsize-16 bold">Versions</td>
+                    <td class="fontsize-16 bold">Network Connections</td>
+                </tr>
+                <tr>
+                    <td class="setupcontainer containerborders">
+                        <table id="versiontable" class="compact stripe row-border setupTable" width="100%">
+                            <thead><tr><th class="heading fontsize-14">Device</th><th class="heading fontsize-14">Version #</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </td>
+                    <td class="setupcontainer containerborders vertical-align-middle fontsize-14">
+                        <div><span>Server: </span><span id="server" class="margin-left-2_5em">Not Connected</span></div>
+                        <div><span>Port: </span><span id="port" class="margin-left-3_65em">Not Connected</span></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <span class="fontsize-16 bold">Events</span><br />
+
+        <div class="containerborders">
+            <table id="eventtable" class="compact stripe row-border cell-border" width="100%">
+                <thead>
+                    <tr>
+                        <th class="heading fontsize-14">Time</th>
+                        <th class="heading fontsize-14">Severity</th>
+                        <th class="heading fontsize-14">Text</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div-->
+    </div>
+    <div></div>
+
+ 
+</body>
+</html>
