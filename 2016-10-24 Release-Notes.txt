@@ -1,4 +1,0 @@
-IVP Version 2.3
-- Initial Release to OSADP
-- Uses the J2735 R41 (2015) message set
-- Contains API, Core, MAP Plugin, SPAT Plugin, CSW Plugin, DMS Plugin, RTCM Plugin, and Location Plugin

@@ -104,6 +104,9 @@ $ make
 This will create a lib and bin folder in the TMX directory.  The lib folder will contain libtmxapi.so and libtmxutils.a.  The bin directory
 will contain the main tmxcore application along with zip files for each plugin.  
 
+- Install the libraries and includes
+$ sudo make install
+
 Installation Instructions
 -------------------------
 - install lamp-server
@@ -124,18 +127,13 @@ $ sudo ./install_db.sh
 $ cd WebPortalSetup
 $ sudo ./web_portal_setup.sh
 
-
-- Copy the libraries from the TMX/lib folder to /usr/lib
-$ sudo cp TMX/lib/* /usr/lib
-
 - Either copy the tmxcore executable from the TMX/bin directory to /usr/bin and create a service to start it or 
 run it locally (i.e. ./tmxcore from the TMX/bin directory)
 
 Setup service for Ubuntu
 $ sudo cp TMX/bin/tmxcore /usr/bin/
 $ sudo cp tmxcore.conf /etc/init/
-$sudo service tmxcore start
-
+$ sudo service tmxcore start
 
 Set Up and Configuration Instructions
 -------------------------------------
