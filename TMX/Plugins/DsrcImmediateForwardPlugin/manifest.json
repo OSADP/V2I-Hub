@@ -1,7 +1,7 @@
 {
   "name": "DSRC Message Manager",
   "description": "Plugin that listens for TMX messages and forwards them to the DSRC Radio (i.e. the RSU).",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "exeLocation": "/bin/DsrcImmediateForwardPlugin",
   "coreIpAddr": "127.0.0.1",
   "corePort": 24601,

@@ -27,7 +27,7 @@ using namespace std;
 namespace tmx {
 namespace utils {
 
-MapSupport::MapSupport() {
+MapSupport::MapSupport(): _irExtent(0) {
 	// TODO Auto-generated constructor stub
 
 }
@@ -157,7 +157,7 @@ bool MapSupport::IsInCenterOfIntersection(WGS84Point point, ParsedMap map) {
 	}
 
 	double dist = Conversions::DistanceMeters(map.ReferencePoint, point);
-	if (dist < radius) {
+	if (dist < radius * (1 + _irExtent)) {
 		return true;
 	}
 
@@ -290,6 +290,10 @@ MapMatchResult MapSupport::PointIsInLane(MapLane lane, WGS84Point point) {
 	return res;
 }
 
+void MapSupport::SetExtendedIntersectionPercentage(double percent)
+{
+	_irExtent = percent;
+}
 
 }
 } // namespace tmx::utils

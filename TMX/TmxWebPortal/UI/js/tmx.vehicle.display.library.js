@@ -22,12 +22,8 @@ var playEPCWAudio = false;
 var baseImageActiveEPCW = false; 
 var lastEPCWID = 0;
 var VTRWActive = false;
+var TSPWActive = false;
 var CSWActive = false;
-
-//var VTRWSeverity = 0;
-//var CSWSeverity = 0;
-//var EEBLSeverity = 0;
-//var FCWSeverity = 0;
 
 var defaultRCVWTimout = 10000;
 var RCVWTimerID = null;
@@ -45,22 +41,11 @@ var RCVWBlinkInterval = 300;
 var RCVWErrorText = "";
 
 var EPCWInterval = null;
-var currentAudio = -1;
 var nextAudio = -1;
-var defaultSoundTimeout = 5000;
-var SoundTimerID = null;
-
-var his = createHisMessageObject();
-var hisAudio = createHisMessageObject();
-var hisID = 0;
-var hisAudioID = 0;
 
 var cloakMode = false;
-var screenNotification = true;
-var soundNotification = true;
 
 var appList = [];
-
 
 
 function createAppStatusMessageObject(appType)
@@ -106,7 +91,7 @@ addEventListener("connect", connectHandler, false);
 function connectHandler()
 {
     console.log("Connected Setting Background Image");
-     $("#ActiveImage").attr('src', '../images/Common/Background.png');
+     $("#ActiveImage").attr('src', commonBackgroundImage);
 }
 
 function createAppStatusMessageObject(appType)
@@ -118,21 +103,30 @@ function createAppStatusMessageObject(appType)
     appStatusMessage.severity = 0;
     appStatusMessage.displayTimer = 300;
 
-
     return appStatusMessage;
 }
 
 // Receiver for unhandled messages from the common.library
 function newMessageHandler(evt)
 {
-//    console.log(evt.detail.message);
+
+//    console.log("Message: " + evt.detail.message);
     var json_obj = JSON.parse(evt.detail.message);
     if (json_obj.header.subtype === "Application") { handleAppMessage(json_obj.payload); }
     else if (json_obj.header.subtype === "Basic") { handleAppMessage(json_obj.payload); }
     else if (json_obj.header.type === "__config") { 
         // Need to handle 
         if (json_obj.payload != undefined)
-            handleConfig(json_obj.payload[0]); 
+        {
+            for (var i = 0; i < json_obj.payload.length; i++)
+            {
+                handleConfig(json_obj.payload[i]); 
+            }
+        }
+    }
+    else if (json_obj.header.subtype === "ModuleStatus") 
+    {
+        handleStatusMessage(json_obj.payload);
     }
 //    else { console.log(timeStamp(evt.detail.time) + " Unknown Message: " + evt.detail.message);	}
 }
@@ -142,47 +136,16 @@ function disconnectHandler()
 {
     console.log("Disconnected - Removing all images");
     clearEPCW();
+    stopEPCWTimer();
     clearRCVW();
-     $("#ActiveImage").attr('src', '../images/Common/Splash_Screen.png');
+    TspwClearAllZones();
+    stopSoundTimer();
+    $("#ActiveImage").removeClass("hidden");
+    $("#CloakImage").addClass("hidden");
+    $("#ActiveImage").attr('src', '../images/Common/Splash_Screen_2.png');
 }
-function  handleConfig(json_obj) 
-{
 
-    console.log("Config Key:" + json_obj.key + " Value:" + json_obj.value);
-    if (json_obj.key == "NotificationMode")
-    {
-        console.log("Notification Mode:" + json_obj.value)
-        if (json_obj.value.toLowerCase() == "none")
-        {
-            screenNotification = false;
-            soundNotification = false;
-            $("#ActiveImage").addClass('hidden');
-            $("#CloakImage").removeClass('hidden');
-        }
-        else if (json_obj.value.toLowerCase() == "audible")
-        {
-            screenNotification = false;
-            soundNotification = true;
-            $("#ActiveImage").addClass('hidden');
-            $("#CloakImage").removeClass('hidden');
-        }
-        else if (json_obj.value.toLowerCase() == "visual")
-        {
-            screenNotification = true;
-            soundNotification = false;
-            $("#ActiveImage").removeClass('hidden');
-            $("#CloakImage").addClass('hidden');
-        }
-        else if (json_obj.value.toLowerCase() == "all")
-        {
-            screenNotification = true;
-            soundNotification = true;
-            $("#ActiveImage").removeClass('hidden');
-            $("#CloakImage").addClass('hidden');
-        }
-    }
-    else { console.log("Did not process " + json_obj.key); }
-}
+
 
 /*
 This function handles all of the Application:Application messages and displays the appropriate 
@@ -190,6 +153,9 @@ Image.
 */
 function handleAppMessage(json_obj)
 {
+    // Do nothing if cloak, maintenance or degraded mode active
+    if ((!screenNotification && !soundNotification) || (MaintenanceMode) || (OperationalModeDegraded)) return;
+
     // Set audio to no sound
     nextAudio = -1;
     if (json_obj.AppId == 2) // FCW
@@ -199,26 +165,36 @@ function handleAppMessage(json_obj)
 //            setTimedImage('../images/FCW/3-base-art.png', json_obj.CustomText);
             break;
         case "1":
-            setTimedImage('../images/FCW/4-vehicle-ahead-alert-yellow.png', json_obj.CustomText);
+            if (screenNotification) {
+                setTimedImage('../images/FCW/4-vehicle-ahead-alert-yellow.png', json_obj.CustomText);
+            }
             if (FCWSeverity < 1)
             {
-                populateHisImageMessageObject(2, 0, 1);
+                if (screenNotification) {
+                    populateHisImageMessageObject(2, json_obj.Id, json_obj.Severity);
+                }
                 FCWSeverity = 1;
                 // TODO Change
                 nextAudio = 4;
             }            
             break;
         case "2":
-            setTimedImage('../images/FCW/5-vehicle-ahead-warning-red.png', json_obj.CustomText);
+            if (screenNotification) {
+                setTimedImage('../images/FCW/5-vehicle-ahead-warning-red.png', json_obj.CustomText);
+            }
             if (FCWSeverity < 2)
             {
-                populateHisImageMessageObject(2, 0, 2);
+                if (screenNotification) {
+                    populateHisImageMessageObject(2, json_obj.Id, json_obj.Severity);
+                }
                 FCWSeverity = 2;
                 nextAudio = 8;
             }            
             break;
-        default:
-            clearImage();
+            default:
+                if (screenNotification) {
+                    clearImage();
+                }
             break;
         }
     }
@@ -226,21 +202,29 @@ function handleAppMessage(json_obj)
     {
         switch (json_obj.Severity) {
         case "0":
-            setTimedImage('../images/FCW/3-base-art.png', json_obj.CustomText);
-            populateHisImageMessageObject(3, 0, 0);
+            if (screenNotification) {
+                setTimedImage('../images/FCW/3-base-art.png', json_obj.CustomText);
+                populateHisImageMessageObject(3, json_obj.Id, json_obj.Severity);
+            }
             break;
         case "1":
         case "2":
-            setTimedImage('../images/EEBL/4-eebl.png', json_obj.CustomText);
+            if (screenNotification) {
+                setTimedImage('../images/EEBL/4-eebl.png', json_obj.CustomText);
+            }
             if (EEBLSeverity < 2)
             {
-                populateHisImageMessageObject(2, 0, 2);
+                if (screenNotification) {
+                    populateHisImageMessageObject(2, json_obj.Id, json_obj.Severity);
+                }
                 EEBLSeverity = 2;
                 nextAudio = 25;
             }            
             break;
         default:
-            clearImage();
+            if (screenNotification) {
+                clearImage();
+            }
             break;
         }
     }
@@ -252,23 +236,32 @@ function handleAppMessage(json_obj)
         playEPCWAudio = false;
         switch (json_obj.EventCode) {
         case "3": // Entered Area
-            clearImage();
             EPCWActive = true;
-            populateHisImageMessageObject(6, 3, 0);
-            setImage('../images/E-PCW/E-PCW_base.png', "");
+            if (screenNotification) {
+                clearImage();
+                populateHisImageMessageObject(6, json_obj.Id, json_obj.Severity);
+                setImage('../images/E-PCW/E-PCW_base.png', "");
+            }
+//            console.log("Entered EPCW currentAudio=-1");
             currentAudio = -1;
             break;
         case "4": // Exited Area
             EPCWActive = false;
-            populateHisImageMessageObject(6, 4, 0);
             stopEPCWTimer();
+            if (screenNotification) {
+                populateHisImageMessageObject(6, json_obj.Id, json_obj.Severity);
+            }
             clearEPCW();
+//            console.log("Exited EPCW currentAudio=-1");
             currentAudio = -1;
             break;
         case "5": // Detected Area
             // No Action
             break;
         case "6": // Near side Pedestrian
+            if (screenNotification) {
+                populateHisImageMessageObject(6, json_obj.Id, json_obj.Severity);
+            }
             nearEPCWID = json_obj.EventID;
             lastEPCWID = json_obj.EventID;
             if (nearEPCWSeverity != json_obj.Severity)
@@ -278,48 +271,60 @@ function handleAppMessage(json_obj)
                 {
                     playEPCWAudio = true;
                 }
-                displayEPCW();
-//                if (nearEPCWSeverity == 1)  nextAudio = 0; //  playAudio(0);
-//                else if (nearEPCWSeverity == 2)  nextAudio = 1; //playAudio(1);
+                if (screenNotification) {
+                    displayEPCW();
+                }
             }
             break;
         case "7": // Far side Pedestrian
+            if (screenNotification) {
+                populateHisImageMessageObject(6, json_obj.Id, json_obj.Severity);
+            }
             farEPCWID = json_obj.EventID;
-            astEPCWID = json_obj.EventID;
+            lastEPCWID = json_obj.EventID;
             if (farEPCWSeverity != json_obj.Severity)
             {
                 farEPCWSeverity = json_obj.Severity;
-                if (farEPCWSeverity != 0)  playEPCWAudio = true;
-                displayEPCW();
-//                if (nearEPCWSeverity == 1)  nextAudio = 0; //  playAudio(0);
-//                else if (nearEPCWSeverity == 2)  nextAudio = 1; //playAudio(1);
+                if (farEPCWSeverity != 0) playEPCWAudio = true;
+                if (screenNotification) {
+                    displayEPCW();
+                }
             }
             break;
         case "8": // Left side Pedestrian
+            if (screenNotification) {
+                populateHisImageMessageObject(6, json_obj.Id, json_obj.Severity);
+            }
             leftEPCWID = json_obj.EventID;
-            astEPCWID = json_obj.EventID;
+            lastEPCWID = json_obj.EventID;
             if (leftEPCWSeverity != json_obj.Severity)
             {
                 leftEPCWSeverity = json_obj.Severity;
                 if (leftEPCWSeverity != 0)  playEPCWAudio = true;
-                displayEPCW();
-//                if (leftEPCWSeverity == 1)  nextAudio = 0; //  playAudio(0);
-//                else if (leftEPCWSeverity == 2)  nextAudio = 1; //playAudio(1);
+                if (screenNotification) {
+                    displayEPCW();
+                }
             }
             break;
         case "9": // Right side Pedestrian
+            if (screenNotification) {
+                populateHisImageMessageObject(6, json_obj.Id, json_obj.Severity);
+            }
             rightEPCWID = json_obj.EventID;
             lastEPCWID = json_obj.EventID;
             if (rightEPCWSeverity != json_obj.Severity)
             {
                 rightEPCWSeverity = json_obj.Severity;
-                if (rightEPCWSeverity != 0)  playEPCWAudio = true;
-                displayEPCW();
-//                if (rightEPCWSeverity == 1) nextAudio = 2; 
-//                else if (rightEPCWSeverity == 2) nextAudio = 3; 
+                if (rightEPCWSeverity != 0) playEPCWAudio = true;
+                if (screenNotification) {
+                    displayEPCW();
+                }
             }
             break;
         case "20": // Pedestrian alert complete 
+            if (screenNotification) {
+                populateHisImageMessageObject(6, json_obj.Id, json_obj.Severity);
+            }
             if (lastEPCWID == json_obj.EventID) stopAudio();
             if (json_obj.EventID == nearEPCWID) 
             {
@@ -341,16 +346,19 @@ function handleAppMessage(json_obj)
                 rightEPCWID = null;
                 rightEPCWSeverity = 0;
             }
-            displayEPCW();
+            if (screenNotification) {
+                displayEPCW();
+            }
             break;
         case "21": // Detected Area
             if (!EPCWActive) 
             {
-                clearImage();
                 EPCWActive = true;
-                populateHisImageMessageObject(6, 21, 0);
-                setImage('../images/E-PCW/E-PCW_base.png', "");
-
+                if (screenNotification) {
+                    clearImage();
+                    populateHisImageMessageObject(6, json_obj.Id, json_obj.Severity);
+                    setImage('../images/E-PCW/E-PCW_base.png', "");
+                }
             }
             // No Action
             break;
@@ -360,30 +368,41 @@ function handleAppMessage(json_obj)
     {
         switch (json_obj.EventCode) {
         case "1": // Entered Area
-            clearImage();
             VTRWActive = true;
-            populateHisImageMessageObject(7, 1, 0);
-            setImage('../images/VTRW/VTRW_base.png', "");
-            commonBackgroundImage = "../images/VTRW/VTRW_base.png";
-
+            if (screenNotification) {
+                clearImage();
+                populateHisImageMessageObject(7, json_obj.Id, json_obj.Severity);
+                commonBackgroundImage = "../images/VTRW/VTRW_base.png";
+                clearImage();
+            }
+ //           setImage('../images/VTRW/VTRW_base.png', "");
             break;
         case "2": // Exited Area
         	VTRWActive = false;
         	VTRWSeverity = 0;
-            clearImage();
+        	if (screenNotification) {
+        	    populateHisImageMessageObject(7, json_obj.Id, json_obj.Severity);
+        	    commonBackgroundImage = "../images/Common/Background.png";
+        	    clearImage();
+        	}
             break;
         case "13":  // Ahead Left
         	if (VTRWActive && json_obj.Severity == "0") 
         	{
-            	VTRWSeverity = 0;
-                populateHisImageMessageObject(7, 13, 0);
-                setImage('../images/VTRW/VTRW_base.png', "");
+        	    VTRWSeverity = 0;
+        	    if (screenNotification) {
+        	        populateHisImageMessageObject(7, json_obj.Id, json_obj.Severity);
+        	        setImage('../images/VTRW/VTRW_base.png', "");
+        	    }
                 break;        		
         	}
         case "17":	// Behind Left
         	if (VTRWActive && json_obj.Severity == "1")
         	{
-        		setTimedImage('../images/VTRW/VTRW_caution_left_2.png', json_obj.CustomText);
+        	    if (screenNotification) {
+        	        populateHisImageMessageObject(7, json_obj.Id, json_obj.Severity);
+        	        setTimedImage('../images/VTRW/VTRW_caution_left_2.png', json_obj.CustomText);
+        	    }
         		if (VTRWSeverity < 1)
         		{
         			VTRWSeverity = 1;
@@ -394,7 +413,10 @@ function handleAppMessage(json_obj)
         case "12": // Vehicle ahead
         	if (VTRWActive && json_obj.Severity == "2")
         	{
-        		setTimedImage('../images/VTRW/VTRW_warning_left_1.png', json_obj.CustomText);
+        	    if (screenNotification) {
+        	        populateHisImageMessageObject(7, json_obj.Id, json_obj.Severity);
+        	        setTimedImage('../images/VTRW/VTRW_warning_left_1.png', json_obj.CustomText);
+        	    }
         		if (VTRWSeverity < 2)
         		{
         			VTRWSeverity = 2;
@@ -408,15 +430,20 @@ function handleAppMessage(json_obj)
     }
     else if (json_obj.AppId == 1) // CSW
     {
+        // TODO: Need to add a display function
         console.log("CSW Event Code " + json_obj.EventCode);
         switch (json_obj.EventCode) {
         case "0": // Alert
             switch (json_obj.Severity) {
-                case "0": // Alert
+            case "0": // Alert
+                if (screenNotification) {
                     setTimedImage('../images/CSW/CSW_info.png', json_obj.CustomText);
+                }
                 break;
-                case "1": // Alert
-                setTimedImage('../images/CSW/CSW_alert.png', json_obj.CustomText);
+            case "1": // Alert
+                if (screenNotification) {
+                    setTimedImage('../images/CSW/CSW_alert.png', json_obj.CustomText);
+                }
                 if (CSWSeverity != "1")
                 {
                     if (CSWSeverity < 1)
@@ -426,10 +453,11 @@ function handleAppMessage(json_obj)
                         nextAudio = 25;
                     }
                 }
-
                 break;
-                case "2": // Alert
-                setTimedImage('../images/CSW/CSW_warning.png', json_obj.CustomText);
+            case "2": // Alert
+                if (screenNotification) {
+                    setTimedImage('../images/CSW/CSW_warning.png', json_obj.CustomText);
+                }
                 if (CSWSeverity != "2")
                 {
                     if (CSWSeverity < 2)
@@ -445,18 +473,20 @@ function handleAppMessage(json_obj)
         case "1": // Entered Area
             if (!CSWActive)
             {
-                clearImage();
                 CSWActive = true;
-                populateHisImageMessageObject(1, 0, 0);
-                setImage('../images/CSW/CSW_base.png', "");
-                commonBackgroundImage = "../images/CSW/CSW_base.png";
+                if (screenNotification) {
+                    clearImage();
+                    populateHisImageMessageObject(1, json_obj.Id, json_obj.Severity);
+                    setImage('../images/CSW/CSW_base.png', "");
+                }
             }
             break;
         case "2": // Exited Area
             CSWActive = false;
             CSWSeverity = 0;
-            commonBackgroundImage = "../images/Common/Background.png";
-            clearImage();
+            if (screenNotification) {
+                clearImage();
+            }
             break;
        default:
             break;
@@ -472,10 +502,12 @@ function handleAppMessage(json_obj)
         }
         switch (json_obj.EventCode) {
         case "1": // Entered Area
-            clearImage();
             RCVWActive = true;
-            populateHisImageMessageObject(10, 1, 0);
-            setImage('../images/RCVW/01-intersection-active.png', "");
+            if (screenNotification) {
+                clearImage();
+                populateHisImageMessageObject(10, json_obj.Id, json_obj.Severity);
+                setImage('../images/RCVW/01-intersection-active.png', "");
+            }
             break;
         case "2": // Exited Area
             RCVWActive = false;
@@ -484,22 +516,17 @@ function handleAppMessage(json_obj)
             stopAudio();
             break;
         case "0":  // None
-            if (RCVWActive) 
-            {
-                currentRCVWSeverity = RCVWSeverity;
-                RCVWSeverity = Number(json_obj.Severity);
-                displayRCVW();
-            }
+            // Do nothing
             break;
         case "23":  // Error
             RCVWCurrentEvent = 23;
             currentRCVWSeverity = RCVWSeverity;
             RCVWSeverity = Number(json_obj.Severity);
             RCVWErrorText = json_obj.CustomText;
-
-
-
-            displayRCVW();
+            
+            if (screenNotification) {
+                displayRCVW();
+            }
             if (currentRCVWSeverity < RCVWSeverity)
             {
                 console.log("Playing sound");
@@ -514,7 +541,9 @@ function handleAppMessage(json_obj)
                 RCVWCurrentEvent = 24;
                 currentRCVWSeverity = RCVWSeverity;
                 RCVWSeverity = Number(json_obj.Severity);
-                displayRCVW();
+                if (screenNotification) {
+                    displayRCVW();
+                }
                 RCVWActiveEvent = RCVWCurrentEvent;
             }
             break;
@@ -524,7 +553,9 @@ function handleAppMessage(json_obj)
                 RCVWCurrentEvent = 25;
                 currentRCVWSeverity = RCVWSeverity;
                 RCVWSeverity = Number(json_obj.Severity);
-                displayRCVW();
+                if (screenNotification) {
+                    displayRCVW();
+                }
                 RCVWActiveEvent = RCVWCurrentEvent;
             }
             break;            
@@ -533,25 +564,15 @@ function handleAppMessage(json_obj)
             break;
         }
     }
-    // If audio needs to be changed play audio
-    if (nextAudio != -1) playAudio(nextAudio);
-}
-
-
-function setImage(image, displayText)
-{
-
-    if ($("#ActiveImage").attr('src') != image)
+    else if (json_obj.AppId == 8 || // TSPW
+             json_obj.AppId == 13)  // TSPWPOV
     {
-        his.payload.HISPreState = $("#ActiveImage").attr('src');
-        his.payload.HISPostState = image;
-        sendCommand("TEST;" + JSON.stringify(his));       
-       $("#ActiveImage").attr('src', image);
+    	TspwHandleAlert(json_obj);
     }
-    $("#bottomDiv").html(displayText);
-
+    
+    // If audio needs to be changed play audio
+    if (nextAudio != -1 && soundNotification) playAudio(nextAudio, audioFiles);
 }
-
 
 function displayRCVW()
 {
@@ -665,9 +686,10 @@ function displayRCVW()
 
     if (currentActiveRCVWImage != activeRCVWImage)
     {
-            his.payload.HISPreState = currentActiveRCVWImage;
-            his.payload.HISPostState = activeRCVWImage;
-            sendCommand("TEST;" + JSON.stringify(his));
+        his.payload.Id = generateUUID();
+        his.payload.HISPreState = currentActiveRCVWImage;
+        his.payload.HISPostState = activeRCVWImage;
+        sendCommand("TEST;" + JSON.stringify(his));
     }
 
 
@@ -684,13 +706,11 @@ function displayEPCW()
             if (nearEPCWSeverity >= 1 && nearEPCWSeverity <= 2) {
                 activeDirections.push("NearDirectionImage");
                 if (nearEPCWSeverity == 1) {
-                    if (baseEPCWImage.indexOf("warning") != -1) {
-                        baseEPCWImage = '../images/E-PCW/E-PCW_base.png';
-                    }
                     $("#NearDirectionImage").attr('src', "../images/E-PCW/E-PCW_caution_near.png");
+                    activeEPCWImage = "../images/E-PCW/E-PCW_caution_near.png"
                 } else if (nearEPCWSeverity == 2) {
-                    baseEPCWImage = '../images/E-PCW/E-PCW_base.png';
                     $("#NearDirectionImage").attr('src', "../images/E-PCW/E-PCW_warning_near.png");
+                    activeEPCWImage = "../images/E-PCW/E-PCW_warning_near.png"
                 }
             }
         }
@@ -698,13 +718,11 @@ function displayEPCW()
             if (rightEPCWSeverity >= 1 && rightEPCWSeverity <= 2) {
                 activeDirections.push("RightDirectionImage");
                 if (rightEPCWSeverity == 1) {
-                    if (baseEPCWImage.indexOf("warning") != -1) {
-                        baseEPCWImage = '../images/E-PCW/E-PCW_base.png';
-                    }
                     $("#RightDirectionImage").attr('src', "../images/E-PCW/E-PCW_caution_right.png");
+                    activeEPCWImage = "../images/E-PCW/E-PCW_caution_right.png"
                 } else if (rightEPCWSeverity == 2) {
-                    baseEPCWImage = '../images/E-PCW/E-PCW_base.png';
                     $("#RightDirectionImage").attr('src', "../images/E-PCW/E-PCW_warning_right.png");
+                    activeEPCWImage = "../images/E-PCW/E-PCW_warning_right.png"
                 }
             }
         }
@@ -712,13 +730,11 @@ function displayEPCW()
             if (farEPCWSeverity >= 1 && farEPCWSeverity <= 2) {
                 activeDirections.push("FarDirectionImage");
                 if (farEPCWSeverity == 1) {
-                    if (baseEPCWImage.indexOf("warning") != -1) {
-                        baseEPCWImage = '../images/E-PCW/E-PCW_base.png';
-                    }
                     $("#FarDirectionImage").attr('src', "../images/E-PCW/E-PCW_caution_far.png");
+                    activeEPCWImage = "../images/E-PCW/E-PCW_caution_far.png"
                 } else if (farEPCWSeverity == 2) {
-                    baseEPCWImage = '../images/E-PCW/E-PCW_base.png';
                     $("#FarDirectionImage").attr('src', "../images/E-PCW/E-PCW_warning_far.png");
+                    activeEPCWImage = "../images/E-PCW/E-PCW_warning_far.png"
                 }
             }
         }
@@ -726,13 +742,11 @@ function displayEPCW()
             if (leftEPCWSeverity >= 1 && leftEPCWSeverity <= 2) {
                 activeDirections.push("LeftDirectionImage");
                 if (leftEPCWSeverity == 1) {
-                    if (baseEPCWImage.indexOf("warning") != -1) {
-                        baseEPCWImage = '../images/E-PCW/E-PCW_base.png';
-                    }
                     $("#LeftDirectionImage").attr('src', "../images/E-PCW/E-PCW_caution_left.png");
+                    activeEPCWImage = "../images/E-PCW/E-PCW_caution_left.png"
                 } else if (leftEPCWSeverity == 2) {
-                    baseEPCWImage = '../images/E-PCW/E-PCW_base.png';
                     $("#LeftDirectionImage").attr('src', "../images/E-PCW/E-PCW_warning_left.png");
+                    activeEPCWImage = "../images/E-PCW/E-PCW_warning_left.png"
                 }
             }
         }
@@ -802,9 +816,9 @@ function displayEPCW()
             }
         }
 
-        console.log("Play audio:" + playEPCWAudio + " index:" + audioPlayIndex);
+//        console.log("Play audio:" + playEPCWAudio + " index:" + audioPlayIndex);
         if ((playEPCWAudio) && (audioPlayIndex != -1)) {
-            playAudio(audioPlayIndex);
+            playAudio(audioPlayIndex, audioFiles);
         }
 
         if (!activeEPCWAlert) {
@@ -831,59 +845,23 @@ function displayEPCW()
     }
 }
 
-/*
-function displayStatus()
-{
-
-
-    if ((nearEPCWID!=null) || (farEPCWID!=null) || (leftEPCWID!=null) || (rightEPCWID!=null))
-    {
-        if ((nearEPCWID!=null) && (rightEPCWID!=null))
-        {
-            if ((nearEPCWSeverity == 2) && (rightEPCWSeverity == 2)) activeEPCWImage = '../images/E-PCW/8-pedestrian-double-red.png';
-            else if ((nearEPCWSeverity == 2) && (rightEPCWSeverity == 1)) activeEPCWImage = '../images/E-PCW/9-pedestrian-red-yellow.png';
-            else if ((nearEPCWSeverity == 1) && (rightEPCWSeverity == 2)) activeEPCWImage = '../images/E-PCW/10-pedestrian-red-yellow.png';
-            else if ((nearEPCWSeverity == 1) && (rightEPCWSeverity == 1)) activeEPCWImage = '../images/E-PCW/11-pedestrian-double-yellow.png';
-        }
-        else if (nearEPCWID!=null)
-        {
-            if (nearEPCWSeverity == 1) activeEPCWImage = '../images/E-PCW/5-pedestrian-intent-to-cross-nearside-yellow.png';
-            else if (nearEPCWSeverity == 2) activeEPCWImage = '../images/E-PCW/4-pedestrian-near-crosswalk-red.png';
-        }
-        else if (rightEPCWID!=null)
-        {
-            if (rightEPCWSeverity == 1) activeEPCWImage = '../images/E-PCW/7-pedestrian-intent-to-cross-rightside-yellow.png';
-            else if (rightEPCWSeverity == 2) activeEPCWImage = '../images/E-PCW/6-pedestrian-in-rightside-crosswalk-red.png';            
-        }
-        if (!activeEPCWAlert)
-        {
-            activeEPCWAlert = true;
-            startEPCWDisplay();
-        }
-    }
-    else
-    {
-        stopEPCWDisplay();
-        activeEPCWAlert = false;
-    }
-
-
-}
-*/
-
 function toggleEPCWImage()
 {
     $("[id$=DirectionImage]").addClass("hidden");
 
-    for (var i = 0; i < activeDirections.length; i++) {
-        var direction = $("#" + activeDirections[i]);
-        if (baseImageActiveEPCW) {
-           direction.removeClass("hidden");
-        } else {
-           direction.addClass("hidden");
+    if ((screenNotification) && (!MaintenanceMode) && (!OperationalModeDegraded))
+    {
+        for (var i = 0; i < activeDirections.length; i++) {
+            var direction = $("#" + activeDirections[i]);
+            if (baseImageActiveEPCW) {
+               direction.removeClass("hidden");
+            } else {
+               direction.addClass("hidden");
+            }
         }
+        baseImageActiveEPCW = !baseImageActiveEPCW;
     }
-    baseImageActiveEPCW = !baseImageActiveEPCW;
+
 }
 
 function startEPCWDisplay()
@@ -898,11 +876,10 @@ function stopEPCWDisplay()
     clearInterval(EPCWInterval);
     EPCWInterval = null;
     activeEPCWImage = '../images/E-PCW/E-PCW_base.png';
-    $("#ActiveImage").attr('src', activeEPCWImage);
-    $("#LeftDirectionImage").addClass("hidden");
-    $("#RightDirectionImage").addClass("hidden");
-    $("#NearDirectionImage").addClass("hidden");
-    $("#FarDirectionImage").addClass("hidden");
+    if (screenNotification) {
+        $("#ActiveImage").attr('src', activeEPCWImage);
+    }
+    $("[id$=DirectionImage]").addClass("hidden");
 }
 
 function clearEPCW()
@@ -916,14 +893,12 @@ function clearEPCW()
     farEPCWSeverity = null;
     leftEPCWSeverity = null;
     rightEPCWSeverity = null;
-    clearImage();
-    $("#LeftDirectionImage").addClass("hidden");
-    $("#RightDirectionImage").addClass("hidden");
-    $("#NearDirectionImage").addClass("hidden");
-    $("#FarDirectionImage").addClass("hidden");
-    his.payload.HISPreState = activeEPCWImage;
-    his.payload.HISPostState = '../images/Common/Background.png';
-    sendCommand("TEST;" + JSON.stringify(his));
+    if (screenNotification) {
+        clearImage();
+        his.payload.HISPreState = activeEPCWImage;
+        his.payload.HISPostState = commonBackgroundImage;
+        sendCommand("TEST;" + JSON.stringify(his));
+    }
 }
 
 function startEPCWTimer(duration)
@@ -951,41 +926,21 @@ function EPCWTimeout()
     clearEPCW();
 }
 
-function startSoundTimer(duration)
-{
-    SoundTimerID = setTimeout(SoundTimeout, duration);
-}
-
-function restartSoundTimeout()
-{
-    stopSoundTimer();
-    startSoundTimer(defaultSoundTimeout);
-}
-
-function stopSoundTimer()
-{
-    if (SoundTimerID != null)
-    {
-        clearTimeout(SoundTimerID);
-        SoundTimerID = null;
-    }    
-}
-function SoundTimeout()
-{
-    console.log("Sound Timerout Clearing");
-    currentAudio = -1;
-}
 
 // ------- EPCW ----------------------------------------------------------
 // ------- RCVW ----------------------------------------------------------
 function toggleRCVWImage()
 {
-    if (baseImageActiveRCVW) $("#ActiveImage").attr('src', activeRCVWImage);
-    else 
+
+    if ((!screenNotification && !soundNotification) && (!MaintenanceMode) && (!OperationalModeDegraded))
     {
-        $("#ActiveImage").attr('src', baseRCVWImage);
+        if (baseImageActiveRCVW) $("#ActiveImage").attr('src', activeRCVWImage);
+        else 
+        {
+            $("#ActiveImage").attr('src', baseRCVWImage);
+        }
+        baseImageActiveRCVW = !baseImageActiveRCVW;
     }
-    baseImageActiveRCVW = !baseImageActiveRCVW;
 }
 
 function startRCVWDisplay()
@@ -1009,16 +964,20 @@ function stopRCVWDisplay()
     RCVWInterval = null;
     activeRCVWImage = '../images/RCVW/01-intersection-active.png';
     activeRCVWAlert = false;
-    $("#ActiveImage").attr('src', activeRCVWImage);
+    if (screenNotification) {
+        $("#ActiveImage").attr('src', activeRCVWImage);
+    }
 }
 
 function clearRCVW()
 {
     stopRCVWDisplay();
-    clearImage();
-    his.payload.HISPreState = activeRCVWImage;
-    his.payload.HISPostState = '../images/Common/Background.png';
-    sendCommand("TEST;" + JSON.stringify(his));
+    if (screenNotification) {
+        clearImage();
+        his.payload.HISPreState = activeRCVWImage;
+        his.payload.HISPostState = commonBackgroundImage;
+        sendCommand("TEST;" + JSON.stringify(his));
+    }
 }
 
 function startRCVWTimer(duration)
@@ -1048,6 +1007,207 @@ function RCVWTimeout()
 
 // ------- RCVW ----------------------------------------------------------
 
+// ------- TSPW Start ----------------------------------------------------
+var tspwPedestrianTimout_ms = 2000;
+var tspwValidSeverity = {"1": true, "2": true};
+
+var tspwZoneInfoTable = {
+	"10": { 		// event Code
+		zoneName: "OnCurbsidePed",
+		timerId: null,
+		currentAudIdx: -1,
+		files: {
+		"1":{   	// severity
+				imgFile: ["../images/TVO/05-inform-zone2.png", ""],
+				audFileIdx: [27, -1]
+			},
+		"2":{
+				imgFile: ["../images/TVO/05-inform-zone2.png", ""], // no warning image present
+				audFileIdx: [27, -1]
+			}}},		
+	"32": {
+		zoneName: "InRoadwayFwdCenterPed",
+		timerId: null,
+		currentAudIdx: -1,
+		files: {
+		"1":{
+				imgFile: ["../images/TVO/03-inform-zone5.png", "../images/POV/02-inform.png"],
+				audFileIdx: [28, 28]
+			},
+		"2":{
+				imgFile: ["../images/TVO/06-warning-zone5.png", "../images/POV/04-warning-road.png"],
+				audFileIdx: [29, 29]
+			}}},
+	"33": {
+		zoneName: "InRoadwayFwdCurbPed",
+		timerId: null,
+		currentAudIdx: -1,
+		files: {
+		"1":{
+				imgFile: ["../images/TVO/07-warning-zone3.png", ""], // no inform image present
+				audFileIdx: [29, -1] // using warning audio
+			},
+		"2":{
+				imgFile: ["../images/TVO/07-warning-zone3.png", ""],
+				audFileIdx: [29, -1]
+			}}},
+	"34": {
+		zoneName: "InRoadwayRearCenterPed",
+		timerId: null,
+		currentAudIdx: -1,
+		files: {
+		"1":{
+				imgFile: ["../images/TVO/04-inform-zone6.png", "../images/POV/03-warning.png"],
+				audFileIdx: [28, 29]
+			},
+		"2":{
+				imgFile: ["../images/TVO/09-warning-zone6.png", "../images/POV/03-warning.png"],
+				audFileIdx: [29, 29]
+			}}},
+	"35": {
+		zoneName: "InRoadwayRearCurbPed",
+		timerId: null,
+		currentAudIdx: -1,
+		files: {
+		"1":{
+				imgFile: ["../images/TVO/08-warning-zone4.png", "../images/POV/03-warning.png"],  // no inform image present
+				audFileIdx: [29, 29]// using warning audio
+			},
+		"2":{
+				imgFile: ["../images/TVO/08-warning-zone4.png", "../images/POV/03-warning.png"],
+				audFileIdx: [29, 29]
+			}}}
+};
+
+function TspwHandleAlert(json_obj)
+{
+    switch (json_obj.EventCode) {
+    case "3": // Entered Area
+        clearImage();
+        populateHisImageMessageObject(json_obj.AppId, json_obj.Id, json_obj.Severity);
+        TspwDisplayBase(json_obj);
+        TspwClearAllZones();
+        console.log("Entered TSPW");
+        break;
+    case "4": // Exited Area
+        populateHisImageMessageObject(json_obj.AppId, json_obj.Id, json_obj.Severity);
+    	TspwClearAllZones();
+        clearImage();
+        console.log("Exited TSPW");
+        break;
+    case "5": // Detected Area
+        // No Action
+        break;
+    case "20": // EventComplete
+    case "21": // InArea
+    	// No pedestrian alerts while on the map.
+    	TspwClearAllZones();
+        console.log("Cleared All TSPW Zones");
+    	break;
+    case "10": // OnCurbsidePed
+    case "32": // InRoadwayFwdCenterPed
+    case "33": // InRoadwayFwdCurbPed
+    case "34": // InRoadwayRearCenterPed
+    case "35": // InRoadwayRearCurbPed
+        TspwDisplayZone(json_obj);
+    	break;
+	}
+}
+
+function TspwDisplayBase(json_obj)
+{
+	var isPov = (json_obj.AppId == "13");
+	
+	if (isPov)
+    	setImage('../images/POV/01-base.png', json_obj.CustomText);
+	else
+    	setImage('../images/TVO/02-base.png', json_obj.CustomText);
+}
+
+function TspwDisplayZone(json_obj)
+{
+	var evCode = json_obj.EventCode;
+	var sev = json_obj.Severity;
+	var zoneObj = tspwZoneInfoTable[evCode];
+    var povIdx = (json_obj.AppId == "8")? 0 : 1;
+//	var povIdx = json_obj.EventID;
+	
+	if (sev in tspwValidSeverity) {
+		var audFileIdx = zoneObj.files[sev].audFileIdx[povIdx];
+		if (audFileIdx > TspwGetAudioSeverity()) {
+			// Play new higher severity audio
+			playAudio(audFileIdx, audioFiles);
+		}
+		zoneObj.currentAudIdx = audFileIdx;
+		
+		var zone = $("#" + zoneObj.zoneName + "ZoneImage");
+		
+		var imgFile = zoneObj.files[sev].imgFile[povIdx];
+
+		// Make sure Base image is set
+        TspwDisplayBase(json_obj);
+		
+		if (imgFile) {
+		    zone.attr('src', imgFile);
+			zone.removeClass("hidden");
+		    
+		    // Reset zone display timer.
+		    clearTimeout(zoneObj.timerId);
+		    zoneObj.timerId = setTimeout(TspwClearZone, tspwPedestrianTimout_ms, evCode);
+		    console.log("Set Image for : " + zoneObj.zoneName);
+		}
+		
+	    // TODO: remove below - test only
+//	    TspwDisplayAllZones("2");
+   	}
+	else {
+	    console.log("Received invalid alert severity " + sev + " for TSPW display event: " + evCode);
+	}
+}
+
+function TspwClearZone(evCode)
+{
+	var zoneObj = tspwZoneInfoTable[evCode];
+    var zone = $("#" + zoneObj.zoneName + "ZoneImage");
+    zone.addClass("hidden");
+    clearTimeout(zoneObj.timerId);
+    zoneObj.timerId = null;
+    zoneObj.currentAudIdx = -1;
+}
+
+function TspwClearAllZones()
+{
+	Object.keys(tspwZoneInfoTable).forEach(function(key,index) {
+	    // key: the name of the object key
+	    // index: the ordinal position of the key within the object
+		TspwClearZone(key, "0");
+	});
+    $("#bottomDiv").html("");
+}
+
+function TspwGetAudioSeverity() {
+	var audIdx = -1;
+	Object.keys(tspwZoneInfoTable).forEach(function(evCode,index) {
+		// Return highest severity audio that was played for any of the zones
+		if (audIdx < tspwZoneInfoTable[evCode].currentAudIdx)
+			audIdx = tspwZoneInfoTable[evCode].currentAudIdx;
+	});
+	return audIdx;
+}
+
+//TODO: remove below - test only
+function TspwDisplayAllZones(sev)
+{
+	Object.keys(tspwZoneInfoTable).forEach(function(evCode,index) {
+		var zoneObj = tspwZoneInfoTable[evCode];
+		if (sev in tspwValidSeverity) {
+			var zone = $("#" + zoneObj.zoneName + "ZoneImage");		
+			zone.removeClass("hidden");
+		    zone.attr('src', zoneObj.files[sev].imgFile);
+		}
+	});
+}
+//------- TSPW End -------------------------------------------------------
 
 
 // Sounds -----------------------
@@ -1081,38 +1241,13 @@ var audioFiles = [
     "../sounds/E-PCW/E-PCW_warning_right.mp3",
     "../sounds/E-PCW/E-PCW_warning_near_warning_far.mp3",
     "../sounds/EEBL.wav",
-    "../sounds/EEBL_warning.wav"
+    "../sounds/EEBL_warning.wav",
+ // -----------------------------------------------------    
+    "../sounds/TSPW/TSPW_Caution\ Curb.mp3",		// 27
+    "../sounds/TSPW/TSPW_Caution\ in\ Road.mp3",           
+    "../sounds/TSPW/TSPW_Warning\ in\ Road.mp3"
 ];
-    
-function preloadAudio(url) {
-    var audio = new Audio();
-    audio.src = url;
-}
 
-var player = document.getElementById('player');
-function playAudio(index) {
-    console.log("Playing Audio index:" + index + " Current Audio:" + currentAudio);
-    if (soundNotification)
-    {
-        if (index != currentAudio)
-        {
-            currentAudio = index;
-            stopAudio();
-            player.src = audioFiles[index];
-            player.play();
-
-            restartSoundTimeout(defaultSoundTimeout);
-            hisAudio.payload.HISPostState = audioFiles[index];
-            sendCommand("TEST;" + JSON.stringify(hisAudio));
-        }
-    }
-}
-
-function stopAudio()
-{
-    player.pause();
-    player.currentTime = 0;
-}
 
 for (var i in audioFiles) {
     preloadAudio(audioFiles[i]);
@@ -1127,9 +1262,4 @@ $(document).ready(function () {
         $(".headbtn").removeClass('ui-btn-active');
         $(this).addClass('ui-btn-active');
     });
-
-//    $(".soundFiles").trigger('load');
-
-    
-
 });

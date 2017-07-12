@@ -41,7 +41,8 @@ enum MsgType
 		Interface = 3,
 		Vehicle = 4,
 		Pedestrian = 5,
-		Pmm = 6
+		Pmm = 6,
+		Radio = 7
 };
 		
 		
@@ -52,6 +53,7 @@ static CONSTEXPR const char *MSGTYPE_INTERFACE_STRING = "Interface";
 static CONSTEXPR const char *MSGTYPE_VEHICLE_STRING = "Vehicle";
 static CONSTEXPR const char *MSGTYPE_PEDESTRIAN_STRING = "Pedestrian";
 static CONSTEXPR const char *MSGTYPE_PMM_STRING = "Pmm";
+static CONSTEXPR const char *MSGTYPE_RADIO_STRING = "Radio";
 			
 enum MsgSubType 
 {
@@ -66,7 +68,10 @@ enum MsgSubType
 		DetectionZones = 8,
 		DetectionLog = 9,
 		TmxEventLog = 10,
-		NextRequest = 11
+		NextRequest = 11,
+		Incoming = 12,
+		Outgoing = 13,
+		Shutdown = 14
 };
 		
 		
@@ -82,6 +87,9 @@ static CONSTEXPR const char *MSGSUBTYPE_DETECTIONZONES_STRING = "DetectionZones"
 static CONSTEXPR const char *MSGSUBTYPE_DETECTIONLOG_STRING = "DetectionLog";
 static CONSTEXPR const char *MSGSUBTYPE_TMXEVENTLOG_STRING = "TmxEventLog";
 static CONSTEXPR const char *MSGSUBTYPE_NEXTREQUEST_STRING = "NextRequest";
+static CONSTEXPR const char *MSGSUBTYPE_INCOMING_STRING = "Incoming";
+static CONSTEXPR const char *MSGSUBTYPE_OUTGOING_STRING = "Outgoing";
+static CONSTEXPR const char *MSGSUBTYPE_SHUTDOWN_STRING = "Shutdown";
 		
 } /* End namespace messages */
 	

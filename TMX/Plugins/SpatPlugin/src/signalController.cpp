@@ -20,18 +20,18 @@
 #include <netdb.h>
 #include <arpa/inet.h>
 
-#include "tmx/tmx.h"
-#include "tmx/IvpPlugin.h"
-#include "tmx/messages/IvpJ2735.h"
+#include <PluginLog.h>
 
 #include "signalController.h"
-#include "utils/common.h"
-#include "utils/spat.h"
 
-void SignalController::Start(spat *msg)
+#include "NTCIP1202.h"
+
+using namespace tmx::messages;
+using namespace tmx::utils;
+using namespace std;
+
+void SignalController::Start()
 {
-	spat_initialize(msg);
-	message = msg;
 	// Create mutex for the Spat message
 	pthread_mutex_init(&spat_message_mutex, NULL);
     // launch update thread
@@ -52,19 +52,14 @@ void *SignalController::get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-void SignalController::setConfigs(char* localIp, char* localUdpPort, char* tscIp, char* tscRemoteSnmpPort, const char* ptlmFile)
+void SignalController::setConfigs(char* localIp, char* localUdpPort, char* tscIp, char* tscRemoteSnmpPort, const char* ptlmFile, char * intersectionName, int intersectionId)
 {
 	_localIp = strdup(localIp);
 	_localUdpPort = strdup(localUdpPort);
-	_ptlmFile = strdup(ptlmFile);
+	_intersectionId = intersectionId;
+	_intersectionName = strdup(intersectionName);
 
 	sc.setConfigs(tscIp, tscRemoteSnmpPort);
-}
-
-void SignalController::updatePtlmFile(const char* ptlmFile)
-{
-	_ptlmFile = strdup(ptlmFile);
-	sd.updatePtlmFile(_ptlmFile);
 }
 
 void SignalController::start_signalController()
@@ -78,19 +73,15 @@ void SignalController::start_signalController()
 
 	int maxDataSize = 1000;
 
+	Ntcip1202* ntcip1202 = new Ntcip1202();
+	_spat = new SPAT();
+
     int sockfd, numbytes;
     char buf[maxDataSize];
     struct addrinfo hints, *servinfo;
     int rv;
     struct timeval tv;
     int on = 1;
-
-	int returnVal = sd.initializeSpat(&sc, _ptlmFile);
-	if (!returnVal)
-	{
-		printf("Initialize Spat Failed:%d", returnVal);
-		return;
-	}
 
 	while (1)
 	{
@@ -108,6 +99,7 @@ void SignalController::start_signalController()
 	    hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG;
 
 	    EthernetIsConnected = 0;
+	    IsReceiving = 0;
 
 	    while (1) {
 	    	printf("Top of While Loop\n");
@@ -145,52 +137,67 @@ void SignalController::start_signalController()
 			}
 
 			if (EthernetIsConnected) {
-				printf("Signal Controller UDP Client Connected to %s:%s\n",_localIp, _localUdpPort);
+				//printf("Signal Controller UDP Client Connected to %s:%s\n",_localIp, _localUdpPort);
 				freeaddrinfo(servinfo); // all done with this structure
 //				client_socket = sockfd;
 				// Receive Packets and process until disconnected
 				while(EthernetIsConnected) {
+					//printf("Signal Controller ethernet connected, reading data\n");
 					numbytes = recv(sockfd, buf, maxDataSize-1, 0);
+					//printf("Signal Controller read %d bytes\n", numbytes);
+					//TODO - Check the start byte for 0xcd, then check for len of 245.
+					//TODO - store in temp space if less than 245, send only from 0xcd (byte 0) to byte 245 to new processing function
 					if ((numbytes == -1) || (numbytes == 0)){
 						if(numbytes == 0)
 							printf("Signal Controller Timed out\n");
 						else
 							printf("Signal Controller Client closed\n");
 						EthernetIsConnected = 0;
+						IsReceiving = 0;
 					}
 					else {
-//						printf("Received Data bytes:%d\n", numbytes);
 
+						IsReceiving = 1;
 						pthread_mutex_lock(&spat_message_mutex);
-						sd.buildSpat((unsigned char *) &buf, numbytes);
-						pthread_mutex_unlock(&spat_message_mutex);
 
-//						for (i=0; i<numbytes; i++) { printf("%02x ", (unsigned char) buf[i]); }
-//						printf("\n\n");
+						//printf("Signal Controller calling ntcip1202 copyBytesIntoNtcip1202");
+						ntcip1202->copyBytesIntoNtcip1202(buf, numbytes);
+
+						//printf("Signal Controller calling ntcip1202 ToJ2735r41SPAT");
+						ntcip1202->ToJ2735r41SPAT(_spat, _intersectionName, _intersectionId);
+
+						//printf("Signal Controller calling _spatMessage set_j2735_data\n");
+						_spatMessage.set_j2735_data(_spat);
+
+						pthread_mutex_unlock(&spat_message_mutex);
+						PLOG(logDEBUG) << _spatMessage;
 					}
 				}
 			}
-			printf("Sleeping\n");
+			//printf("Sleeping\n");
 			sleep(3);
 	    }
 	}
 }
 
+void SignalController::getEncodedSpat(SpatEncodedMessage* spatEncodedMsg)
+{
+	pthread_mutex_lock(&spat_message_mutex);
+
+	//printf("Signal Controller getEncodedSpat\n");
+	spatEncodedMsg->initialize(_spatMessage);
+
+	pthread_mutex_unlock(&spat_message_mutex);
+
+}
+
 int SignalController::getIsConnected()
 {
-	return EthernetIsConnected;
+	return EthernetIsConnected && IsReceiving;
 }
 
 int SignalController::getActionNumber()
 {
-	return sd.actionNumber;
+	return 1;//sd.actionNumber;
 }
 
-void SignalController::spat_update(spat* msg)
-{
-	sd.convertPtlmToSpat(msg);
-}
-SPaTData* SignalController::getSpatData()
-{
-	return &sd;
-}

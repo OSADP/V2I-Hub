@@ -8,6 +8,8 @@ $c_BattellePass = "b9a33441149b5bf052efc0b9673f643e"; //B@ttelle
 require('classes/LoginFormKey.class.php');
 require('dbconnection.php');
 $loginFormKey = new LoginFormKey();
+$system_name = getSystemName($con);
+
 
 
 function getAccessLevelString($arg_AccessLevel)
@@ -107,8 +109,8 @@ function getSystemName($con)
 
 	return $host;
 }
-
 ?>
+
 <html>
 <head>
 	<link href="<?php echo($c_PathPrefix) ?>/style.css" rel="stylesheet" type="text/css" />
@@ -126,15 +128,31 @@ function getSystemName($con)
 	<title> <?php echo($page_Title) ?> </title>
 </head>
 
-<body style="min-width:1000px;">
+<script>
+function currentTime() {
+    var today=new Date();
+    document.getElementById('date').innerHTML = today.toString();
+    var t = setTimeout(function(){currentTime()},500);
+}
+
+function setTitle(sys_name) {
+   document.getElementById('titleCell').innerHTML = '<?php echo($page_Title)?>' + " on " + sys_name;
+}
+
+function init() {
+	currentTime();
+	setTitle('<?php echo($system_name)?>');
+}
+</script>
+
+<body style="min-width:1000px;"  onload="init()">
 <div id="container">
 <div id="content">
 
 <table width="100%" style="color:#FFFFFF; margin-bottom:65px;">
-	<tr>
-		<td height="90px" valign="bottom"><h1 style="margin-bottom:0px; margin-top:10px"><?php echo($page_Title) . " on " . getSystemName($con) ?></h1></td>
-		<td align="right" valign="top">
-
+	<tr>	
+ 		<td height="90px" valign="bottom"><h1 style="margin-bottom:0px; margin-top:10px"><span id="titleCell"/></h1></td>
+ 		<td align="right" valign="top">
 		<?php if(isset($_SESSION['username'])) { ?>
 			<form action="<?php echo($c_PathPrefix) ?>/logout.php" method="post" name="logoutForm">
 				<label for="username">Logged in as: <?php echo("<b>" . $_SESSION['username'] . "</b> (" . getAccessLevelString($_SESSION['accessLevel']) . ")") ?></b></label>
@@ -172,6 +190,9 @@ function getSystemName($con)
 			</form>
 		<?php } ?></td>
 	</tr>
+	<tr>
+		<td valign="top"><span id= "date" runat="server"/></td>
+	</tr>
 </table>
 
 <script>
@@ -204,6 +225,7 @@ if($page_AccessLevel > $_SESSION['accessLevel'])
 <tr><td>+ <a href="<?php echo($c_PathPrefix) ?>/status/systemStatus.php">View System Status</a></td></tr>
 <tr><td>+ <a href="<?php echo($c_PathPrefix) ?>/status/eventLog.php">View Event Log</a></td></tr>
 <tr><td>+ <a href="<?php echo($c_PathPrefix) ?>/status/messageActivity.php">View Message Activity</a></td></tr>
+<tr><td>+ <a href="<?php echo($c_PathPrefix) ?>/status/messageLatency.php">View Message Latency</a></td></tr>
 </table>
 <?php } ?>
 

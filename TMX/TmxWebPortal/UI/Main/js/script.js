@@ -96,12 +96,7 @@ function generateAckMessageForPopup() {
     var ackMessage = device;
     var pageDevice = [];
 
-    if (device.slice(0, 3) == "VP_") pageDevice.push("MVP");
-    else if (device.slice(0, 4) == "EXCOM") {
-        pageDevice.push("MVP");
-        pageDevice.push("VSM");
-    }
-    else pageDevice.push(device);
+    pageDevice.push(device);
 
     if (type == "DANGER" || type == "WARNING") {
         var alertType = "";
@@ -113,17 +108,7 @@ function generateAckMessageForPopup() {
         ackMessage += ";" + 0 + ";LIMIT;" + sensor;
         ackMessage += ";" + alertType + ";ACKNOWLEDGE";
         console.log("ACK:" + ackMessage + " PageDevice:" + pageDevice);
-    } else {
-//        ackMessage += ";" + 0 + ";OP_VERIFY;ACKNOWLEDGE;" + msgNum + ";" + window.document.getElementById("popupmsg").innerHTML;
-        ackMessage += ";" + 0 + ";OP_VERIFY;ACKNOWLEDGE;" + msgNum + ";";
-        if (device == "AP") {
-            if (type.toLowerCase() == "error verify") {
-                ackMessage += "ERROR;"
-            } else {
-                ackMessage += "ADVISORY;"
-            }
-        }
-    }
+    } 
     for (var j = 0; j < pageDevice.length; j++) {
         for (var i = 0; i < iframes.length; i++) {
             if ((iframes[i].location != undefined && iframes[i].location.toUpperCase().indexOf(pageDevice[j].toUpperCase()) != -1) ||
@@ -132,20 +117,6 @@ function generateAckMessageForPopup() {
                 break;
             }
         }
-    }
-}
-
-function addExcomToIframe(link) {
-    if (!bAddedExcom) {
-        var uipage = document.createElement("div");
-        uipage.className += "ui-body-a ui-content uipage";
-        uipage.setAttribute('data-state', 'inactive');
-        uipage.id = "EXCOM";
-//        uipage.innerHTML += "<button id='go_to_excom_btn' class='hidden' onclick='goToExcom()'></button><div role='main' class='ui-content iframecontainer'><iframe src="+ link +"'/EXCOM/excomUI.html' frameBorder='0' id='iframe'></iframe></div></div>";
-        uipage.innerHTML += "<button id='go_to_excom_btn' class='hidden' onclick='goToExcom()'></button><div role='main' class='ui-content iframecontainer'><iframe src="+ link +" frameBorder='0' id='iframe'></iframe></div></div>";
-        window.document.body.appendChild(uipage);
-        iframes.push({ location: "EXCOM", target: window.frames[window.frames.length - 1], link: link, hasBeenAcked: false });
-        bAddedExcom = true;
     }
 }
 
@@ -196,9 +167,7 @@ function showPopupMessage() {
     if (tokens.length >= 4 && !(tokens[0].length <= 0 || tokens[2].length <= 0)) {
         if (tokens[2].toUpperCase() == "EVENT" || tokens[2].toUpperCase() == "LIMIT") {
             showAlertMessage(msg);
-        } else if (tokens[2].toUpperCase() == "OP_VERIFY") {
-            showVerifyMessage(msg);
-        }
+        } 
     }
     else {
         showPopupMessage();
@@ -329,99 +298,8 @@ $(document).ready(function () {
         for (var i = 0; i < tokenPairs.length; i++) {
             var tokens = tokenPairs[i].split("@$");
             switch (tokens[0]) {
-                case "bDisplayOnMain":
-                    for (var m = 0; m < iframes.length; m++) {
-                        if (iframes[m].location.toUpperCase().indexOf(tokens[1]) != -1) {
-                            iframes[m].hasBeenAcked = true;
-                            event.source.window.postMessage("bDisplayOnMain@$true", event.origin);
-                        }
-                    }
-                    break;
-                case "displayPopup":
-                    sortAlertAndVerifyMessages(tokens[1].trim());
-                    if (!bPopup) {
-                        showPopupMessage();
-                    }
-                    break;
-                case "removeDevicePopup":
-                    if (tokens.length < 2) {
-                        return;
-                    }
-                    removeDeviceMessagesFromQueue(tokens[1]);
-                    break;
                 case "adjustVolume":
                     adjustVolume(tokens[1]);
-                    break;
-                case "updateSoundOption":
-                    for (var i = 0; i < iframes.length; i++) {
-                        if (iframes[i].hasBeenAcked) {
-                            window[i].postMessage("updateSoundOption@$" + tokens[1], iframes[i].link);
-                        }
-                    }
-                    if (popupOption == 'beeps') {
-                        console.log("updateSoundOption Stopping Sound");
-                        stopWave();
-                    } else {
-                        cancelSpeech();
-                    }
-                    popupOption = tokens[1];
-                    break;
-                case "playBeeps":
-                    var soundSettings = tokens[1].split(";");
-                    playBeeps(soundSettings[0], soundSettings[1], soundSettings[2], soundSettings[3]);
-                    break;
-                case "goToDestination":
-                    var subTokens = tokens[1].split(";");
-                    var tabbtns = window.document.getElementsByClassName("mytab");
-                    for (var n = 0; n < tabbtns.length; n++) {
-                        if (tabbtns[n].className.indexOf("ui-btn-active") != -1) {
-                            if ((prevNavBtn == null || prevNavBtn == undefined) || (prevNavBtn != null && prevNavBtn != undefined && tabbtns[n].id.indexOf(subTokens[0]) == -1)) {
-                                prevNavBtn = tabbtns[n].id;
-                                break;
-                            }
-                        }
-                    }
-                    if (prevNavBtn != null && prevNavBtn != undefined) {
-                        var location = prevNavBtn.replace("btn_", "");
-                        for (var k = 0; k < iframes.length; k++) {
-                            if (event.origin.indexOf(location) != -1) {
-                                if (subTokens[2] != "null") {
-                                    if ((prevNavBtn == null || prevNavBtn == undefined) || (pervNavBtn != null && prevNavBtn != undefined && subTokens[2].indexOf(subTokens[1]) == -1)) {
-                                        prevHeadBtn = subTokens[2];
-                                        event.source.window.postMessage("prevNavBtn@$" + prevNavBtn + "@#" + "prevHeadBtn:" + prevHeadBtn, event.origin);
-                                    }
-                                }
-                            }
-                        }
-                        event.source.window.postMessage("prevNavBtn@$" + prevNavBtn + "@#" + "prevHeadBtn@$" + prevHeadBtn, event.origin);
-                    }
-                    var navbtn = window.document.getElementById(subTokens[0]);
-                    if (navbtn != null && navbtn != undefined) {
-                        navbtn.click();
-                    } else if (subTokens[2].indexOf("manual_input_btn") != -1) {
-                        $('#btn_SMC').click();
-                    }
-                    for (var k = 0; k < iframes.length; k++) {
-                        if (iframes[k].location.indexOf(location) != -1 && iframes[i].hasBeenAcked) {
-                            window[k].postMessage("clickBtn@$" + subTokens[1], iframes[k].link);
-                            break;
-                        }
-                    }
-                    break;
-                case "addExcomToIframe":
-                    addExcomToIframe("http://" + tokens[1]);
-                    break;
-                case "goToExcom":
-                    //console.log("MAIN script.js - goToExcom");
-                    break;
-                case "hideNavBar":
-                    $('#navbar').addClass('hidden');
-                    break;
-                case "showNavBar":
-                    $('#navbar').removeClass('hidden');
-                    break;
-                case "movePopups":
-                    movePopups(tokens[1]);
                     break;
             }
         }

@@ -19,11 +19,9 @@
     <script type="text/javascript" src="js/bootstrap.min.js"></script>
     <script type="text/javascript" src="js/bootstrap-select.min.js"></script>
 	<script type="text/javascript" src="js/jquery.scrollbox.min.js"></script>
+	<script type="text/javascript" src="../generated-code/js/tmx.MessageTypes.js"></script>
     <script type="text/javascript" src="js/tmx.initialization.js"></script>
     <script type="text/javascript" src="../js/tmx.common.library.js" defer></script>
-    <!--
-	<script type="text/javascript" src="../generated-code/js/tmx.messages.LocationMessageEnumTypes.js"></script>
-	-->    
     <script type="text/javascript" src="../generated-code/js/tmx.messages.VehicleParameterEnumTypes.js"></script>
     <script type="text/javascript" src="../generated-code/js/tmx.messages.ApplicationMessageEnumTypes.js"></script>
     <script type="text/javascript" src="js/tmx.custom.library.js" defer></script>
@@ -60,6 +58,13 @@
 						  <div class="panel-body">
 							 <form>
 							 <div class="col-lg-6">
+							  <div class="form-group">
+							    <h4>Brake Status:</h4>
+		        				<select id="TransportationMode" class="form-control">
+			        				<option value="1" selected="selected">Transit</option>
+			        				<option value="2">Taxi</option>
+		        				</select>							    
+							  </div>								 
 							  <div class="form-group">
 							    <h4>Brake Status:</h4>
 							    <div class="form-control" id="vehicle_brakeapplied"></div>
@@ -182,21 +187,75 @@
 					    <h3 class="panel-title">DSRC RSSI</h3>
 					  </div>
 					  <div class="panel-body">			     
-		                <form>
-		           		  <div class="form-group">
-					        <h4>Select DSRC Configuration:</h4>
-					        <select id="DSRCState" class="selectpicker">
-					          <option value="-1" selected>Select Configuration...</option>
-							  <option value="1">DSRC 1 Only</option>
-							  <option value="2">DSRC 2 Only</option>
-							  <option value="3">Both DSRC 1 and 2</option>
-							</select>
-						  </div>
-						  <div class="form-group">
-					        <h4>DSRC Output</h4>			
-							<textarea class="form-control" id="dsrc_output" cols="40" rows="5"></textarea>		    
-						  </div>					  
-		                </form>
+							 <form>
+							 	<div class="row">
+								 <div class="col-lg-4">
+								  <div class="form-group">
+								    <h4>Select Radio:</h4>
+								    <select id="RSSIConfig_Radio" class="form-control" data-size="5">
+								    </select>
+								  </div>
+								</div>
+							    <div class="col-lg-4">
+								  <div class="form-group">
+								    <h4>Select Channel:</h4>
+								    <select id="RSSIConfig_Channel" class="form-control" data-size="5">
+								    </select>
+								  </div>
+								</div>				
+								<div class="col-lg-4">
+								  <div class="form-group">
+								    <h4>Source:</h4>
+								    <select id="RSSIConfig_Source" class="form-control" data-size="5">
+								    </select>
+								  </div>												  
+							 	</div>
+							 	</div>
+							 	<div class="row">
+								 <div class="col-lg-4">				 
+								  <div class="form-group">
+								    <h4>Radio Id:</h4>
+								    <div class="form-control" id="rssi_RadioID"></div>
+								  </div>						  
+								  <div class="form-group">
+								    <h4>Channel Id:</h4>
+								    <div class="form-control" id="rssi_ChannelID"></div>
+								  </div>
+								  <div class="form-group">
+								    <h4>Source:</h4>
+								    <div class="form-control" id="rssi_Source"></div>
+								  </div>								 
+								 </div>
+								 <div class="col-lg-4">
+								  <div class="form-group">
+								    <h4>RSSI Average:</h4>
+								    <div class="form-control" id="rssi_AVG_RSSI"></div>
+								  </div>						  
+								  <div class="form-group">
+								    <h4>RSSI Minimum:</h4>
+								    <div class="form-control" id="rssi_Min_RSSI"></div>
+								  </div>
+								  <div class="form-group">
+								    <h4>RSSI Maximum:</h4>
+								    <div class="form-control" id="rssi_Max_RSSI"></div>
+								  </div>							 
+								 </div>
+								 <div class="col-lg-4">
+								  <div class="form-group">
+								    <h4>Noise Average:</h4>
+								    <div class="form-control" id="rssi_AVG_Noise"></div>
+								  </div>						  
+								  <div class="form-group">
+								    <h4>Noise Minimum:</h4>
+								    <div class="form-control" id="rssi_Min_Noise"></div>
+								  </div>
+								  <div class="form-group">
+								    <h4>Noise Maximum:</h4>
+								    <div class="form-control" id="rssi_Max_Noise"></div>
+								  </div>							 
+								 </div>
+								</div>
+							</form>
 	                   </div>
 					</div>		
 			     </div>
@@ -206,11 +265,33 @@
 	</div>
 	<div id="result"></div>
     <script type="text/javascript">
-    	$('#DSRCState').selectpicker({
-    	  width: 'auto',
-    	  noneSelectedText: 'Select DSRC Configuration',
-    	  showTick: true
+    	$('#RSSIConfig_Radio').selectpicker({
+    	  width: '100%',
+    	  noneSelectedText: 'Filter by Radio...',
+    	  size: 10
     	});
+    	$('#RSSIConfig_Channel').selectpicker({
+      	  width: '100%',
+      	  noneSelectedText: 'Filter by Channel...'
+      	});
+    	$('#RSSIConfig_Source').selectpicker({
+      	  width: '100%',
+      	  noneSelectedText: 'Filter by Source...'
+      	});  
+    	
+    	$('#RSSIConfig_Radio').on('changed.bs.select', function (e) {
+    		  //console.log("Selected Radio");
+    		  clearRSSIForm();
+    	});
+    	
+    	$('#RSSIConfig_Channel').on('changed.bs.select', function (e) {
+  		  	//console.log("Selected Channel");
+  			clearRSSIForm();
+  		});
+    	$('#RSSIConfig_Source').on('changed.bs.select', function (e) {
+  		  	//console.log("Selected Source");
+  		  	clearRSSIForm();
+  		});    	
     </script>
 </body>
 </html>

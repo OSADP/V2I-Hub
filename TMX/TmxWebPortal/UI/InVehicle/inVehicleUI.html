@@ -17,13 +17,15 @@
     <script type="text/javascript" src="../js/jquery.mobile-1.4.5.min.js"></script>
 
     <script type="text/javascript" src="js/tmx.initialization.js"></script>
+    <script type="text/javascript" src="../js/tmx.shared.library.js" defer></script>
     <script type="text/javascript" src="../js/tmx.common.library.js" defer></script>
     <script type="text/javascript" src="../js/tmx.vehicle.display.library.js" defer></script>
+    <script type="text/javascript" src="../generated-code/js/tmx.SystemConfigTypes.js"></script>
     <script type="text/javascript" src="../js/tmx.components.library.js" defer></script>
 </head>
 <audio id="player"></audio>
 
-<body oncontextmenu="return false;">
+<body oncontextmenu="return false;" style="background-color:#000000">
     <div id="pageContainer">
     <div data-role="header" data-position="fixed" class="headercontainer hidden" data-tap-toggle="false" data-theme="a" data-fullscreen="true">
         <div class="buttoncontainer" data-position="fixed">
@@ -34,16 +36,22 @@
         <!--div id="identifier_label" class="identifierlabel">Vehicle Display Type:Bus ID:1002 Mode:Operational</div-->
     </div>
     <div id="popup"></div>
-    <div data-role="page" class="ui-page-theme-a" id="Main" data-title="TMX">
+    <div data-role="page" class="ui-page-theme-a bgBlack" id="Main" data-title="TMX">
         <div id="middleDiv" class="ImageDiv">
-            <img id="ActiveImage" src="../images/Common/Splash_Screen.png" />
-            <img id="NearDirectionImage" src="" class="hidden" />
-            <img id="RightDirectionImage" src="" class="hidden" />
-            <img id="FarDirectionImage" src="" class="hidden" />
-            <img id="LeftDirectionImage" src="" class="hidden" />
-            <img id="CloakImage" src="../images/cloakmode.png" class="hidden" />
-            <div id="bottomDiv"></div>
+            <img id="ActiveImage" src="../images/Common/Splash_Screen_2.png" class="layered_stack z-index-0" />
+            <img id="NearDirectionImage" src="" class="layered_stack z-index-3 hidden" />
+            <img id="RightDirectionImage" src="" class="layered_stack z-index-4 hidden" />
+            <img id="FarDirectionImage" src="" class="layered_stack z-index-5 hidden" />
+            <img id="LeftDirectionImage" src="" class="layered_stack z-index-6 hidden" />
+            <img id="OnCurbsidePedZoneImage" src="" class="layered_stack z-index-7 hidden" />
+            <img id="InRoadwayFwdCenterPedZoneImage" src="" class="layered_stack z-index-8 hidden" />
+            <img id="InRoadwayFwdCurbPedZoneImage" src="" class="layered_stack z-index-9 hidden" />
+            <img id="InRoadwayRearCenterPedZoneImage" src="" class="layered_stack z-index-10 hidden" />
+            <img id="InRoadwayRearCurbPedZoneImage" src="" class="layered_stack z-index-11 hidden" />            
+            <img id="CloakImage" src="../images/Common/battelle_visual_disabled.png" class="layered_stack z-index-0 hidden" />
         </div>
+        <div id="bottomDiv" class="whiteFont-32"></div>
+
     </div>
     </div>
 </body>

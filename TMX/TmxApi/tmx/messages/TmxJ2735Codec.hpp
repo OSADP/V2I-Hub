@@ -75,8 +75,8 @@ struct der
 	{
 		size_t start;
 		int count = 0;
-		for (start = 0; start < bytes.size() && bytes[start] != 0x30 && count <= 6; start++, count++);
-		if (count > 6) start = 0;  // Beginning not found, just try it
+		for (start = 0; start < bytes.size() && bytes[start] != 0x30 && count <= 16; start++, count++);
+		if (count > 15) start = 0;  // Beginning not found, just try it
 		return ber_decode(0, typeDescriptor, obj, &bytes.data()[start], bytes.size() - start);
 	}
 
@@ -88,25 +88,28 @@ struct der
 
 	static int decode_msgId(const tmx::byte_stream &bytes)
 	{
-		int id = 0;
 		int count = 0;
 
 		// Read the DER encoded bytes to obtain the message ID
 		byte_stream::const_iterator it;
-		for (it = bytes.begin(); it != bytes.end() && *it != 0x30 && count <= 6; it++, count++);
-		for (it = bytes.begin(); it != bytes.end() && *it != 0x80 && count <= 6; it++, count++);
-		if (count <= 6)
+		for (it = bytes.begin(); it != bytes.end() && *it != 0x30 && count <= 16; it++, count++);
+		if (count < 16)
 		{
-			if (it != bytes.end()) it++;
-
-			// Next byte is length, should be one byte
-			if (it != bytes.end() && *it == 0x01)
+			// Should be the 5th segment
+			ber_tlv_len_t len;
+			ssize_t lenBytes = 1;
+			for (int idx = count, count = 0; count < 5 && idx <= bytes.size(); idx += lenBytes, count++)
 			{
-				it++;
-				id = *it;
+				lenBytes = ber_fetch_length(1, &(bytes.data()[idx]), bytes.size(), &len);
+				if (lenBytes == 0 || lenBytes == -1)
+				{
+					len = 0;
+					break;
+				}
 			}
 
-			return id;
+			if (len > api::J2735 && len < api::J2735_end)
+				return static_cast<int>(len);
 		}
 
 		return -1;

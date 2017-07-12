@@ -9,6 +9,7 @@
 #define CONVERSIONS_H_
 
 #include "WGS84Point.h"
+#include "Units.h"
 
 namespace tmx {
 namespace utils {
@@ -25,6 +26,7 @@ public:
 	static double DistanceMeters(double degreesLat1, double degreesLon1, double degreesLat2, double degreesLon2);
 	static double DistanceMeters(WGS84Point point1, WGS84Point point2);
 	static double GetBearingDegrees(WGS84Point point1, WGS84Point point2);
+	static double GradeDegrees(WGS84Point point1, WGS84Point point2);
 	static double NodeOffsetToLatitude(double baseLatitude, double totalYOffsetMeters);
 	static double NodeOffsetToLongitude(double baseLongitude, double baseLatitude, double totalXOffsetMeters);
 };

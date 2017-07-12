@@ -44,13 +44,17 @@ inline std::string NowTime();
 static UdpClient client("localhost", DEFAULT_EVENTLOG_UDP_PORT);
 #endif
 
+std::ostream &_logtime(std::ostream &os, uint64_t timestamp = 0);
+std::ostream & _logsource(std::ostream &os, std::string file = "Unknown source", unsigned int line = 0);
+std::ostream & _loglevel(std::ostream &os, LogLevel level = logINFO);
+
 template <typename T>
 class PluginLog
 {
 public:
 	PluginLog();
 	virtual ~PluginLog();
-	std::ostream &Get(LogLevel level = logINFO, std::string file = "Unknown", unsigned int line = -1, std::string plugin = "");
+	std::ostream &Get(LogLevel level = logINFO, std::string file = "Unknown source", unsigned int line = 0, std::string plugin = "");
 
     static LogLevel& ReportingLevel();
     static FILE* &Stream();
@@ -80,8 +84,11 @@ PluginLog<T>::PluginLog(): tmxMessage(NULL)
 template <typename T>
 PluginLog<T>::~PluginLog()
 {
-    os << std::endl;
-    writer.Output(os.str());
+	if (!os.str().empty())
+	{
+		os << std::endl;
+		writer.Output(os.str());
+	}
 
     if (tmxMessage)
     {
@@ -107,12 +114,14 @@ PluginLog<T>::~PluginLog()
 template <typename T>
 std::ostream& PluginLog<T>::Get(LogLevel level, std::string file, unsigned int line, std::string plugin)
 {
-	static constexpr int fileMaxLen = FILE_NAME_MAX_WIDTH;
-
 	writer.Visit(this, level, file, line, plugin);
 
+	uint64_t timestamp = 0;
+
+#ifndef NO_EVENTLOG_UDP
 	tmx::messages::TmxEventLogMessage elm;
 	elm.set_level(ToEventLogLevel(level));
+
 
 	tmxMessage = new tmx::routeable_message();
 
@@ -131,28 +140,13 @@ std::ostream& PluginLog<T>::Get(LogLevel level, std::string file, unsigned int l
 	}
 
 	tmxMessage->initialize(elm, plugin);
+	timestamp = tmxMessage->get_timestamp();
+#endif
 
-	time_t now = (time_t)(tmxMessage->get_timestamp() / 1000);
-	short ms = tmxMessage->get_timestamp() % 1000;
-	struct tm *myTm = localtime(&now);
-	char tmBuffer[20];
-	strftime(tmBuffer, 20, "%F %T", myTm);
+	_logtime(os, timestamp);
+	_logsource(os, file, line);
+	_loglevel(os, level);
 
-	if (line > 0)
-	{
-		file.append(" (");
-		file.append(std::to_string(line));
-		file.append(")");
-	}
-
-	os << "[" << tmBuffer << "." << std::setfill('0') << std::setw(3) << ms << "] " << std::setfill(' ');
-	if (file.length() > fileMaxLen)
-		os << std::right << std::setw(fileMaxLen) << file.substr(file.size() - fileMaxLen);
-	else
-		os << std::right << std::setw(fileMaxLen) << file;
-
-	os << " - " << std::left << std::setw(7) << ToString(level) << ": ";
-	//os << std::string(level > logDEBUG ? level - logDEBUG : 0, '\t');
 	msgIndex = os.str().length();
     return os;
 }

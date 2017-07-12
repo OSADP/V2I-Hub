@@ -8,7 +8,11 @@ var connections = 	[
 			];
 
 // Messages to subscribe to on the tmx core
-var subscriptions = [{type: "Decoded", subtype: "Location"}, {type: "Vehicle", subtype: "Basic"}, {type: APPLICATIONMESSAGE_TYPE, subtype: "Basic"}];
+
+var subscriptions = [{type: messages.MsgType.Decoded.string, subtype: messages.MsgSubType.Location.string}, 
+                     {type: messages.MsgType.Vehicle.string, subtype: messages.MsgSubType.Basic.string}, 
+                     //{type: messages.MsgType.Application.string, subtype: messages.MsgSubType.Basic.string}, 
+                     {type: messages.MsgType.Radio.string, subtype: messages.MsgSubType.Incoming.string}];
 
 var optgroups = [
 /*                 
@@ -57,7 +61,7 @@ var optgroups = [
              ];
 
 // Name that is registered when the page registers with the tmx core
-var uiString = "CCPDiagnosticsUI";
+var uiString = "CCPDATUI";
 
 // Settings for unit. This will come from the database. Set here for default values and testing
 var radioSettings = 

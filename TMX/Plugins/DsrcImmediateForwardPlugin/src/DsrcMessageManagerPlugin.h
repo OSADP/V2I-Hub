@@ -60,6 +60,8 @@ private:
 	uint _skippedNoDsrcMetadata;
 	uint _skippedNoMessageRoute;
 	uint _skippedInvalidUdpClient;
+
+	bool _muteDsrc;
 };
 
 } /* namespace DsrcMessageManager */

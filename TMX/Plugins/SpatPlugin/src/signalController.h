@@ -11,26 +11,26 @@
 #include <pthread.h>
 #include <boost/thread.hpp>
 
-#include "utils/common.h"
-#include "utils/spat.h"
+#include <asn_j2735_r41/SPAT.h>
+#include <tmx/j2735_messages/SpatMessage.hpp>
 #include "SignalControllerNTCIP.h"
-#include "SpatMessage_r41.h"
-#include "SPaTData.h"
 
 
 class SignalController
 {
 	public:
 
-		void Start(spat *message);
+		void Start();
 		void spat_load();
 		void start_signalController();
-		void spat_update(spat* msg);
 		int getActionNumber();
-		void setConfigs(char* ip, char* udpPort, char* snmpIP, char* snmpPort, const char* ptlmFile);
+		void setConfigs(char* ip, char* udpPort, char* snmpIP, char* snmpPort, const char* ptlmFile, char * intersectionName, int intersectionId);
 		void updatePtlmFile(const char* ptlmFile);
 		int getIsConnected();
-		SPaTData* getSpatData();
+
+		//int getDerEncodedSpat(unsigned char* derEncodedBuffer);
+
+		void getEncodedSpat(tmx::messages::SpatEncodedMessage* spatEncodedMsg);
 
 		pthread_mutex_t spat_message_mutex;
 		boost::thread sigcon_thread_id;
@@ -38,21 +38,21 @@ class SignalController
 	private:
 		void *get_in_addr(struct sockaddr *);
 
-		// Local IP address and UDP port for reception of SPAT data from the TSC.
+		// Local IP address and UDP port for reception of SPAT dSPaTDataata from the TSC.
 		char* _localIp;
 		char* _localUdpPort;
+		char* _intersectionName;
+		int _intersectionId;
 
-		char* _ptlmFile;
+		SPAT* _spat;
+		tmx::messages::SpatMessage _spatMessage;
 
-		spat* message;
-		SPaTData sd;
 		SignalControllerNTCIP sc;
 		int counter;
 		unsigned long normalstate;
 		unsigned long crossstate;
 		int EthernetIsConnected;
-
-
+		int IsReceiving;
 };
 
 #endif /* SIGNALCONTROLLER_H_ */

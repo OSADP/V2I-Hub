@@ -1,5 +1,9 @@
-var deviceName = "MDInVehicle";
+var deviceName = "CCPDAT";
 var customLibraryJsVersion = "0.0.1";
+var radioArray = new Array("Filter by Radio...");
+var channelArray = new Array("Filter by Channel...");
+var sourceArray = new Array("Filter by Source...");
+var MPStoMPH = 2.236936292;
 
 // Event listener from common.library 
 addEventListener("newMessage", newMessageHandler, false);
@@ -16,7 +20,8 @@ function connectHandler()
 // Receiver for unhandled messages from the common.library
 function newMessageHandler(evt)
 {
-    //console.log(evt.detail.message);
+    console.log(evt.detail.message);
+    console.log("New One");
     var json_obj = JSON.parse(evt.detail.message);
     
     handelMessages(json_obj);
@@ -36,12 +41,12 @@ function newMessageHandler(evt)
 function handelMessages(json_obj)
 {
 	if (isSubscribedTo(json_obj.header)) {
-		console.log(json_obj.payload);	
+		//console.log(json_obj.payload);
 		switch(json_obj.header.type) {
-			case "Decoded":
+			case messages.MsgType.Decoded.string:
 			{
 				switch(json_obj.header.subtype) {
-				case "Location":
+				case messages.MsgSubType.Location.string:
 					setLocationForm(json_obj.payload);
 					break;
 				case "Vehicle":
@@ -50,24 +55,64 @@ function handelMessages(json_obj)
 				}
 				break;
 			}
-			case "Vehicle":
+			case messages.MsgType.Vehicle.string:
 			{
 				switch(json_obj.header.subtype) {
-				case "Basic":
+				case messages.MsgSubType.Basic.string:
 					setVehicleForm(json_obj.payload);
 					break;					
 				}
 				break;
 			}
-			case APPLICATIONMESSAGE_TYPE:
+			case messages.MsgType.Application.string:
 			{
 				switch(json_obj.header.subtype) {
-				case APPLICATIONMESSAGE_SUBTYPE:
+				case messages.MsgSubType.Basic.string:
 					console.log("APPLICATION MESSAGE");
 					break;					
 				}
 				break;
-			}				
+			}
+			case messages.MsgType.Radio.string:
+			{
+				switch(json_obj.header.subtype) {
+				case messages.MsgSubType.Incoming.string:
+					//console.log("Selected Rad Val: " + $("#RSSIConfig_Radio").val());
+					//console.log("Selected Channel Val: " + $("#RSSIConfig_Channel").val());
+					//console.log("Selected SOurce Val: " + $("#RSSIConfig_Source").val());
+					
+					if (($("#RSSIConfig_Radio").val() == 0 || $("#RSSIConfig_Radio").val() == null) && ($("#RSSIConfig_Channel").val() == 0 || $("#RSSIConfig_Channel").val() == null ) && ($("#RSSIConfig_Source").val() == 0 || $("#RSSIConfig_Source").val() == null)) {
+						//console.log("Setting Form ALL UNSELECTED");
+						setRSSIForm(json_obj.payload);
+					} else { 
+						if ($("#RSSIConfig_Radio").val() != null && $("#RSSIConfig_Radio").val() != 0 && radioArray[$("#RSSIConfig_Radio").val()] == json_obj.payload.RadioID) {
+							//console.log("Setting Form RADIO: " + $("#RSSIConfig_Radio").val());
+							setRSSIForm(json_obj.payload);
+						} 
+						//console.log($("#RSSIConfig_Channel").val());
+						//console.log(channelArray[$("#RSSIConfig_Channel").val()]);
+						//console.log(json_obj.payload.ChannelID);
+						if ($("#RSSIConfig_Channel").val() != null && $("#RSSIConfig_Channel").val() != 0 && channelArray[$("#RSSIConfig_Channel").val()] == json_obj.payload.ChannelID) {
+							//console.log("Setting Form CHANNEL: " + $("#RSSIConfig_Channel").val());
+							setRSSIForm(json_obj.payload);
+						} 
+						if ($("#RSSIConfig_Source").val() != null && $("#RSSIConfig_Source").val() != 0 && sourceArray[$("#RSSIConfig_Source").val()] == json_obj.payload.Source) {
+							//console.log("Setting Form SOURCE: " + $("#RSSIConfig_Source").val());
+							setRSSIForm(json_obj.payload);
+						} 
+					}
+					//else if (radioArray[$("#RSSIConfig_Radio").val()] == json_obj.payload.RadioID || channelArray[$("#RSSIConfig_Channel").val()] == json_obj.payload.Channel ||
+							//sourceArray[$("#RSSIConfig_Source").val()] == json_obj.payload.Source) {
+						//console.log("RADIO: selected val - " + radioArray[$("#RSSIConfig_Radio").val()] + ", In Value - " + json_obj.payload.RadioID + ", is equal:  " + (radioArray[$("#RSSIConfig_Radio").val()] == json_obj.payload.RadioID));
+						//console.log("CHANNEL: " + channelArray[$("#RSSIConfig_Channel").val()] == json_obj.payload.Channel);
+						//console.log("SOURCE: " + sourceArray[$("#RSSIConfig_Source").val()] == json_obj.payload.Source);
+						//setRSSIForm(json_obj.payload);
+					//}
+					setRSSIConfigDropDown(json_obj.payload.RadioID, json_obj.payload.ChannelID, json_obj.payload.Source);
+					break;					
+				}
+				break;				
+			}
 		}
 	}
 }
@@ -76,29 +121,173 @@ function handelMessages(json_obj)
 //Function to parse the JSON values and set them in the GPS modal
 function setLocationForm(payload)
 {
-
+	var speed = payload.Speed_mps * MPStoMPH;
+	
 	$("#location_latitude").text(round(payload.Latitude, 6));
 	$("#location_longitude").text(round(payload.Longitude, 6));
-	$("#location_speed").text(round(payload.Speed, 4));
+	$("#location_speed").text(round(speed, 4));
 	$("#location_heading").text(round(payload.Heading, 2));
 	$("#location_altitude").text(payload.Altitude);
 	$("#location_fixquality").text(getFixType(payload.FixQuality));
 	$("#location_horizontaldop").text(payload.HorizontalDOP);
 	$("#location_numsatellites").text(payload.NumSatellites);
 	$("#location_signalquality").text(getSignalQuality(payload.SignalQuality));
-	$("#location_time").text(moment.unix(payload.Time / 1000).format("MM/DD/YYYY hh:mm a"));
+	//console.log(moment.unix(payload.Time / 1000).format("MM/DD/YYYY hh:mm:ss a"));
+	$("#location_time").text(moment.unix(payload.Time / 1000).format("MM/DD/YYYY hh:mm:ss a"));
 }
 
 //Function to parse the JSON values and set them in the CAN modal
 function setVehicleForm(payload)
 {
+	var speed = payload.Speed_mps * MPStoMPH;
+
 	//console.log("in setLocationForm");
 	$("#vehicle_brakeapplied").text(payload.BrakeApplied == 0 ? "Not Applied" : "Applied");
 	$("#vehicle_frontdoorsopen").text(payload.FrontDoorsOpen == 0 ? "Closed" : "Open");
 	$("#vehicle_gearposition").text(getGearPosition(payload.GearPosition));
 	$("#vehicle_reardoorsopen").text(payload.RearDoorsOpen == 0 ? "Closed" : "Open");
-	$("#vehicle_speedmph").text(round(payload.SpeedMph, 4));
+	$("#vehicle_speedmph").text(round(speed, 4));
 	$("#vehicle_turnsignalposition").text(getTurnSignalPosition(payload.TurnSignalPosition));		
+}
+
+function setRSSIForm(payload)
+{
+	/*
+	console.log("RadioID: " + payload.RadioID);
+	console.log("ChannelID: " + payload.ChannelID);
+	console.log("Source: " + payload.Source);
+	console.log("RSSI_Avg: " + payload.RSSI_Avg);
+	console.log("RSSI_Min: " + payload.RSSI_Min);
+	console.log("RSSI_Max: " + payload.RSSI_Max);
+	console.log("Noise_Avg: " + payload.Noise_Avg);
+	console.log("Noise_Min: " + payload.Noise_Min);
+	console.log("Noise_Max: " + payload.Noise_Max);
+	*/
+	$("#rssi_RadioID").text(payload.RadioID);
+	$("#rssi_ChannelID").text(payload.ChannelID);
+	$("#rssi_Source").text(payload.Source);
+	$("#rssi_AVG_RSSI").text(payload.RSSI_Avg);
+	$("#rssi_Min_RSSI").text(payload.RSSI_Min);
+	$("#rssi_Max_RSSI").text(payload.RSSI_Max);
+	$("#rssi_AVG_Noise").text(payload.Noise_Avg);
+	$("#rssi_Min_Noise").text(payload.Noise_Min);
+	$("#rssi_Max_Noise").text(payload.Noise_Max);	
+}
+
+function clearRSSIForm()
+{
+	$("#rssi_RadioID").text("");
+	$("#rssi_ChannelID").text("");
+	$("#rssi_Source").text("");
+	$("#rssi_AVG_RSSI").text("");
+	$("#rssi_Min_RSSI").text("");
+	$("#rssi_Max_RSSI").text("");
+	$("#rssi_AVG_Noise").text("");
+	$("#rssi_Min_Noise").text("");
+	$("#rssi_Max_Noise").text("");	
+}
+
+function setRSSIConfigDropDown(radio, channel, source)
+{
+	addtoRadioArrayIfNotIn(radio);
+	addtoChannelArrayIfNotIn(channel);
+	addtoSourceArrayIfNotIn(source);
+}
+
+function addtoRadioArrayIfNotIn(radio)
+{
+	var addToArray = true;
+	var len = radioArray.length;
+	//console.log("Radio Array Length: " + len);
+	for (var i = 0; i < len; i++) {
+		if (radioArray[i] != radio) {
+			addToArray = true;
+		}
+		else {
+			addToArray = false;
+			break;
+		}
+	}
+	
+	if (addToArray) {
+		radioArray.push(radio);
+		refreshRSSIConfigRadio();
+		$('#RSSIConfig_Radio').selectpicker('refresh');
+	}
+}
+
+function addtoChannelArrayIfNotIn(channel)
+{
+	var addToArray = true;
+	var len = channelArray.length;
+	
+	for (var i = 0;i < len; i++) {
+		if (channelArray[i] != channel) {
+			addToArray = true;
+		}
+		else {
+			addToArray = false;
+			break;
+		}
+	}
+	
+	if (addToArray) {
+		channelArray.push(channel);
+		refreshRSSIConfigChannel();
+		$('#RSSIConfig_Channel').selectpicker('refresh');
+	}
+}
+
+function addtoSourceArrayIfNotIn(source)
+{
+	var addToArray = true;
+	var len = sourceArray.length;
+	
+	for (var i = 0; i < len; i++) {
+		if (sourceArray[i] != source) {
+			addToArray = true;
+		}
+		else {
+			addToArray = false;
+			break;
+		}
+	}
+	
+	if (addToArray) {
+		sourceArray.push(source);
+		refreshRSSIConfigSource();
+		$('#RSSIConfig_Source').selectpicker('refresh');
+	}
+}
+
+function refreshRSSIConfigRadio() {
+	//console.log("refreshRSSIConfigRadio()");
+	$('#RSSIConfig_Radio option').remove();
+	
+	$.each(radioArray, function(val, text) {
+		//console.log("refreshRSSIConfigRadio: " + val + " - " + text);
+        $('#RSSIConfig_Radio').append( $('<option></option>').val(val).html(text) )
+        }); // there was also a ) missing here
+}
+
+function refreshRSSIConfigChannel() {
+	//console.log("refreshRSSIConfigChannel()");
+	$('#RSSIConfig_Channel option').remove();
+	
+	$.each(channelArray, function(val, text) {
+		//console.log("refreshRSSIConfigChannel" + val + " - " + text);
+        $('#RSSIConfig_Channel').append( $('<option></option>').val(val).html(text) )
+        }); // there was also a ) missing here	
+}
+
+function refreshRSSIConfigSource() {
+	//console.log("refreshRSSIConfigSource()");
+	$('#RSSIConfig_Source option').remove();
+	
+	$.each(sourceArray, function(val, text) {
+		//console.log("refreshRSSIConfigSource" + val + " - " + text);
+        $('#RSSIConfig_Source').append( $('<option></option>').val(val).html(text) )
+        }); // there was also a ) missing here	
 }
 
 //Translates to a human readable enum value

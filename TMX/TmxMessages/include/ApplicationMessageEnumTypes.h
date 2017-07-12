@@ -48,7 +48,10 @@ enum ApplicationTypes
 		TSPW = 8,
 		RCI = 9,
 		RCVW = 10,
-		MD = 11
+		MD = 11,
+		TSPWRD = 12,
+		TSPWPOV = 13,
+		RLVW = 14
 };
 		
 		
@@ -64,6 +67,9 @@ static CONSTEXPR const char *APPLICATIONTYPES_TSPW_STRING = "TSPW";
 static CONSTEXPR const char *APPLICATIONTYPES_RCI_STRING = "RCI";
 static CONSTEXPR const char *APPLICATIONTYPES_RCVW_STRING = "RCVW";
 static CONSTEXPR const char *APPLICATIONTYPES_MD_STRING = "MD";
+static CONSTEXPR const char *APPLICATIONTYPES_TSPWRD_STRING = "TSPWRD";
+static CONSTEXPR const char *APPLICATIONTYPES_TSPWPOV_STRING = "TSPWPOV";
+static CONSTEXPR const char *APPLICATIONTYPES_RLVW_STRING = "RLVW";
 			
 enum EventCodeTypes 
 {
@@ -102,7 +108,9 @@ enum EventCodeTypes
 		InRoadwayFwdCenterPed = 32,
 		InRoadwayFwdCurbPed = 33,
 		InRoadwayRearCenterPed = 34,
-		InRoadwayRearCurbPed = 35
+		InRoadwayRearCurbPed = 35,
+		RLVWAlert = 36,
+		RLVWWarning = 37
 };
 		
 		
@@ -142,6 +150,8 @@ static CONSTEXPR const char *EVENTCODETYPES_INROADWAYFWDCENTERPED_STRING = "InRo
 static CONSTEXPR const char *EVENTCODETYPES_INROADWAYFWDCURBPED_STRING = "InRoadwayFwdCurbPed";
 static CONSTEXPR const char *EVENTCODETYPES_INROADWAYREARCENTERPED_STRING = "InRoadwayRearCenterPed";
 static CONSTEXPR const char *EVENTCODETYPES_INROADWAYREARCURBPED_STRING = "InRoadwayRearCurbPed";
+static CONSTEXPR const char *EVENTCODETYPES_RLVWALERT_STRING = "RLVWAlert";
+static CONSTEXPR const char *EVENTCODETYPES_RLVWWARNING_STRING = "RLVWWarning";
 			
 enum Severity 
 {

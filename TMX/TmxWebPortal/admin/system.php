@@ -2,7 +2,8 @@
 $page_Title = "TMX System Details";
 $page_AccessLevel = 2;
 ?>
-<?php include("../header.php"); 
+<?php 
+include("../header.php"); 
 $id=$_POST["id"];
 ?>
 
@@ -13,6 +14,12 @@ $id=$_POST["id"];
 		    //Prepare jTable
 			$('#SystemConfigTableContainer').jtable({
 				title: 'System Configuration Parameters',
+				//Event
+	            rowUpdated: function (event, data) {
+		            if (data.record.parameterName == "SYSTEM_NAME") {
+		            	setTitle(data.record.value);
+		            }
+	            },
 				paging: true,
 				pageSize: 20,
 				sorting: true,
@@ -60,7 +67,7 @@ $id=$_POST["id"];
 <br/>
 
 <?php
-$output = shell_exec('dpkg -l |grep tmx |grep -v plugin');
+$output = shell_exec('dpkg -l |grep tmx |grep -iv plugin');
 $outputs = split("[\r|\n]", trim($output));
 
 foreach($outputs as $line) 

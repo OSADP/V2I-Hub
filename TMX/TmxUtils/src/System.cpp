@@ -14,18 +14,20 @@ namespace utils {
 
 std::string System::ExecCommand(const std::string& command)
 {
-    std::string result, file;
+    std::string result;
+
     FILE* pipe{popen(command.c_str(), "r")};
     char buffer[256];
 
     while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
     {
-        file = buffer;
-        result += file.substr(0, file.size() - 1);
+        result += buffer;
     }
 
     pclose(pipe);
 
+    // Trim the last line
+    result = result.substr(0, result.size() - 1);
     return result;
 }
 

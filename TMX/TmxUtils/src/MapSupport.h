@@ -8,7 +8,7 @@
 #ifndef SRC_MAPSUPPORT_H_
 #define SRC_MAPSUPPORT_H_
 
-
+#include <atomic>
 #include <iostream>
 
 
@@ -83,6 +83,14 @@ public:
 	 * Determine if the lane is a vehicle or vehicle computed lane based on the LaneId and the Parsed Map
 	 */
 	bool IsVehicleLane(int laneId, ParsedMap map);
+
+	/**
+	 * Set the extended intersection radius percentage
+	 * @param pct The percent of the radius to extend
+	 */
+	void SetExtendedIntersectionPercentage(double percent);
+private:
+	std::atomic<double> _irExtent;
 };
 
 }} // namespace tmx::utils

@@ -60,8 +60,17 @@ private:
 	std::string _gpsdHost;
 	DATA_MONITOR(_gpsdHost);
 
-	// Location Message for status
-	LocationMessage _message;
+	// Location Message data for status
+	std::atomic<uint64_t> _time;
+	std::atomic<int> _numSats;
+	std::atomic<int> _fix;
+	std::atomic<int> _quality;
+	std::atomic<double> _alt;
+	std::atomic<double> _lat;
+	std::atomic<double> _lon;
+	std::atomic<double> _mph;
+	std::atomic<double> _heading;
+	std::atomic<double> _hdop;
 
 	// Throttle for messages
 	FrequencyThrottle<int> _throttle;
@@ -124,15 +133,13 @@ LocationPlugin::~LocationPlugin()
  */
 void LocationPlugin::UpdateConfigSettings()
 {
-	GetConfigValue("Frequency", _frequency);
-	GetConfigValue("LatchHeadingSpeed", _latchSpeed);
-
-	_dataLock.lock();
-
-	GetConfigValue("GPSSource", _gpsdHost);
-	_throttle.set_Frequency(std::chrono::milliseconds(_frequency));
-
-	_dataLock.unlock();
+	{
+		lock_guard<mutex> lock(_dataLock);
+		GetConfigValue("Frequency", _frequency);
+		GetConfigValue("LatchHeadingSpeed", _latchSpeed);
+		GetConfigValue("GPSSource", _gpsdHost);
+		_throttle.set_Frequency(std::chrono::milliseconds(_frequency));
+	}
 
 	__gpsdHost_mon.check();
 	_configSet = true;
@@ -198,6 +205,14 @@ void LocationPlugin::MonitorGPS()
 				sleep(2);
 			}
 
+			// Do not connect unless we have a good value for the host
+			lock_guard<mutex> lock(_dataLock);
+			if (_gpsdHost.empty())
+			{
+				sleep(1);
+				continue;
+			}
+
 			PLOG(logINFO) << "Connecting to GPS on " << _gpsdHost << ":" << DEFAULT_GPSD_PORT;
 
 			oStatus = gps_open(_gpsdHost.c_str(), DEFAULT_GPSD_PORT, &gps_data);
@@ -244,18 +259,19 @@ void LocationPlugin::MonitorGPS()
 				_gpsError = 0;
 			}
 
+			uint64_t gpsTime = (uint64_t)(1000 * gps_data.fix.time);
 			msg.set_Id(Uuid::NewGuid());
 			msg.set_FixQuality((FixTypes)gps_data.fix.mode);
 			msg.set_SignalQuality(msg.get_FixQuality() > 0 ? SignalQualityTypes::GPS : SignalQualityTypes::Invalid);
-			msg.set_Time(std::to_string((uint64_t)(1000 * gps_data.fix.time)));
+			msg.set_Time(std::to_string(gpsTime));
 			msg.set_NumSatellites(gps_data.satellites_used);
 			if(gps_data.fix.mode > 1)
 			{
 				msg.set_Latitude(gps_data.fix.latitude);
 				msg.set_Longitude(gps_data.fix.longitude);
-				msg.set_Speed(gps_data.fix.speed * 3.6); //fix speed is in m/s * 3.6 - kph
+				msg.set_Speed_mps(gps_data.fix.speed); //fix speed is in m/s
 
-				if (_latchSpeed > msg.get_Speed())
+				if (_latchSpeed > msg.get_Speed_mph())
 				{
 					msg.set_Heading(_lastHeading);
 				}
@@ -269,11 +285,11 @@ void LocationPlugin::MonitorGPS()
 				{
 					msg.set_Altitude(gps_data.fix.altitude);
 				}
-				msg.set_HorizontalDOP(gps_data.dop.hdop);
+				if(!std::isnan(gps_data.dop.hdop))
+				{
+					msg.set_HorizontalDOP(gps_data.dop.hdop);
+				}
 			}
-
-
-			_dataLock.lock();
 
 			// Broadcast the message
 			if (_throttle.Monitor(0))
@@ -282,10 +298,17 @@ void LocationPlugin::MonitorGPS()
 				BroadcastMessage(msg);
 			}
 
-			// Save off the latest message for use later
-			_message = msg;
-
-			_dataLock.unlock();
+			// Save off the latest message data for use later
+			_time = gpsTime;
+			_numSats = msg.get_NumSatellites();
+			_fix = (int)msg.get_FixQuality();
+			_quality = (int)msg.get_SignalQuality();
+			_alt = msg.get_Altitude();
+			_lat = msg.get_Latitude();
+			_lon = msg.get_Longitude();
+			_mph = msg.get_Speed_mph();
+			_heading = msg.get_Heading();
+			_hdop = msg.get_HorizontalDOP();
 		}
 	}
 
@@ -320,24 +343,23 @@ int LocationPlugin::Main()
 
 	while(_plugin->state != IvpPluginState_error)
 	{
-		_dataLock.lock();
-		LocationMessage msg = _message;
-		_dataLock.unlock();
 
-		size_t len = msg.get_Time().length();
-		uint64_t timestamp = 0;
-		if (len > 3)
-			timestamp = strtoul(msg.get_Time().substr(0, len - 3).c_str(), 0, 0);
-		else
-			timestamp = strtoul(msg.get_Time().c_str(), 0, 0);
-
-		int ms = 0;
-		if (len > 3)
-			ms = atoi(msg.get_Time().substr(len - 3).c_str());
-
-		std::chrono::seconds epochTime(timestamp);
+		std::chrono::milliseconds epochTime(_time);
 		std::chrono::time_point<std::chrono::system_clock> tp(epochTime);
-		tp += std::chrono::milliseconds(ms);
+
+		LocationMessage msg;
+		int fix = _fix;
+		int quality = _quality;
+
+		msg.set_NumSatellites(_numSats);
+		msg.set_FixQuality((FixTypes) fix);
+		msg.set_SignalQuality((SignalQualityTypes) quality);
+		msg.set_Altitude(_alt);
+		msg.set_Latitude(_lat);
+		msg.set_Longitude(_lon);
+		msg.set_Speed_mph(_mph);
+		msg.set_Heading(_heading);
+		msg.set_HorizontalDOP(_hdop);
 
 		SetStatus("Last GPS Time (UTC)", Clock::ToUtcPreciseTimeString(tp));
 		SetStatus("Current Time (UTC)", Clock::ToUtcPreciseTimeString(std::chrono::system_clock::now()));
@@ -347,7 +369,7 @@ int LocationPlugin::Main()
 		SetStatus("Altitude", msg.get_Altitude());
 		SetStatus("Latitude", msg.get_Latitude(), false, 10);
 		SetStatus("Longitude", msg.get_Longitude(), false, 10);
-		SetStatus("Speed", msg.get_Speed());
+		SetStatus("Speed (MPH)", msg.get_Speed_mph());
 		SetStatus("Heading", msg.get_Heading());
 		SetStatus("HDOP", msg.get_HorizontalDOP(), false, 4);
 

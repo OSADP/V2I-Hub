@@ -8,10 +8,6 @@
 #ifndef SRC_PLUGINEXEC_H_
 #define SRC_PLUGINEXEC_H_
 
-#ifdef TMX_DEBUG
-#define DEFAULT_LOG_LEVEL "DEBUG"
-#endif
-
 #include "PluginLog.h"
 #include "SignalException.h"
 
@@ -27,7 +23,9 @@
 #include <vector>
 
 #define USAGE "Usage"
+#ifndef INPUT_FILES_PARAM
 #define INPUT_FILES_PARAM "input-file"
+#endif
 
 namespace tmx
 {
@@ -63,10 +61,11 @@ void RegisterSignals(std::string);
 class Runnable
 {
 public:
-	Runnable();
+	Runnable(const char *inputParamName = INPUT_FILES_PARAM, const char *inputParamDescr = "Optional input file");
 	virtual ~Runnable() { Cleanup(); }
 	virtual bool ProcessOptions(const boost::program_options::variables_map &);
 	virtual int Main() = 0;
+	const char *inFileParam = NULL;
 };
 
 /**

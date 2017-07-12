@@ -3,7 +3,7 @@
 LOOP
 
 #vehicle traveling to pickup
-SimulatedLocation; Speed; 45.1  # km/hr (10 mph)
+SimulatedLocation; Speed; 72.45  # km/hr (10 mph)
 SimulatedVehicle; Speed; 45
 SimulatedVehicle; BrakeApplied; 0
 SimulatedVehicle; FrontDoorsOpen; 0
@@ -33,16 +33,16 @@ SimulatedLocation; NumSatellites; 3
 SimulatedLocation; SignalQuality; 3
 3
 
-SimulatedLocation; Speed; 25.1  # km/hr (10 mph)
+SimulatedLocation; Speed; 40.25  # km/hr (10 mph)
 SimulatedVehicle; Speed; 24.9
 SimulatedVehicle; BrakeApplied; 1
 SimulatedLocation; Location; 39.987665,-83.021101
 3
-SimulatedLocation; Speed; 12.1  # km/hr (10 mph)
+SimulatedLocation; Speed; 19.48  # km/hr (10 mph)
 SimulatedVehicle; Speed; 12
 SimulatedLocation; Location; 39.987653,-83.020908
 3
-SimulatedLocation; Speed; 6.1  # km/hr (10 mph)
+SimulatedLocation; Speed; 9.66  # km/hr (10 mph)
 SimulatedVehicle; Speed; 6
 SimulatedLocation; Location; 39.987647,-83.020836
 SimulatedLocation; Heading; 92.53
@@ -68,7 +68,7 @@ SimulatedVehicle; FrontDoorsOpen; 0
 SimulatedVehicle; RearDoorsOpen; 0
 SimulatedVehicle; BrakeApplied; 0
 SimulatedLocation; Heading; 92.53  # degrees
-SimulatedLocation; Speed; 25  # km/hr (0 mph)
+SimulatedLocation; Speed; 40.25  # km/hr (0 mph)
 SimulatedVehicle; Speed; 25
 SimulatedLocation; Location; 39.987618,-83.019648
 SimulatedLocation; Heading; 92.53
@@ -78,7 +78,7 @@ SimulatedLocation; HorizontalDOP; 30
 SimulatedLocation; NumSatellites; 2
 SimulatedLocation; SignalQuality; 2
 3
-SimulatedLocation; Speed; 45  # km/hr (0 mph)
+SimulatedLocation; Speed; 72.45  # km/hr (0 mph)
 SimulatedVehicle; Speed; 45
 SimulatedLocation; Location; 39.987608,-83.01873
 3

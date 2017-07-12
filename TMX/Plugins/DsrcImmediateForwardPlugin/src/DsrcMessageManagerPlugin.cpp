@@ -44,6 +44,9 @@ DsrcMessageManagerPlugin::DsrcMessageManagerPlugin(std::string name) : PluginCli
 	AddMessageFilter("J2735", "*", IvpMsgFlags_RouteDSRC);
 	AddMessageFilter("Battelle-DSRC", "*", IvpMsgFlags_RouteDSRC);
 	SubscribeToMessages();
+
+	_muteDsrc = false;
+	SetSystemConfigValue("MuteDsrcRadio", _muteDsrc, false);
 }
 
 DsrcMessageManagerPlugin::~DsrcMessageManagerPlugin()
@@ -84,7 +87,10 @@ void DsrcMessageManagerPlugin::OnMessageReceived(IvpMessage *msg)
 		return;
 	}
 
-	SendMessageToRadio(msg);
+	if(!_muteDsrc)
+	{
+		SendMessageToRadio(msg);
+	}
 }
 
 void DsrcMessageManagerPlugin::OnStateChange(IvpPluginState state)
@@ -123,6 +129,8 @@ void DsrcMessageManagerPlugin::UpdateConfigSettings()
 	// The same mutex is used that protects the UDP clients.
 	GetConfigValue("Signature", _signature, &_mutexUdpClient);
 
+	GetConfigValue("MuteDsrcRadio", _muteDsrc);
+	SetStatus("MuteDsrc", _muteDsrc);
 	_configRead = true;
 }
 

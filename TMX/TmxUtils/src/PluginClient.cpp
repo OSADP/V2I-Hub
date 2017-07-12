@@ -32,6 +32,8 @@ namespace utils {
 
 // Define static instance members.
 std::map<IvpPlugin*, PluginClient*> PluginClient::_instanceMap;
+SystemContext PluginClient::_sysContext;
+
 
 PluginClient::PluginClient(std::string name) :
 	_name(name),
@@ -139,6 +141,10 @@ void PluginClient::StaticOnConfigChanged(IvpPlugin *plugin, const char *key, con
 			p->HandleException(ex, false);
 		}
 	}
+	if (strcmp(SYS_CONTEXT_CONFIGKEY_DB_RFRSH_INTERVAL, key) == 0)
+	{
+		PluginClient::_sysContext.setDbUpdateFrequency(value);
+	}
 }
 
 void PluginClient::StaticOnConfigChanged(PluginClient *plugin, const char *key, const char *value)
@@ -239,9 +245,14 @@ void PluginClient::StaticOnMessageReceived(IvpPlugin *plugin, IvpMessage *msg)
 	PluginClient *p = PluginClient::_instanceMap[plugin];
 	if (p)
 	{
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		uint64_t microsecondsSinceEpoch = (uint64_t)(tv.tv_sec) * 1000000 + (uint64_t)(tv.tv_usec);
+
 		try
 		{
 			p->OnMessageReceived(msg);
+			PluginClient::_sysContext.trackMessageHandled(p->GetName(), msg, microsecondsSinceEpoch);
 		}
 		catch (exception &ex)
 		{
@@ -303,6 +314,12 @@ void PluginClient::StaticOnStateChange(PluginClient *plugin, IvpPluginState stat
 void PluginClient::OnStateChange(IvpPluginState state)
 {
 	PLOG(logDEBUG1) << "State Changed: " << PluginUtil::IvpPluginStateToString(state);
+}
+
+void PluginClient::RemoveStatus(const char *key)
+{
+	if (_plugin)
+		ivp_removeStatusItem(_plugin, key);
 }
 
 void PluginClient::SetStartTimeStatus()

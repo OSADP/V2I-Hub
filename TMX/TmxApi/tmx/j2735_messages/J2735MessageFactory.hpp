@@ -250,6 +250,52 @@ public:
 		}
 	}
 
+	inline int GetMessageId(std::string messageType)
+	{
+		error_message.reset();
+
+		try
+		{
+			return byStr.at(messageType)->getMessageID();
+		}
+		catch (std::exception &ex)
+		{
+			error_message.reset(new J2735Exception(ex));
+			*error_message << errmsg_info{"Unable to find J2735 message ID from message type " + messageType};
+			return -1;
+		}
+	}
+
+	inline int GetMessageId(tmx::byte_stream &bytes)
+	{
+		error_message.reset();
+
+		tmx::messages::codec::der<UperFrameMessage> derDecoder;
+
+		int id = derDecoder.decode_contentId(bytes);
+		if (id > 0)
+			return id;
+
+		return -1;
+	}
+
+	inline const char *MessageType(int messageId)
+	{
+		error_message.reset();
+
+		try
+		{
+			return byInt.at(messageId)->getMessageType();
+		}
+		catch (std::exception &ex)
+		{
+			error_message.reset(new J2735Exception(ex));
+			*error_message << errmsg_info{"Unable to find J2735 message type from message ID " + std::to_string(messageId)};
+			return NULL;
+		}
+	}
+
+
 	/**
 	 * Create a new J2735 Routeable Message from the given byte stream.  The message ID is separated
 	 * from the byte stream to determine what message type to create.
@@ -261,9 +307,7 @@ public:
 	{
 		error_message.reset();
 
-		tmx::messages::codec::der<UperFrameMessage> derDecoder;
-
-		int id = derDecoder.decode_contentId(bytes);
+		int id = GetMessageId(bytes);
 		if (id > 0)
 		{
 			TmxJ2735EncodedMessageBase *msg = NewMessage(id);

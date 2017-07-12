@@ -14,15 +14,23 @@ namespace utils {
 /// WGS84Point encapsulates coordinates on the earths surface.
 typedef struct WGS84Point
 {
-	WGS84Point() : Latitude(0), Longitude(0) {}
+	WGS84Point() : Latitude(0), Longitude(0), Elevation(0) {}
 	WGS84Point(double latitude, double longitude)
 	{
 		Latitude = latitude;
 		Longitude = longitude;
 	}
 
+	WGS84Point(double latitude, double longitude, double elevation)
+	{
+		Latitude = latitude;
+		Longitude = longitude;
+		Elevation = elevation;
+	}
+
 	double Latitude;
 	double Longitude;
+	double Elevation;
 } WGS84Point;
 
 }} // namespace tmx::utils

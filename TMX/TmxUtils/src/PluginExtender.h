@@ -24,12 +24,14 @@ class PluginExtender
 public:
 	PluginExtender(PluginClient& pluginClient) :
 		_pluginClient(pluginClient),
+		_plugin(pluginClient._plugin),
 		_name(pluginClient._name) {	}
 
 	virtual ~PluginExtender() { }
 
 protected:
 	PluginClient& _pluginClient;
+	IvpPlugin *_plugin;
 	std::string _name;
 };
 

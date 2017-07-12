@@ -45,7 +45,7 @@ void Cleanup()
 		fclose(FILELog::Stream());
 }
 
-Runnable::Runnable()
+Runnable::Runnable(const char *inputParamName, const char *inputParamDescr): inFileParam(inputParamName)
 {
 	// Add default options
 	AddOptions()
@@ -53,7 +53,7 @@ Runnable::Runnable()
 			//("manifest,m", boost::program_options::value<std::string>()->default_value(IVPREGISTER_MANIFEST_FILE_NAME), "Plugin manifest file")
 			("level,l", value<std::string>(), "Log level, i.e. ERROR, WARNING, INFO, DEBUG, DEBUGn where n=1-4")
 			("output,o", value<std::string>()->default_value("-"), "Log output file.  Use - for standard output")
-			(INPUT_FILES_PARAM, value< vector<string> >(), "Optional input file");
+			(inputParamName, value< vector<string> >()->default_value(vector<std::string>(), ""), inputParamDescr);
 }
 
 bool Runnable::ProcessOptions(const variables_map &opts)
@@ -127,7 +127,7 @@ int run(std::string name, int argc, char *argv[], Runnable &runnable, bool newTh
 	desc.add(GetOptions());
 
 	boost::program_options::positional_options_description p;
-	p.add(INPUT_FILES_PARAM, -1);
+	p.add(runnable.inFileParam, -1);
 
 	store(command_line_parser(argc, argv).options(desc).positional(p).run(), opts);
 	notify(opts);

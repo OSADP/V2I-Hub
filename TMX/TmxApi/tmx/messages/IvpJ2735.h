@@ -53,6 +53,7 @@ IvpJ2735EncodedMsg *ivpJ2735_getJ2735EncodedMsg(IvpMessage *msg);
 
 IvpJ2735Msg *ivpJ2735_decode(uint8_t *msg, unsigned int msgLength);
 
+void ivpJ2735_fprint(FILE *stream, IvpJ2735Msg *msg);
 
 #ifdef __cplusplus
 }

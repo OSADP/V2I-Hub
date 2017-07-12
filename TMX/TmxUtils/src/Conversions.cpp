@@ -6,15 +6,10 @@
  */
 
 // Officially, the ANSI standard does not include the math constant definitions, such as M_PI used below
-#ifdef __STRICT_ANSI__
-#undef __STRICT_ANSI__
-#include <cmath>
-#define __STRICT_ANSI__
-#else
-#include <cmath>
-#endif
 
 #include "Conversions.h"
+
+using namespace tmx::messages;
 
 namespace tmx {
 namespace utils {
@@ -23,32 +18,27 @@ namespace utils {
 #define DSRC_EQUATORIAL_RADIUS 6378137
 double Conversions::ConvertMetersToMiles(double meters)
 {
-	double miles = meters / 1609.344;
-	return miles;
+	return meters * Units::MILES_PER_METER;
 }
 
 double Conversions::ConvertMilesToMeters(double miles)
 {
-	double meters = miles * 1609.344;
-	return meters;
+	return miles * Units::METERS_PER_MILE;
 }
 
 double Conversions::ConvertMetersPerSecToMilesPerHour(double mps)
 {
-	double mph = mps * 2.2369362920544025;
-	return mph;
+	return mps * Units::MPH_PER_MPS;
 }
 
 double Conversions::ConvertDegreesToRadians(double degrees)
 {
-	double radians = degrees * (M_PI / 180.0);
-	return radians;
+	return degrees * Units::RADIANS_PER_DEGREE;
 }
 
 double Conversions::ConvertRadiansToDegrees(double radians)
 {
-	double degrees = radians * (180.0 / M_PI);
-	return degrees;
+	return radians * Units::DEGREES_PER_RADIAN;
 }
 
 int Conversions::ConvertMetersPerSecToMPH(double mps)
@@ -79,6 +69,20 @@ double Conversions::DistanceMeters(double degreesLat1, double degreesLon1, doubl
 double Conversions::DistanceMeters(WGS84Point point1, WGS84Point point2)
 {
 	return DistanceMeters(point1.Latitude, point1.Longitude, point2.Latitude, point2.Longitude);
+}
+
+double Conversions::GradeDegrees(WGS84Point point1, WGS84Point point2)
+{
+	double distance = DistanceMeters(point1, point2);
+
+	double elevation_change_m = point2.Elevation - point1.Elevation;
+
+	double riseOverRun = elevation_change_m/distance;
+
+	double grade_Deg = ConvertRadiansToDegrees(atan(riseOverRun));
+
+	return grade_Deg;
+
 }
 
 /// Return the bearing between two points in degrees from 0 - 360.

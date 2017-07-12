@@ -12,6 +12,8 @@
 #include "MessageTypes.h"
 #include "LocationMessageEnumTypes.h"
 
+#include "Units.h"
+
 namespace tmx {
 namespace messages {
 
@@ -24,6 +26,20 @@ class LocationMessage : public tmx::message
 public:
 	LocationMessage() {}
 	LocationMessage(const tmx::message_container_type &contents): tmx::message(contents) {}
+	LocationMessage(std::string id, location::SignalQualityTypes signalQuality, std::string sentenceIdentifier, std::string time,
+			double latitude, double longitude, location::FixTypes fixQuality, int numSatellites, double horizontalDOP, double speed, double heading) {
+		set_Id(id);
+		set_SignalQuality(signalQuality);
+		set_SentenceIdentifier(sentenceIdentifier);
+		set_Time(time);
+		set_Latitude(latitude);
+		set_Longitude(longitude);
+		set_FixQuality(fixQuality);
+		set_NumSatellites(numSatellites);
+		set_HorizontalDOP(horizontalDOP);
+		set_Speed_mps(speed);
+		set_Heading(heading);
+	}
 
 	/// Message type for routing this message through TMX core.
 	static constexpr const char* MessageType = MSGTYPE_DECODED_STRING;
@@ -89,18 +105,39 @@ public:
 		//std_attribute(this->msg,int, Checksum, 0, )
 
 		/**
-		 * x.x,K = Speed, Km/hr
-		 *  (ex: 010.2,K      Ground speed, Kilometers per hour)
+		 * x.x,K = Speed, m/s
+		 *  (ex: 010.2,K      Ground speed, meters per second)
 		 */
-	std_attribute(this->msg,double ,Speed, 0, )
+	std_attribute(this->msg,double, Speed_mps, 0, )
+
 		/**
 		 * Heading in degrees.
 		 */
-	std_attribute(this->msg,double ,Heading, 0, )
+	std_attribute(this->msg,double, Heading, 0, )
 
 
 		//eg2. $--GGA,hhmmss.ss,llll.ll,a,yyyyy.yy,a,x,xx,x.x,x.x,M,x.x,M,x.x,xxxx
 
+	// Converter methods for MPH and KPH
+	inline double get_Speed_mph()
+	{
+		return this->get_Speed_mps() * Units::MPH_PER_MPS;
+	}
+
+	inline void set_Speed_mph(double mph)
+	{
+		this->set_Speed_mps(mph * Units::MPS_PER_MPH);
+	}
+
+	inline double get_Speed_kph()
+	{
+		return this->get_Speed_mps() * Units::KPH_PER_MPS;
+	}
+
+	inline void set_Speed_kph(double kph)
+	{
+		this->set_Speed_mps(kph * Units::MPS_PER_KPH);
+	}
 };
 
 } /* namespace messages */

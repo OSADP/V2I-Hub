@@ -33,6 +33,11 @@ var hismessage = {
 		{			
 				value  : 2,
 				string : 'Audible'
+		},
+		Mode : 
+		{			
+				value  : 3,
+				string : 'Mode'
 		}
 	}
 };

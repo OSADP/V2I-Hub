@@ -54,6 +54,39 @@ void ThreadTimer::ChangeFrequency(uint id, std::chrono::milliseconds frequency)
 	_periodicTicks[id].Frequency = frequency;
 }
 
+void ThreadTimer::TriggerNow(uint id)
+{
+	lock_guard<mutex> lock(_lock);
+
+	if (id >= _periodicTicks.size())
+	{
+		PLOG(logERROR) << "ChangeFrequency: Invalid ID.";
+		throw tmx::TmxException("ChangeFrequency: Invalid ID");
+	}
+	_periodicTicks[id].LastTickTime = steady_clock::now() - _periodicTicks[id].Frequency;
+
+//	if (!_stopThread)
+//	{
+//		for (uint index = 0; true; index++)
+//		{
+//			// Get a copy of the data for the current function to call.
+//			// A copy is obtained so that the lock is not held while the PeriodicTick function is called.
+//			PeriodicTickData tick;
+//			{
+//				lock_guard<mutex> lock(_lock);
+//
+//				if (index >= _periodicTicks.size())
+//					break;
+//
+//				tick = _periodicTicks[index];
+//			}
+//
+//			// Call the function.
+//			tick.PeriodicTick();
+//		}
+//	}
+}
+
 void ThreadTimer::DoWork()
 {
 	steady_clock::time_point startTime = steady_clock::now();

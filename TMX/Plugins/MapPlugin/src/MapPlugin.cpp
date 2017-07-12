@@ -1,6 +1,8 @@
 
+#include <atomic>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <sstream>
 #include <stdio.h>
@@ -14,12 +16,15 @@
 #include <tmx/IvpPlugin.h>
 #include <tmx/messages/IvpBattelleDsrc.h>
 #include <tmx/messages/IvpSignalControllerStatus.h>
-#include <asn_j2735_r41/MapData.h>
-#include <asn_j2735_r41/UPERframe.h>
 #include <tmx/messages/IvpJ2735.h>
+#include <tmx/j2735_messages/J2735MessageFactory.hpp>
 #include "XmlMapParser.h"
 #include "ConvertToJ2735r41.h"
-#include "PluginClient.h"
+#include "inputs/isd/ISDToJ2735r41.h"
+
+#define USE_STD_CHRONO
+#include <FrequencyThrottle.h>
+#include <PluginClient.h>
 
 #include "utils/common.h"
 #include "utils/map.h"
@@ -27,24 +32,39 @@
 #include <MapSupport.h>
 using namespace std;
 using namespace tmx;
+using namespace tmx::messages;
 using namespace tmx::utils;
 
 namespace MapPlugin {
 
 UPERframe _uperFrameMessage;
 
-int _mapAction = -1;
-bool _isMapFilesNew = false;
-bool _isMapLoaded = false;
+class MapFile: public tmx::message {
+public:
+	MapFile(): tmx::message() {}
+	virtual ~MapFile() {}
+
+	std_attribute(this->msg, int, Action, -1, );
+	std_attribute(this->msg, std::string, FilePath, "", );
+	std_attribute(this->msg, std::string, InputType, "", );
+	std_attribute(this->msg, std::string, Bytes, "", );
+public:
+	static tmx::message_tree_type to_tree(MapFile m) {
+		return tmx::message::to_tree(static_cast<tmx::message>(m));
+	}
+
+	static MapFile from_tree(tmx::message_tree_type tree) {
+		MapFile m;
+		m.set_contents(tree);
+		return m;
+	}
+};
+
+//int _mapAction = -1;
+//bool _isMapFilesNew = false;
+//bool _isMapLoaded = false;
 
 volatile int gMessageCount = 0;
-
-uint64_t GetMsTimeSinceEpoch() {
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	return (uint64_t) ((double) (tv.tv_sec) * 1000
-			+ (double) (tv.tv_usec) / 1000);
-}
 
 class MapPlugin: public PluginClient {
 public:
@@ -60,12 +80,18 @@ protected:
 	void OnMessageReceived(IvpMessage *msg);
 	void OnStateChange(IvpPluginState state);
 private:
-	uint64_t gFrequency = 0;
-	std::map<int, std::string> _mapFiles;
+	std::atomic<int> _mapAction {-1};
+	std::atomic<bool> _isMapFileNew {false};
+
+	std::map<int, MapFile> _mapFiles;
 	std::mutex data_lock;
 
-	bool LoadMapFile(map *, ConvertToJ2735r41 *);
-	bool ParseMapFilesJson(cJSON *root);
+	J2735MessageFactory factory;
+
+	FrequencyThrottle<int> throttle;
+	FrequencyThrottle<int> errThrottle;
+
+	bool LoadMapFiles();
 	void DebugPrintMapFiles();
 };
 
@@ -73,6 +99,7 @@ MapPlugin::MapPlugin(string name) :
 		PluginClient(name) {
 	AddMessageFilter(IVPMSG_TYPE_SIGCONT, "ACT", IvpMsgFlags_None);
 	SubscribeToMessages();
+	errThrottle.set_Frequency(std::chrono::minutes(30));
 }
 
 MapPlugin::~MapPlugin() {
@@ -80,27 +107,63 @@ MapPlugin::~MapPlugin() {
 }
 
 void MapPlugin::UpdateConfigSettings() {
-	GetConfigValue<uint64_t>("Frequency", gFrequency, &data_lock);
+	int gFrequency;
+	GetConfigValue("Frequency", gFrequency);
+	throttle.set_Frequency(chrono::milliseconds(gFrequency));
 
-	string rawMapFiles;
-	GetConfigValue<string>("MAP_Files", rawMapFiles, &data_lock);
+	message_tree_type rawMapFiles;
+	GetConfigValue("MAP_Files", rawMapFiles);
 
-	if (rawMapFiles.length() > 0) {
-		cJSON *root = cJSON_Parse(rawMapFiles.c_str());
+	if (!rawMapFiles.empty()) {
+		try
+		{
+			lock_guard<mutex> lock(data_lock);
+			_mapFiles.clear();
 
-		if (ParseMapFilesJson(root)) {
-			_isMapFilesNew = true;
-			DebugPrintMapFiles();
-		} else {
-			std::cout << "Error parsing MapFiles config setting." << std::endl;
+			tmx::message mapFiles;
+			mapFiles.set_contents(rawMapFiles);
+
+			PLOG(logDEBUG) << "Got MAP_Files: " << mapFiles;
+
+			for (auto mapFile : mapFiles.template get_array<MapFile>("MapFiles"))
+			{
+				if (mapFile.get_Action() < 0)
+					continue;
+
+				_mapFiles[mapFile.get_Action()] = mapFile;
+				_isMapFileNew = true;
+			}
+
+			// Check to see if the active map was lost
+			if (!_mapFiles.count(_mapAction))
+			{
+				if (_mapAction > 0)
+				{
+					PLOG(logINFO) << "New configuration does not contain a map for active action " <<
+							_mapAction << ". Using default action.";
+				}
+				_mapAction = -1;
+			}
+
+			if (_mapFiles.size() > 0 && _mapAction < 0)
+				_mapAction = _mapFiles.begin()->first;
+
 		}
+		catch (exception &ex)
+		{
+			PLOG(logERROR) << "Unable to parse map file input: " << ex.what();
+		}
+
+		DebugPrintMapFiles();
 	}
 
 }
 
 void MapPlugin::OnConfigChanged(const char *key, const char *value) {
 	PluginClient::OnConfigChanged(key, value);
-	UpdateConfigSettings();
+
+	if (_plugin->state == IvpPluginState_registered)
+		UpdateConfigSettings();
 }
 
 void MapPlugin::OnStateChange(IvpPluginState state) {
@@ -118,9 +181,21 @@ void MapPlugin::OnMessageReceived(IvpMessage *msg) {
 			&& (strcmp(msg->subtype, "ACT") == 0)
 			&& (msg->payload->type == cJSON_String)) {
 		int action = ivpSigCont_getIvpSignalControllerAction(msg);
-		if (_mapAction != action) {
-			_mapAction = action;
-			_isMapFilesNew = true;
+
+		if (action != _mapAction)
+		{
+			// Ignore if there is no map for this action
+			lock_guard<mutex> lock(data_lock);
+			if (_mapFiles.count(action) <= 0)
+			{
+				if (errThrottle.Monitor(action))
+				{
+					PLOG(logERROR) << "Missing map for Action " << action;
+				}
+				return;
+			}
+
+			_isMapFileNew = _mapAction.exchange(action) != action;
 		}
 	}
 }
@@ -128,269 +203,176 @@ void MapPlugin::OnMessageReceived(IvpMessage *msg) {
 int MapPlugin::Main() {
 	PLOG(logINFO) << "Starting plugin.";
 
-	map mm;
-	ConvertToJ2735r41 mapConverter;
+	bool mapFilesOk = false;
 
-	/*
-	 XmlMapParser mapParser;
-	 std::string gidFile = "GID_Telegraph-Twelve_Mile_withEgress.xml";
-	 mapParser.ReadGidFile(gidFile, &mm);
-
-	 //map_initialize(&mm);
-	 //map_load(&mm);
-
-	 map_encode(&mm, 1);
-	 printf("MAP size: %d\n\n", mm.payload.size);
-	 for (int i=0; i<mm.payload.size; i++) { printf("%02x ", mm.payload.pblob[i]); }
-	 */
-	uint64_t lastSendTime = 0;
+	std::unique_ptr<MapDataEncodedMessage> msg;
+	int activeAction = -1;
 
 	while (_plugin->state != IvpPluginState_error) {
-		uint64_t frequency = gFrequency;
+		if (_isMapFileNew) {
+			msg.reset();
+			activeAction = -1;
 
-		if (_isMapFilesNew) {
-			_isMapFilesNew = false;
+			mapFilesOk = LoadMapFiles();
+			_isMapFileNew = false;
+		}
 
-			_isMapLoaded = LoadMapFile(&mm, &mapConverter);
+		int temp = _mapAction;
+		if (temp < 0)
+		{
+			// No action set yet, so just wait
+			sleep(1);
+			continue;
+		}
 
-			if (_isMapLoaded) {
-				map_encode(&mm, 1);
-//				unsigned int i;
-//				printf("MAP size: %d\nPayload: ", mm.payload.size);
-//				for (i=0; i < mm.payload.size; i++) { printf("%02x ", mm.payload.pblob[i]); }
-//				printf("\n");
-			} else {
-				PLOG(logERROR) << "Map was not loaded correctly";
+		// Action has changed, so retrieve the correct map
+		if (temp != activeAction)
+		{
+			lock_guard<mutex> lock(data_lock);
+			string byteStr = _mapFiles[temp].get_Bytes();
+			if (!byteStr.empty())
+			{
+				msg.reset(dynamic_cast<MapDataEncodedMessage *>(factory.NewMessage(api::MSGSUBTYPE_MAPDATA_STRING)));
+				if (!msg)
+				{	if (errThrottle.Monitor(temp))
+					{
+						PLOG(logERROR) << "Unable to create map from bytes " << byteStr << ": " << factory.get_event();
+					}
+					sleep(1);
+					continue;
+				}
+
+				string enc = msg->get_encoding();
+				msg->refresh_timestamp();
+				msg->set_payload(byteStr);
+				msg->set_encoding(enc);
+				msg->set_flags(IvpMsgFlags_RouteDSRC);
+				msg->set_dsrcChannel(172);
+				msg->set_dsrcPsid(0x8002);
+
+				activeAction = temp;
+				PLOG(logINFO) << "Map for action " << activeAction << " will be sent";
 			}
 		}
 
-		uint64_t time = GetMsTimeSinceEpoch();
-
-		if (_isMapLoaded && frequency > 0
-				&& (time - lastSendTime) > frequency) {
-			lastSendTime = time;
-
-			// Battelle map message
-			/*
-			 IvpMessage *msg = ivpBattelleDsrc_createMsg(mm.payload.pblob, mm.payload.size, IvpBattelleDsrcMsgType_GID, IvpMsgFlags_RouteDSRC);
-			 if (msg != NULL)
-			 {
-			 ivpMsg_addDsrcMetadata(msg, 172, 0xBFF0);
-			 ivp_broadcastMessage(gPlugin, msg);
-			 ivpMsg_destroy(msg);
-			 }
-			 */
-			// MapMessage r41
-			IvpMessage *msg = ivpJ2735_createMsgFromEncodedwType(
-					mapConverter.derEncoded, mapConverter.derEncodedByteCount,
-					IvpMsgFlags_RouteDSRC, "MAP-P");
-			if (msg != NULL) {
-				ivpMsg_addDsrcMetadata(msg, 172, 0x8002);
-				ivp_broadcastMessage(_plugin, msg);
-				ivpMsg_destroy(msg);
-			}
-
+		if (mapFilesOk && throttle.Monitor(0))
+		{
+			// Time to send a new message
+			routeable_message *rMsg = dynamic_cast<routeable_message *>(msg.get());
+			if (rMsg) BroadcastMessage(*rMsg);
 		}
 
-		usleep(50000);
+		// Wake up a few times before next cycle, in case there is something to do
+		usleep(1000 * throttle.get_Frequency().count() / 5);
 	}
 
 	return (EXIT_SUCCESS);
 }
 
-void Decode(char * payload, int length) {
-	MapData map;
-	ConvertToJ2735r41 converter;
-	converter.decodePerMapData(&map, payload, length);
-
-	ParsedMap _map;
-
-	int intersectionId;
-	intersectionId = 0;
-	//Why would a map file ever have more than one intersection? hardcode to assume 1 for now.
-	int interIter = 0;
-	//Grab unique id for intersection.
-	intersectionId = map.intersections->list.array[interIter]->id.id;
-	Position3D_2_t referencePoint =
-			map.intersections->list.array[interIter]->refPoint;
-	_map.ReferencePoint.Latitude = referencePoint.lat;
-	_map.ReferencePoint.Longitude = referencePoint.Long;
-	double baseLatitude = _map.ReferencePoint.Latitude / 10000000.0;
-	double baseLongitude = _map.ReferencePoint.Longitude / 10000000.0;
-
-	//Iterate over lanes of intersection.
-	for (int l;
-			l < map.intersections->list.array[interIter]->laneSet.list.count;
-			l++) {
-		MapLane mapLane;
-		//Get lane reference.
-		GenericLane *lane =
-				map.intersections->list.array[interIter]->laneSet.list.array[l];
-		//get laneid
-		long laneId = lane->laneID;
-		mapLane.LaneNumber = lane->laneID;
-
-		LaneTypeAttributes_t laneType = lane->laneAttributes.laneType;
-		LaneDirection_t dir = lane->laneAttributes.directionalUse;
-//		if(dir== )
-//		{
-//			mapLane._laneDirectionEgress
-//		}
-		auto laneTypeVal = laneType.present;
-
-
-
-		double totalXOffset = 0.0;
-		double totalYOffset = 0.0;
-		double xOffset;
-		double yOffset;
-		//iterate over all nodes in this lane.
-		for (int n; n < lane->nodeList.choice.nodes.list.count; n++) {
-			Node *node = lane->nodeList.choice.nodes.list.array[n];
-			long latval = node->delta.choice.node_LatLon.lat;
-			long longval = node->delta.choice.node_LatLon.lon;
-			NodeOffsetPoint_PR prtypeval = node->delta.present;
-//			auto xoff4 = node->delta.choice.node_XY4.x;
-//			auto yoff4 = node->delta.choice.node_XY4.y;
-//			auto xoff5 = node->delta.choice.node_XY5.x;
-//			auto yoff5 = node->delta.choice.node_XY5.y;
-
-			/*The geometry of a lane is described by a list of nodes (always at least two) each with a
-			 * Northerly and Easterly offset (positive values) or Southerly and Westerly offsets (negative values).
-			 *  The offsets for the first node are relative to the intersections reference point that is given
-			 *  as a lat/long position, the offsets for all remaining nodes, after the first one, are relative
-			 *   to the previous node.  You should typically set you offset resolution to decimeter.
-			 *
-			 */
-			//std::cout << "xOffset " << xOffset << ", yOffset " << yOffset << std::endl;
-
-			//TODO change decimeters to meters??
-			double scaleOffset = 0.1;//GetScaleFactor();
-			yOffset = latval * scaleOffset;
-			xOffset = longval * scaleOffset;
-
-			totalXOffset += xOffset;
-			totalYOffset += yOffset;
-
-			LaneNode laneNode;
-			double absLatitude = Conversions::NodeOffsetToLatitude(baseLatitude,totalYOffset);
-			double absLongitude = Conversions::NodeOffsetToLongitude(baseLongitude,baseLatitude, totalXOffset);
-			//Use the node offset and the reference point to calculate a real lat/long.
-			laneNode.Point.Latitude = absLatitude;
-			laneNode.Point.Longitude = absLongitude;
-			//Add the node
-			mapLane.Nodes.push_back(laneNode);
-		}
-		//Add lane to lane list.
-		_map.Lanes.push_back(mapLane);
-	}
-}
-
-bool MapPlugin::LoadMapFile(map *mapMessage, ConvertToJ2735r41 *mapConverter) {
+bool MapPlugin::LoadMapFiles()
+{
 	if (_mapFiles.empty())
 		return false;
 
-	if (_mapAction < 0)
-		_mapAction = 1;
-
-	// Try to find a map file for the current action number.
-	std::map<int, std::string>::iterator pair = _mapFiles.find(_mapAction);
-	if (pair == _mapFiles.end()) {
-		PLOG(logWARNING) << "Map file not found for Action " << _mapAction;
-
-		// Could not find a map for the current action number.
-		if (_mapFiles.size() > 1) {
-			PLOG(logWARNING)
-					<< "Multiple map files available, using the first one.";
-		}
-
-		// Default to any in the std::map.
-		pair = _mapFiles.begin();
-		_mapAction = pair->first;
-		PLOG(logINFO) << "Using map file for Action " << _mapAction;
-	}
-
-	std::string actionString;
-	std::stringstream out;
-	out << _mapAction;
-	actionString = out.str();
-
-	SetStatus<string>("Current Action", actionString);
-
-	XmlMapParser mapParser;
-	std::string gidFile = pair->second;
-
-	std::cout << "Loading map file: " << gidFile << std::endl;
-
-	if (mapParser.ReadGidFile(gidFile, mapMessage))
+	lock_guard<mutex> lock(data_lock);
+	for (auto &mapPair : _mapFiles)
 	{
-		// Convert Map Blob to new J2735 r41.
-		mapConverter->convertMap(
-				&mapConverter->mapDataStructure, mapMessage,
-				mapConverter->encoded);
-
-		std::cout << std::endl << "Encoded Bytes:" << mapConverter->encodedByteCount << std::endl;
-
-		if (mapConverter->encodedByteCount > 0)
+		MapFile &mapFile = mapPair.second;
+		if (mapFile.get_Bytes() == "")
 		{
-			std::cout << "MAP successfully encoded." << std::endl;
-
-			if (mapConverter->createUPERframe_DERencoded_msg())
+			// Fill in the bytes for each map file
+			string inType = mapFile.get_InputType();
+			if (inType.empty())
 			{
-				return true;
+				try
+				{
+					string fn = mapFile.get_FilePath();
+
+					if (fn.substr(fn.size() - 5) == ".json")
+						inType = "ISD";
+					else
+						inType = "XML";
+
+					if (inType == "ISD")
+					{
+						ISDToJ2735r41 converter(fn);
+						mapFile.set_Bytes(converter.to_encoded_message().get_payload_str());
+
+						PLOG(logINFO) << fn << " ISD file encoded as " << mapFile.get_Bytes();
+					}
+					else if (inType == "XML")
+					{
+						tmx::message_container_type container;
+						container.load<XML>(fn);
+
+						if (container.get_storage().get_tree().begin()->first == "MapData")
+						{
+							MapDataMessage mapMsg;
+							mapMsg.set_contents(container.get_storage().get_tree());
+
+							PLOG(logDEBUG) << "Encoding " << mapMsg;
+							MapDataEncodedMessage mapEnc;
+							mapEnc.encode_j2735_message(mapMsg);
+							mapFile.set_Bytes(mapEnc.get_payload_str());
+
+							PLOG(logINFO) << fn << " XML file encoded as " << mapFile.get_Bytes();
+						}
+						else
+						{
+							ConvertToJ2735r41 mapConverter;
+							XmlMapParser mapParser;
+							map theMap;
+
+							if (mapParser.ReadGidFile(fn, &theMap))
+							{
+								mapConverter.convertMap(&mapConverter.mapDataStructure,
+										&theMap, mapConverter.encoded);
+
+								PLOG(logDEBUG) << "Encoded Bytes:" << mapConverter.encodedByteCount;
+
+								if (mapConverter.encodedByteCount > 0)
+								{
+									if (!mapConverter.createUPERframe_DERencoded_msg())
+										return false;
+
+									byte_stream bytes(mapConverter.derEncodedByteCount);
+									memcpy(bytes.data(), mapConverter.derEncoded, mapConverter.derEncodedByteCount);
+
+									auto *mapEnc = factory.NewMessage(bytes);
+									if (!mapEnc)
+										return false;
+
+									mapFile.set_Bytes(mapEnc->get_payload_str());
+
+									PLOG(logINFO) << fn << " input file encoded as " << mapEnc->get_payload_str();
+								}
+								else
+								{
+									return false;
+								}
+							}
+						}
+					}
+				}
+				catch (exception &ex)
+				{
+					PLOG(logERROR) << "Unable to convert " << mapFile.get_FilePath() << ": " << ex.what();
+					return false;
+				}
 			}
 		}
-		else
-		{
-			std::cout << "MAP was not encoded correctly." << std::endl;
-		}
-	}
-
-	return false;
-}
-
-bool MapPlugin::ParseMapFilesJson(cJSON *root) {
-	if (root == NULL)
-		return false;
-
-	cJSON *actionNumber;
-	cJSON *filePath;
-
-	cJSON *item = cJSON_GetObjectItem(root, "MapFiles");
-
-	if (item == NULL || item->type != cJSON_Array)
-		return false;
-
-	_mapFiles.clear();
-
-	for (int i = 0; i < cJSON_GetArraySize(item); i++) {
-		cJSON *subitem = cJSON_GetArrayItem(item, i);
-
-		actionNumber = cJSON_GetObjectItem(subitem, "Action");
-		filePath = cJSON_GetObjectItem(subitem, "FilePath");
-
-		if (actionNumber == NULL || actionNumber->type != cJSON_Number
-				|| filePath == NULL || filePath->type != cJSON_String)
-			return false;
-
-		_mapFiles.insert(
-				std::pair<int, std::string>(actionNumber->valueint,
-						filePath->valuestring));
 	}
 
 	return true;
 }
 
 void MapPlugin::DebugPrintMapFiles() {
-	std::map<int, std::string>::iterator iter;
-
 	PLOG(logDEBUG) << _mapFiles.size()
 			<< " map files specified by configuration settings:";
 
-	for (iter = _mapFiles.begin(); iter != _mapFiles.end(); iter++) {
+	for (auto iter = _mapFiles.begin(); iter != _mapFiles.end(); iter++) {
 		int key = iter->first;
-		std::string value = iter->second;
-		PLOG(logDEBUG) << "-- Action " << key << " file is " << value;
+		PLOG(logDEBUG) << "-- Action " << key << " file is " << iter->second.get_FilePath();
 	}
 }
 

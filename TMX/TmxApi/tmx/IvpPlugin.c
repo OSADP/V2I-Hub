@@ -227,8 +227,10 @@ char *ivp_getCopyOfConfigurationValue(IvpPlugin *plugin, const char *key)
 	char *results = ivpConfig_getCopyOfValueFromCollection(plugin->config, key);
 	pthread_mutex_unlock(&plugin->lock);
 
-	if (results == NULL)
-		ivp_onError(plugin, ivpError_createError(IvpLogLevel_error, IvpError_configKeyDoesntExist, 0));
+// Commenting out the two lines below to prevent errors being logged to the event log when a configuration
+// parameter does not exist.  MGB 1/31/2017
+//	if (results == NULL)
+//		ivp_onError(plugin, ivpError_createError(IvpLogLevel_error, IvpError_configKeyDoesntExist, 0));
 
 	return results;
 }

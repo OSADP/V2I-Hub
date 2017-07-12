@@ -78,6 +78,21 @@ var appmessage = {
 		{			
 				value  : 11,
 				string : 'MD'
+		},
+		TSPWRD : 
+		{			
+				value  : 12,
+				string : 'TSPWRD'
+		},
+		TSPWPOV : 
+		{			
+				value  : 13,
+				string : 'TSPWPOV'
+		},
+		RLVW : 
+		{			
+				value  : 14,
+				string : 'RLVW'
 		}
 	},
 	EventCodeTypes : {
@@ -260,6 +275,16 @@ var appmessage = {
 		{			
 				value  : 35,
 				string : 'InRoadwayRearCurbPed'
+		},
+		RLVWAlert : 
+		{			
+				value  : 36,
+				string : 'RLVWAlert'
+		},
+		RLVWWarning : 
+		{			
+				value  : 37,
+				string : 'RLVWWarning'
 		}
 	},
 	Severity : {

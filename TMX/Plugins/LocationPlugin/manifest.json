@@ -1,7 +1,7 @@
 {
     "name":"Location",
     "description":"Plugin used to send out Location Messages using data from GPSD",
-    "version":"1.1.0",
+    "version":"1.1.1",
     "exeLocation":"/bin/LocationPlugin",
     "coreIpAddr":"127.0.0.1",
     "corePort":24601,
@@ -20,8 +20,8 @@
         },
         {
         	"key":"LatchHeadingSpeed",
-        	"default":"5.0",
-        	"description":"Speed at which the heading parameter should be latched, in kph.  Set to 0 to disable latching."
+        	"default":"2.5",
+        	"description":"Speed at which the heading parameter should be latched, in mph.  Set to 0 to disable latching."
         },
         {
         	"key":"GPSSource",

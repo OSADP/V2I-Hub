@@ -52,6 +52,11 @@ var messages = {
 		{			
 				value  : 6,
 				string : 'Pmm'
+		},
+		Radio : 
+		{			
+				value  : 7,
+				string : 'Radio'
 		}
 	},
 	MsgSubType : {
@@ -114,6 +119,21 @@ var messages = {
 		{			
 				value  : 11,
 				string : 'NextRequest'
+		},
+		Incoming : 
+		{			
+				value  : 12,
+				string : 'Incoming'
+		},
+		Outgoing : 
+		{			
+				value  : 13,
+				string : 'Outgoing'
+		},
+		Shutdown : 
+		{			
+				value  : 14,
+				string : 'Shutdown'
 		}
 	}
 };

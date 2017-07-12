@@ -33,6 +33,8 @@ public:
 	 */
 	static std::string ToUtcTimeString(const std::chrono::system_clock::time_point& tp);
 
+
+
 	/**
 	 * Convert a time_point into a local calendar string using abbreviated format and fractional seconds.
 	 * Example return format: 2016-09-12 11:28:53.773.
@@ -45,6 +47,11 @@ public:
 	 */
 	static std::string ToUtcPreciseTimeString(const std::chrono::system_clock::time_point& tp);
 
+	/**
+	 * Convert a time_point into a UTC calendar string.
+	 * Example return format: 2017-02-27 21:23:32.773.
+	 */
+	static std::string ToUtcPreciseTimeString(uint64_t ms);
 	/**
 	 * Convert a chrono::milliseconds duration into a string formatted as hh:mm:ss.fff.
 	 */

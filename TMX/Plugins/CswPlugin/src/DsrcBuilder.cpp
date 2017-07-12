@@ -20,7 +20,8 @@ void DsrcBuilder::AddCurveSpeedAdvisory(TiDataFrame *frame, unsigned int speedLi
 	AddItisCode(&frame->content.choice.advisory.list, 27); // "warning advice"
 	AddItisText(&frame->content.choice.advisory.list, "curve ahead");
 	AddItisCode(&frame->content.choice.advisory.list, 2564); // "speed restriction"
-	AddItisText(&frame->content.choice.advisory.list, speedText.str());
+	AddItisText(&frame->content.choice.advisory.list, std::to_string(speedLimit));
+	AddItisCode(&frame->content.choice.advisory.list, 8720); // "MPH"
 }
 
 void DsrcBuilder::AddItisCode(ITIScodesAndText::ITIScodesAndText__List *list, long code)
@@ -33,19 +34,17 @@ void DsrcBuilder::AddItisCode(ITIScodesAndText::ITIScodesAndText__List *list, lo
 
 void DsrcBuilder::AddItisText(ITIScodesAndText::ITIScodesAndText__List *list, std::string text)
 {
-	int textLength = text.length() + 1;
+	int textLength = text.length();
 
 	ItisMember *itisMember = (ItisMember*)calloc(1, sizeof(ItisMember));
-	itisMember->item_itis.present = item_itis_PR_itis;
+	itisMember->item_itis.present = item_itis_PR_text;
 	itisMember->item_itis.choice.text.buf = (uint8_t*)calloc(textLength, sizeof(uint8_t));
 	itisMember->item_itis.choice.text.size = textLength;
 
-	for (int i = 0; i < textLength - 1; i++)
+	for (int i = 0; i < textLength; i++)
 	{
 		itisMember->item_itis.choice.text.buf[i] = text[i];
 	}
-
-	itisMember->item_itis.choice.text.buf[textLength - 1] = '\0';
 
 	asn_set_add(list, itisMember);
 }

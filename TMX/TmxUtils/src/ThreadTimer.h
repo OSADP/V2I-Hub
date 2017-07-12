@@ -60,6 +60,11 @@ public:
 	 */
 	void ChangeFrequency(uint id, std::chrono::milliseconds frequency);
 
+	/**
+	 * Force a timer trigger event.
+	*/
+	void TriggerNow(uint id);
+
 private:
 	// Override of DoWork from BackgroundWorker.
 	void DoWork();
@@ -85,6 +90,11 @@ public:
 	void set_Frequency(std::chrono::milliseconds frequency)
 	{
 		_timer.ChangeFrequency(_periodicTickId, frequency);
+	}
+
+	void TriggerNow()
+	{
+		_timer.TriggerNow(_periodicTickId);
 	}
 
 private:

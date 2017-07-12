@@ -30,6 +30,7 @@
 #include "PluginException.h"
 #include "PluginKeepAlive.h"
 #include "database/DbConnectionPool.h"
+#include "database/SystemContext.h"
 
 // Redefine PLOG for plugins
 #ifdef PLOG
@@ -47,6 +48,7 @@
 
 namespace tmx {
 namespace utils {
+
 
 // C++ wrapper for an ivpapi plugin.
 // If the ivpapi is rewritten in C++, this class will be moved to the API, and it will
@@ -190,14 +192,17 @@ public:
 
 		// Maybe this is a system-wide parameter?
 		if (text == NULL && _sysConfig != NULL)
+		{
+			pthread_mutex_lock(&_plugin->lock);
 			text = ivpConfig_getCopyOfValueFromCollection(_sysConfig, key.c_str());
+			pthread_mutex_unlock(&_plugin->lock);
+		}
 
 		if (text != NULL)
 		{
 			try
 			{
 				value = boost::lexical_cast<T>(text);
-				free(text);
 				success = true;
 			}
 			catch (boost::bad_lexical_cast const &ex)
@@ -205,6 +210,7 @@ public:
 				PLOG(logERROR) << "Unable to convert config value from \"" << text << "\": " << ex.what();
 				success = false;
 			}
+			free(text);
 		}
 
 		if (lock != NULL)
@@ -280,6 +286,12 @@ public:
 	template<typename T>
 	bool SetStatus(const char *key, T value, bool prependTime = false, std::streamsize precision = 2)
 	{
+		bool mute = false;
+		GetConfigValue("MuteStatus", mute);
+
+		if (mute)
+			return false;
+
 		std::ostringstream ss;
 
 		if (prependTime)
@@ -291,17 +303,16 @@ public:
 
 		bool isNewValue = false;
 
-		std::map<const char*, std::string>::iterator pair = _statusMap.find(key);
-		if (pair == _statusMap.end())
+		if (_statusMap.count(key) == 0)
 		{
-			_statusMap.insert(std::pair<const char*, std::string>(key, ss.str()));
+			_statusMap[key] = ss.str();
 			isNewValue = true;
 		}
 		else
 		{
-			if (ss.str().compare(pair->second) != 0)
+			if (ss.str().compare(_statusMap[key]) != 0)
 			{
-				pair->second = ss.str();
+				_statusMap[key] = ss.str();
 				isNewValue = true;
 			}
 		}
@@ -314,6 +325,8 @@ public:
 
 		return isNewValue;
 	}
+
+	void RemoveStatus(const char *key);
 
 	static std::string NewGuid();
 
@@ -341,6 +354,9 @@ protected:
 	std::string _logPrefix;
 	IvpPlugin* _plugin;
 
+	// Static system context - to log msg latency and system load
+	static tmx::utils::SystemContext _sysContext;
+
 private:
 	void SetStartTimeStatus();
 
@@ -349,7 +365,7 @@ private:
 	PluginKeepAlive *_keepAlive;
 
 	// Map a plugin status key to the last value set for that key.
-	std::map<const char *, std::string> _statusMap;
+	std::map<std::string, std::string> _statusMap;
 
 	// Code for message handler registration and invoking
 	struct handler_allocator {

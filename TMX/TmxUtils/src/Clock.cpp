@@ -91,6 +91,7 @@ std::string Clock::ToUtcTimeString(const std::chrono::system_clock::time_point& 
     return calStr;
 }
 
+
 std::string Clock::ToLocalPreciseTimeString(const std::chrono::system_clock::time_point& tp)
 {
     std::time_t t = chrono::system_clock::to_time_t(tp);
@@ -116,6 +117,22 @@ std::string Clock::ToUtcPreciseTimeString(const std::chrono::system_clock::time_
     ss << tmBuffer << "." << std::setfill('0') << std::setw(3) << ms;
     return ss.str();
 }
+
+
+std::string Clock::ToUtcPreciseTimeString(uint64_t ms)
+{
+	// Convert time_t struct into UTC timestamp string.
+	std::time_t t = ms/1000;
+	short msec = ms%1000;
+	struct tm *myTm = gmtime(&t);
+	char tmBuffer[20];
+	strftime(tmBuffer, 20, "%F %T", myTm);
+
+	ostringstream ss;
+    ss << tmBuffer << "." << std::setfill('0') << std::setw(3) << msec;
+    return ss.str();
+}
+
 
 std::string Clock::ToTimeString(const std::chrono::milliseconds ms)
 {

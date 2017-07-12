@@ -28,6 +28,7 @@
     <script type="text/javascript" src="js/tmx.custom.library.js" defer></script>
     <script type="text/javascript" src="../js/tmx.vehicle.display.library.js" defer></script>
     <script type="text/javascript" src="../js/tmx.components.library.js" defer></script>
+    <script type="text/javascript" src="../generated-code/js/tmx.SystemConfigTypes.js"></script>
     <script type="text/javascript" src="../js/jquery.keyboard.js" defer></script>
     <!--script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAqCPFCmtDoTVv3qBGnM4rquV5Of4yHYYM" async defer></script-->
     <!--script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAqCPFCmtDoTVv3qBGnM4rquV5Of4yHYYM&callback=initMap"
@@ -50,7 +51,6 @@
             <!--button id="setup_page_btn" class="ui-btn ui-btn-inline headbtn ui-corner-all" data-transition="none" onmousedown="location.href='#Setup'">Setup</button-->
         </div>
         <div id="identifier_label" class="identifierlabel"></div>
-        <!--div id="mvp_page_label" class="headerlabel">TMX</div-->
         <div data-demo-html="true">
             <div data-role="popup" id="popupMenu" data-theme="a">
                 <ul data-role="listview" data-inset="true" class="width-12em" data-theme="a">
@@ -68,11 +68,20 @@
 
     <!-- ============================================================= Main Page =================================================================== -->
     <div data-role="page" class="ui-page-theme-a" id="Main" data-title="Display">
-        <div id="middleDiv">
-            <img id="ActiveImage" src="../images/battelle.png" />
-            <img id="CloakImage" src="../images/cloakmode.png" class="hidden" />
-            <div id="bottomDiv"></div>
+        <div id="middleDiv" class="ImageDiv">
+            <img id="ActiveImage" src="../images/Common/Splash_Screen_2.png" class="layered_stack z-index-0" />
+            <img id="NearDirectionImage" src="" class="layered_stack z-index-3 hidden" />
+            <img id="RightDirectionImage" src="" class="layered_stack z-index-4 hidden" />
+            <img id="FarDirectionImage" src="" class="layered_stack z-index-5 hidden" />
+            <img id="LeftDirectionImage" src="" class="layered_stack z-index-6 hidden" />
+            <img id="OnCurbsidePedZoneImage" src="" class="layered_stack z-index-7 hidden" />
+            <img id="InRoadwayFwdCenterPedZoneImage" src="" class="layered_stack z-index-8 hidden" />
+            <img id="InRoadwayFwdCurbPedZoneImage" src="" class="layered_stack z-index-9 hidden" />
+            <img id="InRoadwayRearCenterPedZoneImage" src="" class="layered_stack z-index-10 hidden" />
+            <img id="InRoadwayRearCurbPedZoneImage" src="" class="layered_stack z-index-11 hidden" />            
+            <img id="CloakImage" src="../images/Common/battelle_visual_disabled.png" class="layered_stack z-index-0 hidden" />
         </div>
+        <div id="bottomDiv" class="whiteFont-32"></div>
         <!--table data-role="table" data-mode="reflow" class="ui-responsive table-stroke padding-0em margin-left-0_25em table-fixed margin-right-0_25em">
             <thead class="hidden"><tr><th colspan="6"></th></tr></thead>
             <tbody>
@@ -341,10 +350,6 @@
             </tbody>
         </table>                    
     </div>
-    <!-- =========================================================================================================================================== -->
-    <!-- ============================================================= Page 3 Page =================================================================== -->
-    <!--div data-role="page" class="ui-page-theme-a" id="Page3" data-title="MVP">
-    </div-->
     <!-- =========================================================================================================================================== -->
     <!-- ========================= Setup PAGE ======================================================================================================== -->
     <!--div data-role="page" class="ui-page-theme-a" id="Setup" data-title="Setup">
