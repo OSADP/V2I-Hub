@@ -9,3 +9,6 @@ V2I Hub Version 2.4
 - New SPAT plugin does not need an input file
 - Updated MAP plugin to take json output from the Connected Vehicle ISD tool
 - Various stability and bug fixes
+
+V2I Hub Version 2.5.1
+- Fixed compliation script
