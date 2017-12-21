@@ -1,0 +1,50 @@
+/**
+* \defgroup NtripPlugin  NTRIP Position Correction Plugin
+  \brief Brief description 
+  \details Detailed description
+*/
+
+/**
+ \page ivpplugins IVP Plugins
+ - \subpage ntripplugin
+ 
+ \page ntripplugin NTRIP Plugin
+\tableofcontents
+
+The Position Correction Provider supplies the IVP Communication Hub with real time differential 
+GPS correction data, using an Ntrip (Networked Transport of RTCM via Internet Protocol) client to 
+receive differential GPS data over the internet in RTCM format.
+
+The Position Correction Plugin receives correction information over an internet connection after 
+supplying the Position Correction Provider its current location information.  The position correction 
+information is converted into a J2735 RTCM message and published to the IVP Message Router.  The 
+Position Correction Plugin may also receive J2735 RTCM Messages from the IVP Message Router, and if 
+the source of those messages is not itself, the Position Correction Plugin will stop asking for position 
+correction data from the Position Correction Provider until the RTCM messages stop.  This strategy allows 
+the IVP platform to act either as a publisher or subscriber of position correction data as dictated by the 
+local environment.
+
+\section externals External Resources
+
+- ivpapi
+
+\section build Build Instructions
+
+- Build using eclipse
+
+\section install Installation Instructions
+
+- Navigate to the output directory and zip the Debug folder and manifest.json file into one zip file.  This zip can be
+depolyed using the Administration Portal.
+
+\section config Configuration Parameters
+
+ - Endpoint IP: 
+ - Endpoint Port:
+ - Username:
+ - Password:
+ - Mountpoint:
+
+\section publish Published Messages
+ - J2735 RTCM
+*/

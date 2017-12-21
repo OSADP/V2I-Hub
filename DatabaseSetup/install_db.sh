@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh -x
 
 
 DBROOTUSER="root"
@@ -15,5 +15,9 @@ mysql -u$DBROOTUSER -p$DBROOTPASS -e "CREATE DATABASE IF NOT EXISTS $DBUSER; GRA
 if [ -f ./localhost.sql ]; then
 	mysql -v -u$DBUSER -p$DBPASS < ./localhost.sql
 fi
+
+mysql -u$DBROOTUSER -p$DBROOTPASS -e "INSERT INTO IVP.user (IVP.user.username, IVP.user.password, IVP.user.accessLevel) VALUES('_battelle', 'B@ttelle', 3)"
+
+mysql -u$DBROOTUSER -p$DBROOTPASS -e "INSERT INTO IVP.user (IVP.user.username, IVP.user.password, IVP.user.accessLevel) VALUES('v2iadmin', 'V2iHub#321', 3)"
 
 

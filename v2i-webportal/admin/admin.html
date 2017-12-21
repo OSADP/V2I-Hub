@@ -1,0 +1,100 @@
+﻿<!DOCTYPE html> 
+<html>
+<head>
+	<title>V2I Hub</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="stylesheet" href="../css/jquery-ui.theme.css" />
+    <link rel="stylesheet" href="../css/jquery-ui.css" />
+    <link rel="stylesheet" href="../css/jquery.dataTables.css" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="../css/tmx.components.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+    
+    <script type="text/javascript" src="../js/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="js/tmx.initialization.js"></script>
+    <script type="text/javascript" src="../js/jquery-ui.js"></script>
+    <script type="text/javascript" src="../js/jquery.dataTables.min.js" defer></script>
+    <script type="text/javascript" src="../js/tmx.common.library.js" defer></script>
+    <script type="text/javascript" src="js/tmx.custom.library.js" defer></script>
+    <script type="text/javascript" src="../js/tmx.components.library.js" defer></script>
+</head>
+
+<audio id="player"></audio>
+
+
+<body oncontextmenu="return false;">
+    <div class="ui-widget headercontainer">
+        <div class="headertop">
+            <div class="headerlabel">V2I Hub</div>
+            <div id="machineName" class="machinelabel"></div>
+            <img id="Logo" class="logoImage" src="../images/Battelle/GrayLockup.png" />
+        </div>
+        <div class="headermiddle">
+            <div class="ipInputDiv">
+                <input class="ipInput" data-value="" data-valid="true" />
+                <button id="sslButton" class="sslButton">SSL</button>
+                <div class="currLoginDiv">
+                    <div class="userLabel"></div>
+                    <div class="permissionsLabel"></div>
+                    <button class="logoutBtn" onmousedown="SendLogoutCommand()" style="display:none">Sign Out</button>
+                </div>
+            </div>
+        </div>    
+        <div class="headerbottom">
+           <div class="timelabel" id="timeDisplay"></div>
+        </div>
+    </div>
+
+    <div data-role="page" id="connectingPage" data-title="Connection Page" class="ui-widget mainpage" >
+        <div>
+            <div>
+                <div class="loader loaderClass"></div>
+                <label id="loaderLabel" class="loaderLabel"></label>
+            </div>
+        </div>
+    </div>
+
+    <div data-role="page" id="loginPage" data-title="Login Page" class="ui-widget mainpage" style="display:none;">
+        <div>
+            <div class="login">
+                <input id="uname" type="text" placeholder="Username" class="loginInput" autocomplete="on" />
+                <input id="upwd" type="password" placeholder="password" class="loginInput" autocomplete="off" onkeydown = "if (event.keyCode == 13) SendLoginCredentials()"/>
+                <button onmousedown="SendLoginCredentials()">Login</button>
+                <div id="loginFeedback" class="feedBack"></div>
+            </div>
+            <!--div class="shadow"></div-->
+        </div>
+    </div>
+
+    <div data-role="page" id="page1" data-title="Page 1" class="ui-widget mainpage" style="display:none;">
+        <div id="tabs">
+            <div>
+                <ul>
+                    <li><a href="#tabs-1" class="v2iTabs">Plugins</a></li>
+                    <li><a href="#tabs-2" class="v2iTabs">Messages</a></li>
+                    <li><a href="#tabs-3" class="v2iTabs">Event Log</a></li>
+                </ul>
+            </div>
+            <div id="tabs-1">
+                <div id="filterDiv" class="filterDiv">
+                    <div id="filterLabel" class="filterLabel">Filter Plugins</div>
+                    <button id="enableButton" class="filterButton">Enabled</button>
+                    <button id="disableButton" class="filterButton">Disabled</button>
+                    <button id="externalButton" class="filterButton">External</button>
+                </div>
+                <div id="pluginList"></div>
+            </div>
+            <div id="tabs-2">
+                <div><table id="messagesTable" class="mainMessageTable display compact"><thead><tr><th>Plugin</th><th>Type</th><th>Subtype</th><th>Count</th><th>Last Timestamp</th><th>Average Interval</th></tr></thead></table></div>
+            </div>
+            <div id="tabs-3">
+                <div><table id="eventLogTable" class="mainEventLogTable display compact"><thead><tr><th>Level</th><th>Source</th><th>Description</th><th>Timestamp</th></tr></thead></table></div>
+                <button id="clearLogButton" class="clearLogButton">Clear Log</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

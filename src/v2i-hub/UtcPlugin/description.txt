@@ -1,0 +1,44 @@
+/**
+* \defgroup UTCPlugin  UTC Time Source Plugin
+  \brief Brief description 
+  \details Detailed description
+*/
+
+/**
+ \page ivpplugins IVP Plugins
+ - \subpage utcplugin
+ 
+ \page utcplugin UTC Plugin
+\tableofcontents
+
+The UTC plugin is the source of Universal Coordinated Time for plugin modules installed 
+on the IVP platform.  Depending on the configuration of the UTC plugin, the time source 
+for the system’s local time is synchronized with either timestamps from an installed GPS 
+receiver, or from a Network Time Protocol (NTP) server, in the case that no GPS receiver 
+is available and the IVP platform has a reliable source of internet connectivity.
+
+Regardless of the source of the system’s local time, the UTC plugin extracts the local 
+server time and formats it into several messages that are published to the IVP Message Router.
+
+\section externals External Resources
+
+- ivpapi
+
+\section build Build Instructions
+
+- Build using eclipse
+
+\section install Installation Instructions
+
+- Navigate to the output directory and zip the Debug folder and manifest.json file into one zip file.  This zip can be
+depolyed using the Administration Portal.
+
+\section config Configuration Parameters
+
+- Frequency: The frequency in ms in which messages a published from the plugin.
+- Time Server: The time server or localhost to get time from the IVP host.
+
+\section publish Published Messages
+ - Time Milliseconds UTC Since 1970 
+ - Time Formatted UTC
+*/
