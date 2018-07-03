@@ -191,14 +191,7 @@ public:
 		}
 	}
 
-	~J2735MessageFactory()
-	{
-		for (auto iter = byInt.begin(); iter != byInt.end(); iter++)
-			delete iter->second;
-
-		byInt.clear();
-		byStr.clear();
-	}
+	~J2735MessageFactory()	{ }
 
 	/**
 	 * Return the last event that occurred.  This can be used to report on the

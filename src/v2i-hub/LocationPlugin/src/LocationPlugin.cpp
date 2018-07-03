@@ -7,6 +7,7 @@
 //				 from gpsd.
 //============================================================================
 
+#include <memory>
 #include <mutex>
 #include <thread>
 
@@ -18,8 +19,9 @@
 #include <LocationMessageEnumTypes.h>
 #include <PluginDataMonitor.h>
 #include <Uuid.h>
+#include <tmx/messages/TmxNmea.hpp>
 
-#include <gps.h>
+#include <libgpsmm.h>
 
 using namespace std;
 using namespace tmx;
@@ -49,6 +51,7 @@ protected:
 private:
 	std::mutex _dataLock;
 	std::atomic<uint64_t> _frequency;
+	std::atomic<bool> _sendNmea;
 	std::atomic<double> _latchSpeed;
 	std::atomic<double> _lastHeading;
 	std::atomic<bool> _configSet;
@@ -115,6 +118,7 @@ LocationPlugin::LocationPlugin(std::string name) : PluginClient(name)
 	_frequency = 500;
 	_configSet = false;
 	_monitoringActive = false;
+	_sendNmea = false;
 
 	AddMessageFilter<tmx::messages::DataChangeMessage>(this, &LocationPlugin::HandleDataChange);
 	SubscribeToMessages();
@@ -138,6 +142,8 @@ void LocationPlugin::UpdateConfigSettings()
 		GetConfigValue("Frequency", _frequency);
 		GetConfigValue("LatchHeadingSpeed", _latchSpeed);
 		GetConfigValue("GPSSource", _gpsdHost);
+		GetConfigValue("SendRawNMEA", _sendNmea);
+
 		_throttle.set_Frequency(std::chrono::milliseconds(_frequency));
 	}
 
@@ -184,42 +190,50 @@ void LocationPlugin::HandleDataChange(DataChangeMessage &msg, routeable_message 
  */
 void LocationPlugin::MonitorGPS()
 {
-	struct gps_data_t gps_data;
+	struct gps_data_t *gps_data;
 	int oStatus = -1;
 	bool sendMessage = false;
 
-	while(_plugin->state != IvpPluginState_error)
+	std::unique_ptr<gpsmm> gps;
+
+	string host;
+
+	_gpsGood = false;
+	_gpsError = EPIPE;
+
+	PLOG(logINFO) << "GPS monitoring thread " << this_thread::get_id() << " initializing.";
+
+	while(_monitoringActive)
 	{
-		if (!_monitoringActive)
+		string oldHost = host;
+
+		// Do not connect unless we have a good value for the host
 		{
-			_gpsGood = false;
-			_gpsError = EPIPE;
-
-			// If monitoring was stopped while we were processing an open connection, then
-			// close the stream and wait a few seconds
-			if (oStatus == 0)
-			{
-				PLOG(logWARNING) << "Shutting down active GPSD connection";
-				gps_stream(&gps_data, WATCH_DISABLE, NULL);
-				gps_close(&gps_data);
-
-				sleep(2);
-			}
-
-			// Do not connect unless we have a good value for the host
 			lock_guard<mutex> lock(_dataLock);
-			if (_gpsdHost.empty())
+			host = _gpsdHost;
+		}
+
+		if (host.empty())
+		{
+			sleep(1);
+			continue;
+		}
+
+		// If monitoring was stopped while we were processing an open connection, then
+		// close the stream and wait a few seconds
+		if (oldHost != host)
+		{
+			if (gps && gps->is_open())
 			{
-				sleep(1);
-				continue;
+				PLOG(logWARNING) << "Shutting down active GPSD connection to " << oldHost;
 			}
 
 			PLOG(logINFO) << "Connecting to GPS on " << _gpsdHost << ":" << DEFAULT_GPSD_PORT;
+			gps.reset(new gpsmm(_gpsdHost.c_str(), DEFAULT_GPSD_PORT));
 
-			oStatus = gps_open(_gpsdHost.c_str(), DEFAULT_GPSD_PORT, &gps_data);
-
-			if(oStatus < 0)
+			if (!gps)
 			{
+				_gpsError = errno;
 				PLOG(logERROR) << "Problem opening socket to GPSD: " << gps_errstr(errno);
 
 				// Sleep some time before trying again
@@ -228,52 +242,35 @@ void LocationPlugin::MonitorGPS()
 			}
 
 			PLOG(logDEBUG) << "Watching GPSD on " << _gpsdHost;
-
-			gps_stream(&gps_data, WATCH_ENABLE | WATCH_JSON, NULL);
-
-			_monitoringActive = true;
+			gps->stream(WATCH_ENABLE | WATCH_JSON | WATCH_NMEA);
 		}
 
 		LocationMessage msg;
 
-		if((_gpsGood = gps_waiting(&gps_data, _frequency * 1000)))
+		if((_gpsGood = gps->waiting(_frequency * 1000)))
 		{
-			int bytes = gps_read(&gps_data);
-			_gpsGood = (bytes > 0);
-
-			if (bytes == 0)	// No data returned
-			{
-				_gpsError = ENODATA;
+			gps_data = NULL;
+			gps_data = gps->read();
+			if (!gps_data)
 				continue;
-			}
-			else if (bytes < 0)	// True read error
-			{
-				PLOG(logERROR) << "Error reading GPS data from the socket.";
-				_gpsError = EIO;
 
-				// Reconnect
-				_monitoringActive = false;
-				continue;
-			}
-			else
-			{
-				_gpsError = 0;
-			}
+			PLOG(logDEBUG2) << "Received: " << gps->data();
+			_gpsError = 0;
 
 			sendMessage = false;
-			uint64_t gpsTime = (uint64_t)(1000 * gps_data.fix.time);
+			uint64_t gpsTime = (uint64_t)(1000 * gps_data->fix.time);
 			msg.set_Id(Uuid::NewGuid());
-			msg.set_FixQuality((FixTypes)gps_data.fix.mode);
+			msg.set_FixQuality((FixTypes)gps_data->fix.mode);
 			msg.set_SignalQuality(msg.get_FixQuality() > 0 ? SignalQualityTypes::GPS : SignalQualityTypes::Invalid);
 			msg.set_Time(std::to_string(gpsTime));
-			msg.set_NumSatellites(gps_data.satellites_used);
-			if(gps_data.fix.mode > 1)
+			msg.set_NumSatellites(gps_data->satellites_used);
+			if(gps_data->fix.mode > 1)
 			{
-				if (gps_data.fix.latitude != 0.0 || gps_data.fix.longitude != 0.0)
+				if (gps_data->fix.latitude != 0.0 || gps_data->fix.longitude != 0.0)
 					sendMessage = true;
-				msg.set_Latitude(gps_data.fix.latitude);
-				msg.set_Longitude(gps_data.fix.longitude);
-				msg.set_Speed_mps(gps_data.fix.speed); //fix speed is in m/s
+				msg.set_Latitude(gps_data->fix.latitude);
+				msg.set_Longitude(gps_data->fix.longitude);
+				msg.set_Speed_mps(gps_data->fix.speed); //fix speed is in m/s
 
 				if (_latchSpeed > msg.get_Speed_mph())
 				{
@@ -281,17 +278,17 @@ void LocationPlugin::MonitorGPS()
 				}
 				else
 				{
-					msg.set_Heading(gps_data.fix.track);
+					msg.set_Heading(gps_data->fix.track);
 					_lastHeading = msg.get_Heading();
 				}
 
-				if(gps_data.fix.mode == 3)
+				if(gps_data->fix.mode == 3)
 				{
-					msg.set_Altitude(gps_data.fix.altitude);
+					msg.set_Altitude(gps_data->fix.altitude);
 				}
-				if(!std::isnan(gps_data.dop.hdop))
+				if(!std::isnan(gps_data->dop.hdop))
 				{
-					msg.set_HorizontalDOP(gps_data.dop.hdop);
+					msg.set_HorizontalDOP(gps_data->dop.hdop);
 				}
 			}
 
@@ -313,13 +310,36 @@ void LocationPlugin::MonitorGPS()
 			_mph = msg.get_Speed_mph();
 			_heading = msg.get_Heading();
 			_hdop = msg.get_HorizontalDOP();
+
+			// Lastly, route each raw NMEA message, if set up to
+			if (_sendNmea)
+			{
+				istringstream is(gps->data());
+				for (string line; std::getline(is, line); )
+				{
+					if (line.empty())
+						continue;
+
+					if (line[line.length() - 1] == '\r')
+						line.erase(line.length() - 1);
+
+					TmxNmeaMessage msg;
+					const string baseST = msg.get_subtype();
+
+					msg.set_sentence(line);
+					if (!msg.get_subtype().empty() && msg.get_subtype() != baseST)
+						BroadcastMessage(static_cast<const routeable_message &>(msg));
+				}
+			}
 		}
 	}
 
-	if (oStatus == 0)
+	PLOG(logINFO) << "GPS monitoring thread " << this_thread::get_id() << " terminating.";
+
+	if (gps)
 	{
-		gps_stream(&gps_data, WATCH_DISABLE, NULL);
-		gps_close(&gps_data);
+		PLOG(logINFO) << "Closing connection to " << host;
+		gps.reset();
 	}
 }
 
@@ -338,12 +358,9 @@ int LocationPlugin::Main()
 	}
 
 	// Monitor GPS on a separate thread
+	_monitoringActive = true;
 	std::thread gps(&LocationPlugin::MonitorGPS, this);
-
-	if(!_monitoringActive)
-	{
-		usleep(10000);
-	}
+	usleep(10000);
 
 	while(_plugin->state != IvpPluginState_error)
 	{
@@ -382,8 +399,10 @@ int LocationPlugin::Main()
 			status += "Active";
 		else
 		{
+			int err = _gpsError;
+
 			status += "Inactive: ";
-			status += strerror(_gpsError);
+			status += gps_errstr(err);
 		}
 
 		SetStatus("GPS Status", status);
@@ -392,6 +411,7 @@ int LocationPlugin::Main()
 		sleep(3);
 	}
 
+	_monitoringActive = false;
 	gps.join();
 
 	return 0;

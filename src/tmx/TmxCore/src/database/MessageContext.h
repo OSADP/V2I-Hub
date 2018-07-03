@@ -19,7 +19,7 @@ struct MessageActivityEntry {
 	unsigned int pluginId;
 	unsigned int count;
 	time_t lastReceivedTimestamp;
-	unsigned int averageInterval;
+	uint64_t averageInterval;
 };
 
 struct MessageTypeEntry {

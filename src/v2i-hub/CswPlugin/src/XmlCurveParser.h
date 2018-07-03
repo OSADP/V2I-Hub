@@ -30,7 +30,7 @@ public:
 	XmlCurveParser();
 	~XmlCurveParser();
 
-	bool ReadCurveFile(std::string& filePath, TravelerInformation *tim);
+	bool ReadCurveFile(const char *filePath, TravelerInformation *tim);
 
 	unsigned int SpeedLimit;
 

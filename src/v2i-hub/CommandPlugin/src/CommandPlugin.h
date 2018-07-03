@@ -31,6 +31,8 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/lockfree/spsc_queue.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/regex.hpp>
 
 
 using namespace std;
@@ -40,12 +42,14 @@ using namespace tmx::messages;
 using namespace std;
 using namespace tmxctl;
 using namespace boost::property_tree;
+using namespace boost::filesystem;
 
 namespace CommandPlugin
 {
 
 #define READ_BUFFER_SIZE 5000
 #define MAX_SEND_BYTES 5000
+#define DEFAULT_PLUGINDIRECTORY "/var/www/plugins"
 
 /**
  * This plugin listens for websocket connections from the TMX admin portal
@@ -65,11 +69,14 @@ protected:
 
 	void UpdateConfigSettings();
 	static uint64_t GetMsTimeSinceEpoch();
+	static int FileUploadCB(void *data, const char *name, const char *filename,
+		       char *buf, int len, enum lws_spa_fileupload_states state);
 	static void GetTelemetry(string dataType);
 	static void GetEventTelemetry();
 	static void BuildFullTelemetry(string *outputBuffer, string dataType);
 	static void BuildUpdateTelemetry(string *outputBuffer, string dataType);
-	static void BuildCommandResponse(string *outputBuffer, string id, string command, string status, string reason, std::map<string, string> &data);
+	static void BuildRemoveTelemetry(string *outputBuffer, string dataType);
+	static void BuildCommandResponse(string *outputBuffer, string id, string command, string status, string reason, std::map<string, string> &data, std::map<string, string> &arrayData);
 	static void SendData(string *outputBuffer, struct lws *wsi);
 
 	static int WSCallbackHTTP(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
@@ -91,12 +98,38 @@ private:
 		uint64_t lastHeartbeatSendTimeMS;
 	};
 
+	struct PerSessionDataHTTP
+	{
+		struct lws_spa *spa;
+			char result[LWS_PRE + 512];
+			int result_len;
+
+			char filename[64];
+			long file_length;
+		#if !defined(LWS_WITH_ESP32)
+			lws_filefd_type fd;
+		#endif
+			int last_percent_sent;
+	};
+
 	struct EventLogMessage
 	{
 		string level;
 		string source;
 		string description;
 		string timestamp;
+	};
+
+	struct UploadData
+	{
+		string requestId;
+		uint64_t requestTimeMS;
+		string *outputbuffer;
+		string destinationFileName;
+		string destinationPath;
+		uint64_t fileSize;
+		bool uploading;
+		string message;
 	};
 
 	enum AuthorizationLevels
@@ -106,11 +139,22 @@ private:
 		SystemAdministrator = 3
 	};
 
+	enum HTTPEnumParamNames {
+		EPN_TEXT,
+		EPN_SEND,
+		EPN_FILE,
+		EPN_UPLOAD,
+	};
+
+	static const char * _httpParamNames[4];
+
 	atomic<bool> _newConfigValues{false};
 	std::atomic<uint64_t> _sleepMS{10}; // sleep in milliseconds
 	atomic<bool> _sslEnabled{false};
 	string _sslPath = "";
-	mutex _configLock;
+	static std::atomic<uint64_t> _eventRowLimit; // limit on number of rows returned for initial event log query
+	static string _downloadPath; // path to download directory
+	static mutex _configLock;
 
 	boost::lockfree::spsc_queue<EventLogMessage, boost::lockfree::capacity<1024> > _eventLogMessageQueue;
 
@@ -156,6 +200,11 @@ private:
 	static std::map<string, string> _messagesPluginsRemoveJSON;
 	static std::map<string, string> _systemConfigPluginsRemoveJSON;
 	static string _eventsUpdatesJSON;
+	static string _eventsNextFullJSON;
+	static uint64_t _eventsFullCount;
+	static uint64_t _eventsNextFullCount;
+
+	static std::map<string, UploadData> _uploadRequests;
 
 };
 

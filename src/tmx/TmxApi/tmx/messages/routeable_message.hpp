@@ -462,6 +462,10 @@ public:
 		_dsrcPsid.bind(ivpMsg->dsrcMetadata->psid);
 	}
 
+	virtual void flush() {
+		get_payload_str();
+	}
+
 private:
 	// For incoming messages, keep a copy of the source IVP message
 	IvpMessage *ivpMsg = NULL;

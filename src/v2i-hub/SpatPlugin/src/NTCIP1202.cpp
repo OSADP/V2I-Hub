@@ -12,6 +12,7 @@
 #include <chrono>
 #include <ratio>
 #include "Clock.h"
+#include <PluginLog.h>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -20,6 +21,7 @@
 using namespace std;
 using namespace boost::property_tree;
 using namespace std::chrono;
+using namespace tmx::utils;
 
 #if SAEJ2735_SPEC < 63
 #else
@@ -39,7 +41,7 @@ void Ntcip1202::setSignalGroupMappingList(string json)
 	for(auto & signalGroup : root.get_child("SignalGroups"))
 	{
 		int signalGroupId = signalGroup.second.get<int>("SignalGroupId");
-		int phaseNumber = signalGroup.second.get<int>("Phase");
+		int phaseNumber = signalGroup.second.get<int>("Phase", 0);
 		string typeName = signalGroup.second.get<string>("Type");
 
 		cout<<"signalGroupId: "<<signalGroupId<<" phaseNumber: "<<phaseNumber<<" typeName: "<<typeName<<endl;
@@ -61,6 +63,16 @@ void Ntcip1202::copyBytesIntoNtcip1202(char* buff, int numBytes)
 
 	unsigned char * vptr = (unsigned char *)&(ntcip1202Data);
 
+	// map phase to array index for later use
+	_phaseToIndexMapping.clear();
+	for (int i = 0;i < 16;i++)
+	{
+		if (ntcip1202Data.phaseTimes[i].phaseNumber > 0)
+		{
+			_phaseToIndexMapping[ntcip1202Data.phaseTimes[i].phaseNumber] = i;
+		}
+	}
+
 	//for (int i=0; i<numBytes; i++) { printf("%02x ", vptr[i]); }
 	//printf("\n\n");
 
@@ -69,27 +81,42 @@ void Ntcip1202::copyBytesIntoNtcip1202(char* buff, int numBytes)
 
 uint16_t Ntcip1202::getVehicleMinTime(int phaseNumber)
 {
-	return ((ntohs(ntcip1202Data.phaseTimes[phaseNumber-1].spatVehMinTimeToChange)));
+	return ((ntohs(ntcip1202Data.phaseTimes[_phaseToIndexMapping[phaseNumber]].spatVehMinTimeToChange)));
 }
 
 uint16_t Ntcip1202::getVehicleMaxTime(int phaseNumber)
 {
-	return ((ntohs(ntcip1202Data.phaseTimes[phaseNumber-1].spatVehMaxTimeToChange)));
+	return ((ntohs(ntcip1202Data.phaseTimes[_phaseToIndexMapping[phaseNumber]].spatVehMaxTimeToChange)));
 }
 
 uint16_t Ntcip1202::getPedMinTime(int phaseNumber)
 {
-	return ((ntohs(ntcip1202Data.phaseTimes[phaseNumber-1].spatPedMinTimeToChange)));
+	return ((ntohs(ntcip1202Data.phaseTimes[_phaseToIndexMapping[phaseNumber]].spatPedMinTimeToChange)));
 }
 
 uint16_t Ntcip1202::getPedMaxTime(int phaseNumber)
 {
-	return ((ntohs(ntcip1202Data.phaseTimes[phaseNumber-1].spatPedMaxTimeToChange)));
+	return ((ntohs(ntcip1202Data.phaseTimes[_phaseToIndexMapping[phaseNumber]].spatPedMaxTimeToChange)));
+}
+
+uint16_t Ntcip1202::getOverlapMinTime(int phaseNumber)
+{
+	return ((ntohs(ntcip1202Data.phaseTimes[_phaseToIndexMapping[phaseNumber]].spatOvlpMinTimeToChange)));
+}
+
+uint16_t Ntcip1202::getOverlapMaxTime(int phaseNumber)
+{
+	return ((ntohs(ntcip1202Data.phaseTimes[_phaseToIndexMapping[phaseNumber]].spatOvpMaxTimeToChange)));
 }
 
 bool Ntcip1202::getPhaseFlashingStatus(int phaseNumber)
 {
 	return (bool)((ntohs(ntcip1202Data.flashingOutputPhaseStatus) >> (phaseNumber - 1))&0x01);
+}
+
+bool Ntcip1202::getOverlapFlashingStatus(int phaseNumber)
+{
+	return (bool)((ntohs(ntcip1202Data.flashingOutputOverlapStatus) >> (phaseNumber - 1))&0x01);
 }
 
 bool Ntcip1202::getPhaseRedStatus(int phaseNumber)
@@ -169,10 +196,13 @@ void Ntcip1202::printDebug()
 	for(int i=0; i<16; i++)
 	{
 		int phaseNum = i+1;
-		printf("Phase %02d, Green %d, Yellow %d, Red %d, Walk %d, Ped Clear %d, Don't Walk %d\r\n",
-				phaseNum, getPhaseGreensStatus(phaseNum), getPhaseYellowStatus(phaseNum),
-				getPhaseRedStatus(phaseNum), getPhaseWalkStatus(phaseNum), getPhasePedClearsStatus(phaseNum),
-				getPhaseDontWalkStatus(phaseNum));
+		PLOG(logDEBUG3) << "Phase " << phaseNum <<
+				", Green " << getPhaseGreensStatus(phaseNum) <<
+				", Yellow " << getPhaseYellowStatus(phaseNum) <<
+				", Red " << getPhaseRedStatus(phaseNum) <<
+				", Walk " << getPhaseWalkStatus(phaseNum) <<
+				", Ped Clear " << getPhasePedClearsStatus(phaseNum) <<
+				", Don't Walk " << getPhaseDontWalkStatus(phaseNum);
 	}
 
 }
@@ -228,27 +258,58 @@ bool Ntcip1202::ToJ2735r41SPAT(SPAT* spat, char* intersectionName, IntersectionI
 	for (int m = 0; m < 16; m++)
 	{
 		int phase = ntcip1202Data.phaseTimes[m].phaseNumber;
-		int vehicleSignalGroup = getVehicleSignalGroupForPhase(phase);
-		if(vehicleSignalGroup>0)
+
+		for(std::list<SignalGroupMapping>::iterator it = signalGroupMappingList.begin(); it != signalGroupMappingList.end(); it++)
 		{
-			MovementState *movement = (MovementState *) calloc(1, sizeof(MovementState));
-			movement->signalGroup = vehicleSignalGroup;
+			if(it->PhaseId == phase && boost::iequals(it->Type,"vehicle"))
+			{
+				if(it->SignalGroupId > 0)
+				{
+					MovementState *movement = (MovementState *) calloc(1, sizeof(MovementState));
+					movement->signalGroup = it->SignalGroupId;
 
-			populateVehicleSignalGroup(movement, phase);
+					populateVehicleSignalGroup(movement, phase);
 
-			ASN_SEQUENCE_ADD(&intersection->states.list, movement);
+					ASN_SEQUENCE_ADD(&intersection->states.list, movement);
+				}
+
+			}
 		}
 
-		int pedSignalGroup = getPedestrianSignalGroupForPhase(phase);
-		if(pedSignalGroup>0)
+		for(std::list<SignalGroupMapping>::iterator it = signalGroupMappingList.begin(); it != signalGroupMappingList.end(); it++)
 		{
-			MovementState *movement = (MovementState *) calloc(1, sizeof(MovementState));
-			movement->signalGroup = pedSignalGroup;
+			if(it->PhaseId == phase && boost::iequals(it->Type,"pedestrian"))
+			{
+				if(it->SignalGroupId > 0)
+				{
+					MovementState *movement = (MovementState *) calloc(1, sizeof(MovementState));
+					movement->signalGroup = it->SignalGroupId;
 
-			populatePedestrianSignalGroup(movement, phase);
+					populatePedestrianSignalGroup(movement, phase);
 
-			ASN_SEQUENCE_ADD(&intersection->states.list, movement);
+					ASN_SEQUENCE_ADD(&intersection->states.list, movement);
+				}
+			}
 		}
+
+		for(std::list<SignalGroupMapping>::iterator it = signalGroupMappingList.begin(); it != signalGroupMappingList.end(); it++)
+		{
+			if(it->PhaseId == phase && boost::iequals(it->Type,"overlap"))
+			{
+				if(it->SignalGroupId > 0)
+				{
+					MovementState *movement = (MovementState *) calloc(1, sizeof(MovementState));
+					movement->signalGroup = it->SignalGroupId;
+
+					populateOverlapSignalGroup(movement, phase);
+
+					ASN_SEQUENCE_ADD(&intersection->states.list, movement);
+				}
+
+			}
+		}
+
+
 	}
 	ASN_SEQUENCE_ADD(&(spat->intersections.list), intersection);
 
@@ -293,22 +354,24 @@ void Ntcip1202::populateVehicleSignalGroup(MovementState *movement, int phase)
 	stateTimeSpeed->timing = (TimeChangeDetails * ) calloc(1, sizeof(TimeChangeDetails));
 	stateTimeSpeed->timing->minEndTime =  getAdjustedTime(getVehicleMinTime(phase));
 
-	if (ntcip1202Data.phaseTimes[phase].spatVehMaxTimeToChange > 0)
+	if (getVehicleMaxTime(phase) > 0)
 	{
 		stateTimeSpeed->timing->maxEndTime = (TimeMark_t *) calloc(1, sizeof(TimeMark_t));
 		*(stateTimeSpeed->timing->maxEndTime) = getAdjustedTime(getVehicleMaxTime(phase));
 	}
 
-	if(getSpatPedestrianDetect(phase))
-	{
-		movement->maneuverAssistList = (ManeuverAssistList *) calloc(1, sizeof(ManeuverAssistList));
-		ConnectionManeuverAssist *pedDetect = (ConnectionManeuverAssist *) calloc(1, sizeof(ConnectionManeuverAssist));
-		pedDetect->connectionID = 0;
-		pedDetect->pedBicycleDetect = (PedestrianBicycleDetect_t *) calloc(1, sizeof(PedestrianBicycleDetect_t));
+	//we only get a phase number 1-16 from ped detect, assume its a ped phase
+//	if(getSpatPedestrianDetect(phase))
+//	{
+//		movement->maneuverAssistList = (ManeuverAssistList *) calloc(1, sizeof(ManeuverAssistList));
+//		ConnectionManeuverAssist *pedDetect = (ConnectionManeuverAssist *) calloc(1, sizeof(ConnectionManeuverAssist));
+//		pedDetect->connectionID = 0;
+//		pedDetect->pedBicycleDetect = (PedestrianBicycleDetect_t *) calloc(1, sizeof(PedestrianBicycleDetect_t));
+//
+//		*(pedDetect->pedBicycleDetect) = 1;
+//		ASN_SEQUENCE_ADD(&movement->maneuverAssistList->list, pedDetect);
+//	}
 
-		*(pedDetect->pedBicycleDetect) = 1;
-		ASN_SEQUENCE_ADD(&movement->maneuverAssistList->list, pedDetect);
-	}
 	ASN_SEQUENCE_ADD(&movement->state_time_speed.list, stateTimeSpeed);
 }
 
@@ -355,6 +418,65 @@ void Ntcip1202::populatePedestrianSignalGroup(MovementState *movement, int phase
 	ASN_SEQUENCE_ADD(&movement->state_time_speed.list, stateTimeSpeed);
 }
 
+void Ntcip1202::populateOverlapSignalGroup(MovementState *movement, int phase)
+{
+	MovementEvent *stateTimeSpeed = (MovementEvent *) calloc(1, sizeof(MovementEvent));
+
+	bool isFlashing = getOverlapFlashingStatus(phase);
+
+
+	if(getOverlapRedStatus(phase))
+	{
+		if(isFlashing)
+			stateTimeSpeed->eventState = MovementPhaseState_stop_Then_Proceed;
+		else
+			stateTimeSpeed->eventState = MovementPhaseState_stop_And_Remain;
+	}
+	else if(getOverlapYellowStatus(phase))
+	{
+		if(isFlashing)
+			stateTimeSpeed->eventState = MovementPhaseState_caution_Conflicting_Traffic;
+		else
+		{
+			//TODO Add protected and permissive
+			stateTimeSpeed->eventState = MovementPhaseState_protected_clearance;
+		}
+	}
+	else if(getOverlapGreenStatus(phase))
+	{
+		//TODO Add protected and permissive
+		stateTimeSpeed->eventState = MovementPhaseState_permissive_Movement_Allowed;
+	}
+	else
+	{
+		stateTimeSpeed->eventState = MovementPhaseState_dark;
+	}
+
+	stateTimeSpeed->timing = (TimeChangeDetails * ) calloc(1, sizeof(TimeChangeDetails));
+	stateTimeSpeed->timing->minEndTime =  getAdjustedTime(getOverlapMinTime(phase));
+
+	if (getOverlapMaxTime(phase) > 0)
+	{
+		stateTimeSpeed->timing->maxEndTime = (TimeMark_t *) calloc(1, sizeof(TimeMark_t));
+		*(stateTimeSpeed->timing->maxEndTime) = getAdjustedTime(getOverlapMaxTime(phase));
+	}
+
+	//we only get a phase number 1-16 from ped detect, assume its a ped phase
+//	if(getSpatPedestrianDetect(phase))
+//	{
+//		movement->maneuverAssistList = (ManeuverAssistList *) calloc(1, sizeof(ManeuverAssistList));
+//		ConnectionManeuverAssist *pedDetect = (ConnectionManeuverAssist *) calloc(1, sizeof(ConnectionManeuverAssist));
+//		pedDetect->connectionID = 0;
+//		pedDetect->pedBicycleDetect = (PedestrianBicycleDetect_t *) calloc(1, sizeof(PedestrianBicycleDetect_t));
+//
+//		*(pedDetect->pedBicycleDetect) = 1;
+//		ASN_SEQUENCE_ADD(&movement->maneuverAssistList->list, pedDetect);
+//	}
+
+	ASN_SEQUENCE_ADD(&movement->state_time_speed.list, stateTimeSpeed);
+}
+
+//this method assumes only one signal group per phase and will return last match, DONT USE
 int Ntcip1202::getVehicleSignalGroupForPhase(int phase)
 {
 	int signalGroupId = -1;
@@ -369,6 +491,7 @@ int Ntcip1202::getVehicleSignalGroupForPhase(int phase)
 	return signalGroupId;
 }
 
+//this method assumes only one signal group per phase and will return last match, DONT USE
 int Ntcip1202::getPedestrianSignalGroupForPhase(int phase)
 {
 	int signalGroupId = -1;

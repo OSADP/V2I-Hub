@@ -4,6 +4,6 @@
 // 	port: 		Port on which to connect to the Web Socket
 // 	led: 		id of the element that contains the status indicator. 
 var connections = 	[
-				{ip:"10.30.100.130", port:"19760", led:"Logo"}
+				{ip:"127.0.0.1", port:"19760", led:"Logo"}
 			];
 

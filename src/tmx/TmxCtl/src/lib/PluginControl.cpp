@@ -49,6 +49,10 @@ bool TmxControl::enable(pluginlist &plugins, ...)
 		DbConnection conn = _pool.Connection();
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
 		stmt->setUInt(1, 1);
+		for (size_t i = 0; i < plugins.size(); i++)
+		{
+			stmt->setString(i + 2, plugins[i]);
+		}
 		int rows = stmt->executeUpdate();
 		PLOG(logDEBUG1) << "Updated " << rows << " rows.";
 		return rows > 0;
@@ -74,6 +78,10 @@ bool TmxControl::disable(pluginlist &plugins, ...)
 		DbConnection conn = _pool.Connection();
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
 		stmt->setUInt(1, 0);
+		for (size_t i = 0; i < plugins.size(); i++)
+		{
+			stmt->setString(i + 2, plugins[i]);
+		}
 		int rows = stmt->executeUpdate();
 		PLOG(logDEBUG1) << "Updated " << rows << " rows.";
 		return rows > 0;
@@ -97,8 +105,12 @@ bool TmxControl::start(pluginlist &plugins, ...)
 		PLOG(logDEBUG1) << "Executing query " << query;
 
 		DbConnection conn = _pool.Connection();
-		unique_ptr<Statement> stmt(conn.Get()->createStatement());
-		unique_ptr<ResultSet> rs(stmt->executeQuery(query));
+		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
+		for (size_t i = 0; i < plugins.size(); i++)
+		{
+			stmt->setString(i + 1, plugins[i]);
+		}
+		unique_ptr<ResultSet> rs(stmt->executeQuery());
 
 		while (rs->next())
 		{
@@ -170,8 +182,12 @@ bool TmxControl::stop(pluginlist &plugins, ...)
 		PLOG(logDEBUG1) << "Executing query " << query;
 
 		DbConnection conn = _pool.Connection();
-		unique_ptr<Statement> stmt(conn.Get()->createStatement());
-		unique_ptr<ResultSet> rs(stmt->executeQuery(query));
+		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
+		for (size_t i = 0; i < plugins.size(); i++)
+		{
+			stmt->setString(i + 1, plugins[i]);
+		}
+		unique_ptr<ResultSet> rs(stmt->executeQuery());
 
 		while (rs->next())
 		{
@@ -221,8 +237,12 @@ bool TmxControl::status(pluginlist &plugins, ...)
 		PLOG(logDEBUG1) << "Executing query " << query;
 		_output.get_storage().get_tree().clear();
 		DbConnection conn = _pool.Connection();
-		unique_ptr<Statement> stmt(conn.Get()->createStatement());
-		unique_ptr<ResultSet> rs(stmt->executeQuery(query));
+		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
+		for (size_t i = 0; i < plugins.size(); i++)
+		{
+			stmt->setString(i + 1, plugins[i]);
+		}
+		unique_ptr<ResultSet> rs(stmt->executeQuery());
 
 		while (rs->next())
 		{

@@ -22,6 +22,19 @@
 
 namespace tmx {
 namespace messages {
+namespace j2735 {
+
+/*
+ * Return a unique key for the given message, which by default is 0.  If a message can
+ * be identified by a unique key, then it should specialize this function.
+ *
+ * @return An integer unique identifier for the supplied J2735 message, or 0 if no key can be identified.
+ */
+template <typename MsgType>
+int get_j2735_message_key(std::shared_ptr<typename MsgType::message_type> message) { return 0; }
+
+} /* End namespace j2735 */
+
 
 /**
  * A template class for all J2735 messages.  This class is a decoded version of the
@@ -183,6 +196,10 @@ public:
 	}
 
 	using xml_message::flush;
+
+	int get_messageKey() {
+		return j2735::get_j2735_message_key<type>(get_j2735_data());
+	}
 protected:
 	/**
 	 * Populates the property tree from an XML serialization of the supplied J2735 data structure
@@ -227,45 +244,6 @@ private:
 		buffer = NULL;
 		return xml;
 	}
-/*
-#ifdef _COHDA_R63
-public:
-	void downgrade()
-	{
-		this->flush();
-		this->addFirstField("msgID", to_string(this->get_default_msgId()));
-		this->removeField("timeStamp");
-		_j2735_data.reset();
-	}
-
-	void upgrade()
-	{
-		this->flush();
-		this->removeField("msgID");
-		_j2735_data.reset();
-	}
-private:
-	void addFirstField(std::string key, std::string val)
-	{
-		tmx::message_path_type path(this->get_messageTag());
-		boost::optional<tmx::message_tree_type &> top = this->as_tree(path);
-		if (top && top.get().front().first != key)
-		{
-			top.get().put(key, val);
-			top.get().push_front(top.get().back());
-			top.get().pop_back();
-		}
-	}
-
-	void removeField(std::string key)
-	{
-		tmx::message_path_type path(this->get_messageTag());
-		boost::optional<tmx::message_tree_type &> top = this->as_tree(path);
-		if (top)
-			top.get().erase(key);
-	}
-#endif
-*/
 };
 
 } /* End namespace messages */

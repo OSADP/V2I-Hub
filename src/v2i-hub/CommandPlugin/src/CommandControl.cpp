@@ -571,6 +571,76 @@ void CommandPlugin::BuildUpdateTelemetry(string *outputBuffer, string dataType)
 	}
 }
 
+void CommandPlugin::BuildRemoveTelemetry(string *outputBuffer, string dataType)
+{
+	ostringstream oss;
+	bool processTelemetry = false;
+	string output;
+	map<string, string> *pluginsRemoveJSON;
+
+	if (dataType == "List" && _haveList && !_listPluginsRemoveJSON.empty())
+	{
+		pluginsRemoveJSON = &_listPluginsRemoveJSON;
+		processTelemetry = true;
+	}
+	else if (dataType == "Status" && _haveStatus && !_statusPluginsRemoveJSON.empty())
+	{
+		pluginsRemoveJSON = &_statusPluginsRemoveJSON;
+		processTelemetry = true;
+	}
+	else if (dataType == "Config" && _haveConfig && !_configPluginsRemoveJSON.empty())
+	{
+		pluginsRemoveJSON = &_configPluginsRemoveJSON;
+		processTelemetry = true;
+	}
+	else if (dataType == "State" && _haveState && !_statePluginsRemoveJSON.empty())
+	{
+		pluginsRemoveJSON = &_statePluginsRemoveJSON;
+		processTelemetry = true;
+	}
+	else if (dataType == "Messages" && _haveMessages && !_messagesPluginsRemoveJSON.empty())
+	{
+		pluginsRemoveJSON = &_messagesPluginsRemoveJSON;
+		processTelemetry = true;
+	}
+	else
+		return;
+
+	if (processTelemetry)
+	{
+		//FILE_LOG(logDEBUG) << "BuildRemoveTelemetry output: " << output;
+		//build  message
+
+		outputBuffer->append("\x02{\"header\":{\"type\":\"Telemetry\",\"subtype\":\"");
+		outputBuffer->append("Remove_");
+		outputBuffer->append(dataType);
+		outputBuffer->append("\",\"encoding\":\"jsonstring\",\"timestamp\":\"");
+		oss << GetMsTimeSinceEpoch();
+		outputBuffer->append(oss.str());
+		outputBuffer->append("\",\"flags\":\"0\"},\"payload\":{");
+		//loop through updates
+		bool first = true;
+		for  (auto it = pluginsRemoveJSON->begin();it != pluginsRemoveJSON->end();it++)
+		{
+			//FILE_LOG(logDEBUG) << "pluginsRemoveJSON " << it->first << " = " << it->second;
+			//append plugin json
+			int firstBracket = it->second.find_first_of('{');
+			int lastBracket = it->second.find_last_of('}');
+			if (lastBracket - firstBracket > 1)
+			{
+				if (first)
+					first = false;
+				else
+					outputBuffer->append(",");
+				outputBuffer->append(it->second.substr(firstBracket + 1, lastBracket - firstBracket - 1));
+			}
+		}
+
+		outputBuffer->append("}}\x03");
+
+	}
+}
+
 void CommandPlugin::GetEventTelemetry()
 {
 	TmxControl::pluginlist plugins;
@@ -578,6 +648,8 @@ void CommandPlugin::GetEventTelemetry()
 	_tmxControl.ClearOptions();
 	if (_lastEventTime != "")
 		_tmxControl.SetOption("eventTime", _lastEventTime);
+	else
+		_tmxControl.SetOption("rowLimit", std::to_string(_eventRowLimit));
 	_haveEvents = _tmxControl.events(plugins);
 
 	if (_haveEvents)
@@ -614,18 +686,51 @@ void CommandPlugin::GetEventTelemetry()
 			_eventsUpdatesJSON = "";
 			return;
 		}
-		//save update json without brackets if already have initial full json
+		//count number of lines in the new JSON string
+		int eventCount = 1;
+		int stringPosition = eJSON.find("},{", firstIndex);
+		while (stringPosition < eJSON.length() && stringPosition != string::npos)
+		{
+			eventCount++;
+			stringPosition += 3;
+			stringPosition = eJSON.find("},{", stringPosition);
+		}
+		//FILE_LOG(logDEBUG) << "GetEventTelemetry: new events: " << eventCount;
 		if (_eventsJSON.length() > 0)
+		{
+			//save update json without brackets if already have initial full json
 			_eventsUpdatesJSON = eJSON.substr(firstIndex + 1, lastIndex - firstIndex - 1);
-		//append to full json without brackets
-		if (_eventsJSON.length() > 0)
 			_eventsJSON.append(",");
-		_eventsJSON.append(eJSON.substr(firstIndex + 1, lastIndex - firstIndex - 1));
+		}
+		//add JSON to next JSON buffer
+		if (_eventsFullCount >= _eventRowLimit)
+		{
+			if (_eventsNextFullJSON.length() > 0)
+				_eventsNextFullJSON.append(",");
+			_eventsNextFullJSON.append(eJSON.substr(firstIndex + 1, lastIndex - firstIndex - 1));
+			_eventsNextFullCount += eventCount;
+		}
+		if (_eventsFullCount >= (_eventRowLimit * 2))
+		{
+			//copy next JSON buffer into full JSON buffer
+			_eventsJSON = _eventsNextFullJSON;
+			_eventsNextFullJSON = "";
+			_eventsFullCount =_eventsNextFullCount;
+			_eventsNextFullCount = 0;
+		}
+		else
+		{
+			//append to full json without brackets
+			_eventsJSON.append(eJSON.substr(firstIndex + 1, lastIndex - firstIndex - 1));
+			_eventsFullCount += eventCount;
+		}
+
+		//FILE_LOG(logDEBUG) << "GetEventTelemetry: full events: " << _eventsFullCount << ", next events: " << _eventsNextFullCount;
 	}
 
 }
 
-void CommandPlugin::BuildCommandResponse(string *outputBuffer, string id, string command, string status, string reason, std::map<string, string> &data)
+void CommandPlugin::BuildCommandResponse(string *outputBuffer, string id, string command, string status, string reason, std::map<string, string> &data, std::map<string, string> &arrayData)
 {
 	ostringstream oss;
 	//build message
@@ -649,6 +754,13 @@ void CommandPlugin::BuildCommandResponse(string *outputBuffer, string id, string
 		outputBuffer->append(it->second);
 	}
 	outputBuffer->append("\"");
+	for (auto it = arrayData.begin();it != arrayData.end();++it)
+	{
+		outputBuffer->append(",\"");
+		outputBuffer->append(it->first);
+		outputBuffer->append("\":");
+		outputBuffer->append(it->second);
+	}
 	outputBuffer->append("}}\x03");
 }
 

@@ -220,8 +220,10 @@ void MessageProfiler::dbRefreshThreadEntry()
 			entry.pluginId = itr->first.pluginId;
 			entry.count = itr->second.messageCounts;
 			entry.lastReceivedTimestamp = itr->second.lastReceivedTime / 1000;
-			entry.averageInterval = (unsigned int)((double)purgeWindow / itr->second.receiveTimeForAveraging.size());
-
+			if (itr->second.receiveTimeForAveraging.size() == 0)
+				entry.averageInterval = 0;
+			else
+				entry.averageInterval = (uint64_t)((double)purgeWindow / itr->second.receiveTimeForAveraging.size());
 
 			// The activity is stored in an array for now.
 			// This allows the mutex to be unlocked while the database is updated.

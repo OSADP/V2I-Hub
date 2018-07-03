@@ -92,7 +92,7 @@ protected:
 	void SetStatusForVehiclesInZones();
 
 
-	bool LoadTim(TravelerInformation *tim);
+	bool LoadTim(TravelerInformation *tim, const char *mapFile);
 	void TestFindRegion();
 
 private:
@@ -108,6 +108,8 @@ private:
 	uint64_t _vehicleTimeout = 1000;
 
 	TravelerInformation _tim;
+
+	mutex _mapFileLock;
 	string _mapFile;
 	atomic<bool> _isMapFileNew{false};
 	bool _isTimLoaded = false;

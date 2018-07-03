@@ -179,6 +179,10 @@ bool TmxControl::load_manifest(pluginlist &, ...)
 		stmt->setString(1, pluginPath);
 		stmt->setString(2, exe);
 		stmt->setString(3, manifestFile);
+		for (size_t i = 0; i < self.size(); i++)
+		{
+			stmt->setString(i + 4, self[i]);
+		}
 		stmt->execute();
 
 		// Insert into the installed plugin table if this is a new entry
@@ -192,6 +196,10 @@ bool TmxControl::load_manifest(pluginlist &, ...)
 		stmt->setString(1, pluginPath);
 		stmt->setString(2, exe);
 		stmt->setString(3, manifestFile);
+		for (size_t i = 0; i < self.size(); i++)
+		{
+			stmt->setString(i + 4, self[i]);
+		}
 		stmt->execute();
 
 		// Update the configuration parameters
@@ -215,7 +223,11 @@ bool TmxControl::load_manifest(pluginlist &, ...)
 			stmt.reset(conn.Get()->prepareStatement(query));
 			stmt->setString(1, cfgDef);
 			stmt->setString(2, cfgDesc);
-			stmt->setString(3, cfgKey);
+			for (size_t i = 0; i < self.size(); i++)
+			{
+				stmt->setString(i + 3, self[i]);
+			}
+			stmt->setString(self.size() + 3, cfgKey);
 			stmt->execute();
 
 			// Try to add new values
@@ -230,7 +242,11 @@ bool TmxControl::load_manifest(pluginlist &, ...)
 			stmt->setString(2, cfgDef);
 			stmt->setString(3, cfgDef);
 			stmt->setString(4, cfgDesc);
-			stmt->setString(5, cfgKey);
+			for (size_t i = 0; i < self.size(); i++)
+			{
+				stmt->setString(i + 5, self[i]);
+			}
+			stmt->setString(self.size() + 5, cfgKey);
 			stmt->executeUpdate();
 		}
 	}
@@ -272,7 +288,11 @@ bool TmxControl::set(pluginlist &plugins, ...)
 		DbConnection conn = _pool.Connection();
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
 		stmt->setString(1, val);
-		stmt->setString(2, key);
+		for (size_t i = 0; i < plugins.size(); i++)
+		{
+			stmt->setString(i + 2, plugins[i]);
+		}
+		stmt->setString(plugins.size() + 2, key);
 		stmt->executeUpdate();
 
 		query = add_constraint(CFG_INSERT, plugins, "id");
@@ -286,7 +306,11 @@ bool TmxControl::set(pluginlist &plugins, ...)
 		stmt->setString(2, val);
 		stmt->setString(3, def);
 		stmt->setString(4, comment);
-		stmt->setString(5, key);
+		for (size_t i = 0; i < plugins.size(); i++)
+		{
+			stmt->setString(i + 5, plugins[i]);
+		}
+		stmt->setString(plugins.size() + 5, key);
 		stmt->executeUpdate();
 
 		return true;
@@ -379,7 +403,11 @@ bool TmxControl::reset(pluginlist &plugins, ...)
 
 		DbConnection conn = _pool.Connection();
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
-		stmt->setString(1, key);
+		for (size_t i = 0; i < plugins.size(); i++)
+		{
+			stmt->setString(i + 1, plugins[i]);
+		}
+		stmt->setString(plugins.size() + 1, key);
 		int rows = stmt->executeUpdate();
 		PLOG(logDEBUG1) << "Updated " << rows << " rows.";
 		return rows > 0;
@@ -405,8 +433,12 @@ bool TmxControl::config(pluginlist &plugins, ...)
 
 		_output.get_storage().get_tree().clear();
 		DbConnection conn = _pool.Connection();
-		unique_ptr<Statement> stmt(conn.Get()->createStatement());
-		unique_ptr<ResultSet> rs(stmt->executeQuery(query));
+		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
+		for (size_t i = 0; i < plugins.size(); i++)
+		{
+			stmt->setString(i + 1, plugins[i]);
+		}
+		unique_ptr<ResultSet> rs(stmt->executeQuery());
 
 		while (rs->next())
 		{
@@ -456,19 +488,23 @@ bool TmxControl::remove(pluginlist &plugins, ...)
 
 		DbConnection conn = _pool.Connection();
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
+		for (size_t i = 0; i < plugins.size(); i++)
+		{
+			stmt->setString(i + 1, plugins[i]);
+		}
 		int rows = stmt->executeUpdate();
 		PLOG(logDEBUG1) << "Deleted " << rows << " rows.";
 
 		// Need to use the sub-query where clause
-		string constraint = add_constraint("", plugins, "id");
-		constraint.erase(0, 41);
-		constraint.erase(constraint.length() - 2);
-		query = PLUGIN_DELETE;
-		query += constraint;
+		query = add_subconstraint(PLUGIN_DELETE, plugins);
 
 		PLOG(logDEBUG1) << "Executing query " << query;
 
 		stmt.reset(conn.Get()->prepareStatement(query));
+		for (size_t i = 0; i < plugins.size(); i++)
+		{
+			stmt->setString(i + 1, plugins[i]);
+		}
 		rows = stmt->executeUpdate();
 		PLOG(logDEBUG1) << "Deleted " << rows << " rows.";
 

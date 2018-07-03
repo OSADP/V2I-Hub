@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS `messageActivity` (
   `pluginId` int(10) unsigned NOT NULL,
   `count` int(10) unsigned NOT NULL,
   `lastReceivedTimestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'The date and time of the most recent message of a type in UTC.',
-  `averageInterval` double unsigned NOT NULL,
+  `averageInterval` int(10) unsigned NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `messageTypeId_pluginId` (`messageTypeId`,`pluginId`),
   KEY `messageTypeId` (`messageTypeId`),
@@ -109,6 +109,26 @@ CREATE TABLE IF NOT EXISTS `messageActivity` (
   CONSTRAINT `messageActivity_ibfk_1` FOREIGN KEY (`messageTypeId`) REFERENCES `messageType` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `messageActivity_ibfk_2` FOREIGN KEY (`pluginId`) REFERENCES `plugin` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='This table records the most recent message activity of each active plugin in the IVP system. The data in this table is updated by the IVP plugin monitor core component for every message the plugin monitor receives.' AUTO_INCREMENT=31397 ;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `pluginActivity`
+--
+
+CREATE TABLE IF NOT EXISTS `pluginActivity` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
+  `msgReceivedTimestamp` bigint(20) unsigned NOT NULL COMMENT 'Timestamp in microseconds since Epoch of when message was received by destination Plugin',
+  `rPluginName` varchar(100) NOT NULL COMMENT 'Name of receiving plugin',
+  `sPluginName` varchar(100) NOT NULL COMMENT 'Name of source plugin',
+  `msgType` varchar(100) NOT NULL COMMENT 'Type of message',
+  `msgSubtype` varchar(100) NOT NULL COMMENT 'Subtype of message',
+  `msgCreatedTimestamp` bigint(20) NOT NULL COMMENT 'Timestamp in milliseconds since Epoch of when message was created.',
+  `msgHandledTimestamp` bigint(20) NOT NULL COMMENT 'Timestamp in milliseconds since Epoch of when receiving plugin finished handling message.',
+  `origMsgTimestamp` bigint(20) NOT NULL COMMENT 'Timestamp in milliseconds since Epoch of the original message that triggered this message sequence.',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `msgReceivedTimestamp_rPluginName` (`msgReceivedTimestamp`,`rPluginName`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 COMMENT='This table records all message activity of each active plugin in the IVP system. The data in this table is updated by each Plugin as part of PluginClient base class implementation.' ;
 
 -- --------------------------------------------------------
 

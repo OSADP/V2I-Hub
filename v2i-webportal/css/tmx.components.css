@@ -114,6 +114,11 @@
     border-top-right-radius: 5px;
     border-top-left-radius: 5px;
 }
+
+.pluginInfo {
+    line-height: 2;
+}
+
 .pluginInfoField
 {
     font-size: .8em !important;
@@ -123,6 +128,9 @@
 {
     height: 1.6em;
     border: 1px solid #0079CF;
+    /*
+        See copyright in jquery-ui.theme.css
+    */
     background: #0079CF url("images/ui-bg_gloss-wave_50_0079CF_500x100.png") 50% 50% repeat-x;
     color: #eaf5f7;
     margin: 1px;
@@ -133,6 +141,30 @@
     width:99.6%;
     vertical-align: middle;
     font-size: 1em; 
+}
+
+.collapsibleHeader[id*="infoHeader_"]
+{
+    width: 85% !important;
+    display:inline-block;
+    height: 2.25em;
+    vertical-align: middle;
+    overflow:hidden;
+    line-height:2;
+    /*overflow-behavior-y: contain; */
+}
+
+.hidden {
+    display:none;
+}
+
+.collapsibleHeader[id*="configurationHeader_"]
+{
+    min-height: 100%;
+}
+
+button[class*='infoUploadBtn_'], button[class*='infoDeleteBtn_'] {
+    display:inline-block;
 }
 
 .pluginHeaderDisabled
@@ -159,7 +191,7 @@
     margin-left:2%;
     width:98%;
     border:none;
-
+    font-size: 0.8em;
 }
 .pluginName
 {
@@ -182,6 +214,7 @@
     font-size: 60%;
 
 }
+
 .pluginState {
     display:inline-block;
     margin-left:1em;
@@ -191,22 +224,18 @@
     margin-top:0.25%;
 }
 
-.filterDiv
-{
-    margin-left:auto; 
-    margin-right:0;
-}
-
 .filterButton 
 {
     color: #eaf5f7;
-    margin-top: .3em;
     border: 1px solid #0079CF;
     background: #0079CF;
     border-bottom-right-radius: 5px;
     border-bottom-left-radius: 5px;
     border-top-right-radius: 5px;
     border-top-left-radius: 5px;
+    height: 1.7em;
+    width:6em;
+    margin-right: .3em;
 }
 .filterButton[data-state="true"] 
 {
@@ -239,14 +268,14 @@
     margin-top:.1em;
     width:6em;
 }
- .configurationBtn{
+
+.deletePluginButton {
     z-index: 2;
     float:right;
-    margin-right: 1em;
-    width:3em;
-    font-size:0.8em !important;
-    margin-top: 0.25%;
- }
+    margin-right: 1.5%;
+    width: 9%;
+}
+
 .configurationItem
 {
     margin-left: 2%;
@@ -266,6 +295,7 @@
     width: 98%;
     font-size:.7em;
 }
+
 .headerVersion
 {
 
@@ -285,6 +315,42 @@
     border-left: 1px solid #ddd;
     word-break: break-all;
     word-wrap: break-word;
+}
+
+
+.user-table, .newConfigDiv
+{
+    margin-left: 2%;
+    width: 98%;
+    font-size:.7em;
+}
+
+.user-table th
+{
+    background-color: #909090;
+    background: -webkit-gradient(linear, left top, left bottom, from(#909090), to(#ababab));
+    background: -moz-linear-gradient(top, #909090, #ababab);
+    color: #efefef;
+}
+
+.user-table th, .user-table td {
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    border-left: 1px solid #ddd;
+    word-break: break-all;
+    word-wrap: break-word;
+}
+
+.user-table[id*="messagesTable"] td[data-type='userName'] {
+    width:40%;
+}
+
+.user-table[id*="messagesTable"] td[data-type='accessLevel'] {
+    width:40%;
+}
+
+.user-table[id*="messagesTable"] td[data-type='operation'] {
+    width:20%;
 }
 
 .message-table[id*="infoTable"] td[data-type='key'] {
@@ -327,53 +393,41 @@
     width:15%;
 }
 
-.newConfigInput[data-type='Key'] {
-    width:14.9%;
-}
-
 .message-table[id*="configsTable"] td[data-type='value'] {
     width:15%;
 }
-
- .newConfigInput[data-type='Value'] {
-     width:14.75%;
- }
 
 .message-table[id*="configsTable"] td[data-type='defaultValue'] {
     width:30%;
 }
 
- .newConfigInput[data-type="Default Value"] {
-     width:29.75%;
- }
-
 .message-table[id*="configsTable"] td[data-type='description'] {
     width:40%;
 }
 
- .newConfigInput[data-type='Description'] {
-     width:30%;
- }
+.infoInput {
+    height: 1.5em;
+    width: 98%;
+}
+
+.newConfigLabel {
+    display: inline-block;
+    width: 20%;
+    text-align: right;
+    font-weight: bold;
+}
+
+.newConfigInput {
+    width: 75%;
+}
 
  button[onmousedown*="AddNewConfigurationItem"] {
      width:8%;
  }
 
 /*
-.loader {
-    border: 1.2em solid #f3f3f3; 
-    border-top: 1.2em solid #3498db; 
-    border-radius: 50%;
-    width: 7em;
-    height: 7em;
-    animation: spin 2s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
+  Copyright (c) 2014 Luke Haas
+  Licensed under the MIT License (http://opensource.org/licenses/MIT) 
 */
 
 .loaderClass {
@@ -472,3 +526,8 @@
     transform: rotate(360deg);
   }
 }
+/*
+  End
+  Copyright (c) 2014 Luke Haas
+  Licensed under the MIT License (http://opensource.org/licenses/MIT) 
+*/

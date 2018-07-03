@@ -8,6 +8,7 @@
 #ifndef TMX_TMXNMEA_HPP_
 #define TMX_TMXNMEA_HPP_
 
+#include <cstring>
 #include <tmx/messages/routeable_message.hpp>
 #include "IvpNmea.h"
 
@@ -30,37 +31,26 @@ public:
 
 	std::string get_sentence()
 	{
-		std::string sentence = this->get_subtype();
-		if (sentence.length() > 0)
-			sentence.insert(0, "$GP");
-
-		return sentence;
+		return get_payload_str();
 	}
 
 	void set_sentence(const std::string sentence)
 	{
-		if(sentence == "$GPGGA")
+		this->set_payload(sentence);
+
+		if(::strstr(sentence.c_str(), "$GPGGA") != NULL)
 			this->set_subtype("GGA");
-		if(sentence == "$GPGSA")
+		if(::strstr(sentence.c_str(), "$GPGSA") != NULL)
 			this->set_subtype("GSA");
-		if(sentence == "$GPRMC")
+		if(::strstr(sentence.c_str(), "$GPRMC") != NULL)
 			this->set_subtype("RMC");
-		if(sentence == "$GPGSV")
+		if(::strstr(sentence.c_str(), "$GPGSV") != NULL)
 			this->set_subtype("GSV");
-		if(sentence == "$GPVTG")
+		if(::strstr(sentence.c_str(), "$GPVTG") != NULL)
 			this->set_subtype("VTG");
-		if(sentence == "$GPGLL")
+		if(::strstr(sentence.c_str(), "$GPVTG") != NULL)
 			this->set_subtype("GLL");
-	}
 
-	std::string get_nmeaString()
-	{
-		return get_payload_str();
-	}
-
-	void set_nmeaString(const std::string &nmea)
-	{
-		set_payload(nmea);
 	}
 };
 

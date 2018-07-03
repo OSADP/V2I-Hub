@@ -30,21 +30,26 @@ var logFileName = "";
 var msgBuffer = "";
 
 var pluginsInitialized=false;
-
+var uploadFile = null;
 var cmdCntr = 0;
-var currUser = null;
 var permissions = 0;
 
-var useSSL = true;
+//var useSSL = true;
 var timeOffsetMs = 0;
 
+var msgTimeFilterMs = 600000;
+var CookieUrlList = [];
+
+var debugLevel = 0
+
+/*
 function ssl_changed()
 {
     if (useSSL) socketObj.url = "wss://" + socketObj.ip + ':' + socketObj.port + "/";
     else socketObj.url = "ws://" + socketObj.ip + ':' + socketObj.port + "/";
 
 }
-
+*/
 /**
 *   Print text to console with a timestamp.
 *   @private
@@ -77,6 +82,51 @@ function getUrlCookie(cname) {
     return "";
 }
 
+function readCookies()
+{
+    var decodedCookie = decodeURIComponent(document.cookie);
+    var ca = decodedCookie.split('; ');
+    for(var i = 0; i <ca.length; i++) {
+        var c = ca[i];
+        var splitc = c.split('=');
+        if (splitc[0] == "previousUrlList")
+        {
+            CookieUrlList = JSON.parse(splitc[1]);
+            updateIPOptions();
+        }
+    }
+}
+
+function savePreviousIPCookie()
+{
+    var d = new Date();
+    d.setTime(d.getTime() + (7*24*60*60*1000));
+    var expires = "expires="+ d.toUTCString();
+    document.cookie = "previousUrlList=" + JSON.stringify(CookieUrlList) + ";" + expires + ";path=/";
+//        Delete Cookie - for testing
+//        document.cookie = "previousUrlList=; Max-Age=-99999999;path=/";
+    updateIPOptions();
+}
+
+function updateIPOptions()
+{
+    var str=''; // variable to store the options
+    for (var i = 0; i < CookieUrlList.length; i++) {
+        str += '<option>' + CookieUrlList[i] + '</option>';
+    }
+    document.getElementById("previousIPs").innerHTML = str;
+}
+
+function initializeCookieElements()
+{
+    var str=''; // variable to store the options
+    for (var i = 0; i < CookieUrlList.length; i++) {
+        str += '<option>' + CookieUrlList[i] + '</option>';
+    }
+    // Set the previous IPs into the list
+    document.getElementById("previousIPs").innerHTML = str;
+    readCookies();
+}
 /** 
 * Create a new socket connection to the specified IP and port. 
 * @private
@@ -101,7 +151,7 @@ function createSocketObject(ip, port, led) {
 	{
 		if ((socketObject.timeoutID != null) && (socketObject.timeoutID != undefined))
 		{
-			console.log("Clearing timeout for " + socketObject.url + " socketObject.timeoutID:" + socketObject.timeoutID);
+			if (debugLevel > 0) console.log("Clearing timeout for " + socketObject.url + " socketObject.timeoutID:" + socketObject.timeoutID);
 			clearTimeout(socketObject.timeoutID);
 			socketObject.timeoutID = null;
 		}
@@ -127,6 +177,7 @@ var printed = false;
 function updateListObject(plugin, name, value) {
 
     var found = false;
+    value = value.trim();
 
     if (name.toUpperCase() == "ENABLED") {
         RefreshHeaderStatus(plugin, value);
@@ -140,13 +191,49 @@ function updateListObject(plugin, name, value) {
         // if found just update the values
         if ($(this).find("td").eq(0).html() == name) {
             found = true;
-            $(this).find("td").eq(1).html(value.trim());
+            if (value != null) {
+                if ((permissions == 2 || permissions == 3) && name.toUpperCase() == "MAXMESSAGEINTERVAL") {
+                    var cell = $(this).find("td").eq(1).find("textarea");
+                    cell.attr("data-value", value);
+                    cell.val(value);
+                    cell.html(value);
+                    cell.css("background-color", "");
+                    cell.css("color", "black");
+                } else {
+                    $(this).find("td").eq(1).html(value);
+                }
+            }
+            // TODO Can we add abreak here?
         }
+
     });
 
     // Add new table row
     if (!found) {
-        $("[id=\"infoTable_" + plugin + "\"]").append("<tr><td data-type='key'>" + name + "</td><td data-type='value'>" + value.trim() + "</td></tr>");
+        if (permissions == 2 || permissions == 3) {
+            if (name.toUpperCase() == "MAXMESSAGEINTERVAL") {
+                $("[id=\"infoTable_" + plugin + "\"]").append("<tr><td data-type='key'>" + name + "</td><td data-type='value'><textarea class='infoInput' onfocusout='ResetDisplay(this);' data-plugin=\"" + plugin + "\" data-name=\"" + name + "\" data-value=\"" + value + "\">" + value + "</textarea></td></tr>");
+
+                $("textarea.infoInput").on("keydown", function (event) {
+                    if (event.key == "Enter") {
+                        event.preventDefault();
+                        var target = $(event.target);
+                        var newValue = target.val();
+                        if (newValue.endsWith("\n")) {
+                            newValue = newValue.replace("\n", "");
+                        }
+                        if (newValue != target.attr("data-value")) {
+                            generateAndSendCommandMessage("set", [{ name: "plugin", value: target.attr("data-plugin") }, { name: "key", value: target.attr("data-name") }, { name: "value", value: newValue.replace(/"/g, "\\\"") }]);
+                            target.css("background-color", "#909090");
+                            target.css("color", "white");
+                        }
+                        target.val(target.attr("data-value"));
+                    }
+                });
+                return;
+            }
+        }
+        $("[id=\"infoTable_" + plugin + "\"]").append("<tr><td data-type='key'>" + name + "</td><td data-type='value'>" + value + "</td></tr>");
     }
 }
 
@@ -180,7 +267,6 @@ function updateStatusObject(plugin, name, value) {
         $("div[id=\"pluginHeader_" + plugin + "\"] > .pluginState").attr("data-state", "off");
     }
 }
-
 
 function updateMessagesObject(plugin, id, type, subtype, count, lastTimestamp, averageInterval) {
     var found = false;
@@ -255,9 +341,10 @@ function updateConfigurationObject(plugin, name, value, defaultValue, Descriptio
                 if (permissions == 1) {
                     $(this).find("td").eq(1).html(value);
                 } else if (permissions == 2 || permissions == 3) {
-                    var cell = $(this).find("td").eq(1).find("input");
+                    var cell = $(this).find("td").eq(1).find("textarea");
                     cell.attr("data-value", value);
                     cell.val(value);
+                    cell.html(value);
                     cell.css("background-color", "");
                     cell.css("color", "black");
                 }
@@ -274,12 +361,29 @@ function updateConfigurationObject(plugin, name, value, defaultValue, Descriptio
     });
 
     // Add new table row
-    if (!found)
-    {
+    if (!found) {
         if (permissions == 1) {
             $("[id=\"configsTable_" + plugin + "\"]").append("<tr><td data-type='key'>" + name + "</td><td data-type='value'>" + value + "</td><td data-type='defaultValue'>" + defaultValue + "</td><td data-type='description'>" + Description + "</td></tr>");
         } else if (permissions == 2 || permissions == 3) {
-            $("[id=\"configsTable_" + plugin + "\"]").append("<tr><td data-type='key'>" + name + "</td><td data-type='value'><input class='configInput' onfocusout='ResetDisplay(this);' data-plugin='" + plugin + "' data-name='" + name + "' data-value='" + value + "' value='" + value + "'/></td><td data-type='defaultValue'>" + defaultValue + "</td><td data-type='description'>" + Description + "</td></tr>");
+            $("[id=\"configsTable_" + plugin + "\"]").append("<tr><td data-type='key'>" + name + "</td><td data-type='value'><textarea class='configInput' onfocusout='ResetDisplay(this);' data-plugin='" + plugin + "' data-name='" + name + "' data-value='" + value + "'>" + value + "</textarea></td><td data-type='defaultValue'>" + defaultValue + "</td><td data-type='description'>" + Description + "</td></tr>");
+            //$("[id=\"configsTable_" + plugin + "\"]").append("<tr><td data-type='key'>" + name + "</td><td data-type='value'><input class='configInput' onfocusout='ResetDisplay(this);' data-plugin='" + plugin + "' data-name='" + name + "' data-value='" + value + "' value='" + value + "'/></td><td data-type='defaultValue'>" + defaultValue + "</td><td data-type='description'>" + Description + "</td></tr>");}
+            
+            $("textarea.configInput[data-plugin=\"" + plugin + "\"][data-name=\"" + name + "\"]").on("keydown", function (event) {
+                if (event.key == "Enter") {
+                    event.preventDefault();
+                    var target = $(event.target);
+                    var newValue = target.val();
+                    if (newValue.endsWith("\n")) {
+                        newValue = newValue.replace("\n", "");
+                    }
+                    if (newValue != target.attr("data-value")) {
+                        generateAndSendCommandMessage("set", [{ name: "plugin", value: target.attr("data-plugin") }, { name: "key", value: target.attr("data-name") }, { name: "value", value: newValue.replace(/"/g, "\\\"") }]);
+                        target.css("background-color", "#909090");
+                        target.css("color", "white");
+                    }
+                    target.val(target.attr("data-value"));
+                }
+            });
         }
     }
 }
@@ -298,18 +402,20 @@ function messageHandler(msg)
 {
 //	console.log(msg);
 	// Strip control characters
-	msg = msg.replace(/[\x00-\x1F\x7F-\x9F]/g, "");
+    msg = msg.replace(/[\x00-\x1F\x7F-\x9F]/g, "");
 	var json_obj = JSON.parse(msg);
-//    console.log("Message " + json_obj.header.type + ":" + json_obj.header.subtype);
 	if (json_obj.header.type.toUpperCase() === "TELEMETRY") {
 	    if (json_obj.header.subtype.toUpperCase() === "LIST") {
+            if (debugLevel > 0) console.log(json_obj.payload);
 	        handleListMessage(json_obj.payload);
 	    }
 	    else if (json_obj.header.subtype.toUpperCase() === "STATUS") {
 	        handleStatusMessage(json_obj.payload);
+            if (debugLevel > 0) console.log(json_obj.payload);
 	    }
 	    else if (json_obj.header.subtype.toUpperCase() === "STATE") {
 	        handleStateMessage(json_obj.payload);
+            if (debugLevel > 0) console.log(json_obj.payload);
 	    }
 	    else if (json_obj.header.subtype.toUpperCase() === "CONFIG") {
 	        handleConfigMessage(json_obj.payload);
@@ -322,6 +428,9 @@ function messageHandler(msg)
         }
         else if (json_obj.header.subtype.toUpperCase() === "REMOVE_LIST") {
             handleRemoveListMessage(json_obj.payload);
+        }
+        else if (json_obj.header.subtype.toUpperCase() === "REMOVE_DESCRIPT") {
+            handleRemoveDescriptionMessage(json_obj.payload);
         }
         else if (json_obj.header.subtype.toUpperCase() === "REMOVE_STATUS") {
             handleRemoveStatusMessage(json_obj.payload);
@@ -343,19 +452,27 @@ function messageHandler(msg)
                 var timeStamp = json_obj.header.timestamp;
                 var d = new Date().getTime();
                 timeOffsetMs = d - timeStamp;
-//                console.log("Received HB Time Offset: " + timeOffsetMs);
+                if (debugLevel > 0) console.log("Received HB Time Offset: " + timeOffsetMs);
             }
         }
 	} else if (json_obj.header.type.toUpperCase() === "COMMAND") {
+        if (debugLevel > 0) console.log("Message:" + msg);
 	    handleCommandMessage(json_obj.payload);
 	} else {
-	    console.log("Message:" + msg);
+	    if (debugLevel > 0) console.log("Message:" + msg);
 	}
 }
 
 function LogOut() {
+    // Reset contents
     removePlugins();
     $(".logoutBtn").css("display", "none");
+    resetPluginFilterButtons();
+    clearFileUploadProgress();
+    $("#uploadFileBtn").removeAttr("disabled");
+
+
+    // Switch pages to login page or connecting page depending on socket status
     $("[id=page1]").css("display", "none");
     if (socketObj.connected) {
         $("[id=loginPage]").css("display", "");
@@ -364,6 +481,21 @@ function LogOut() {
         $("[id=loginPage]").css("display", "none");
         $("[id=connectingPage]").css("display", "");
     }
+
+    // Hide permission-dependent buttons
+    $("#uploadFileBtn").css("display", "none");
+    $("#clearLogButton").css("display", "none");
+    $("#fileButtonOptions").remove();
+
+    // Close all dialogs
+    $("#fileUploadDialog").dialog("close");
+    $("#confirm_reset").dialog("close");
+    $("#user_change_access_dialog").dialog("close");
+    $("#user_delete_dialog").dialog("close");
+    $("#user_add_dialog").dialog("close");
+    $("#error_dialog").dialog("close");
+
+    // Remove current user
     currUser = null;
     $(".userLabel").html("");
     $(".permissionsLabel").html("");
@@ -386,30 +518,48 @@ function handleSystemConfigMessage(msgData) {
 
 function handleCommandMessage(msgData) {
     // TODO: Add logout functionality
+    var feedback = "";
+    var reason = "";
+    if (msgData["reason"] != null && msgData["reason"] != undefined) {
+        reason = msgData["reason"];
+    }
 
     if (msgData["command"] != null && msgData["command"] != undefined) {
         if (msgData["command"].toUpperCase() == "LOGIN") {
             if (msgData["status"] != null && msgData["status"] != undefined) {
                 var status = msgData["status"].toUpperCase();
                 if (status == "SUCCESS") {
+                    $("#tabs").tabs("option", "active", 0);
                     if (msgData["level"] != null && msgData["level"] != undefined) {
                         var role = "No Permissions";
                         permissions = msgData["level"];
                         if (msgData["level"] == "1") {
                             // TODO : Read Only – Can view everything but cannot change anything
-                            $("[id=\"uploadButton\"]").css("display", "none");
+                            $("[id=\"uploadFileBtn\"]").css("display", "none");
+                            $($("#tabs").find("li")[3]).hide();
+                            $($("#tabs").find('#tab4')).hide();
+                            $(".clearLogButton").css("display", "none");
                             role = "Read Only";
                         } else if (msgData["level"] == "2") {
                             // TODO : Application Administrator – Can change all settings on the plugins as well as add new plugins
-                            $("[id=\"uploadButton\"]").css("display", "");
+                            $("[id=\"uploadFileBtn\"]").css("display", "");
+                            createFileUploadDialog(msgData["level"]);
+                            $($("#tabs").find("li")[3]).hide();
+                            $($("#tabs").find('#tab4')).hide();
                             role = "Application Administrator";
+                            $(".clearLogButton").css("display", "");
                         } else if (msgData["level"] == "3") {
                             // TODO : System Administrator – Can do all Application Administrator functions plus add/remove/change passwords of users
-                            $("[id=\"uploadButton\"]").css("display", "");
+                            $("[id=\"uploadFileBtn\"]").css("display", "");
+                            createFileUploadDialog(msgData["level"]);
+                            $("[id=\"userTab\"]").css("display", "");
+                            $($("#tabs").find("li")[3]).show();
+                            $($("#tabs").find('#tab4')).show();
                             role = "System Administrator";
+                            $(".clearLogButton").css("display", "");                            
                         } else {
                             // TODO : Let them see nothing...
-                            $("[id=\"uploadButton\"]").css("display", "none");
+                            $("[id=\"uploadFileBtn\"]").css("display", "none");
                             // TODO: Switch to Log out instead of login 
                             return;
                         }
@@ -421,11 +571,7 @@ function handleCommandMessage(msgData) {
                         $(".permissionsLabel").html("(" + role + ")");
                     }
                 } else if (status == "FAILED") {
-                    var feedback = status;
-                    if (msgData["reason"] != null && msgData["reason"] != undefined) {
-                        feedback += " : " + msgData["reason"];
-                    }
-                    $("[id=loginFeedback]").html(feedback);
+                    $("[id=loginFeedback]").html(status + " : " + reason);
                 }
             }
         } else if (msgData["command"].toUpperCase() == "LOGOUT") {
@@ -434,20 +580,109 @@ function handleCommandMessage(msgData) {
                 if (status == "SUCCESS") {
                     LogOut();
                 } else {
-                    // TODO?
+                    launchErrorDialog(msgData["command"], status + " : " + reason);
                 }
             }
-        }else if (msgData["command"].toUpperCase() == "CLEARLOG") {
+        } else if (msgData["command"].toUpperCase() == "CLEARLOG") {
             if (msgData["status"] != null && msgData["status"] != undefined) {
                 var status = msgData["status"].toUpperCase();
                 if (status == "SUCCESS") {
                     $("[id=eventLogTable]").DataTable().clear().draw('full-hold');
                 } else {
-                    // TODO?
+                    launchErrorDialog(msgData["command"], status + " : " + reason);
+                }
+            }
+        } else if (msgData["command"].toUpperCase() == "UPLOADFILE") {
+            var state = msgData["state"].toUpperCase();
+            if (state == "REQUEST") {
+                var status = msgData["status"].toUpperCase();
+                if (status == "SUCCESS") {
+                    document.getElementById("submitFileButton").click();
+                    if ($(".ui-dialog[aria-describedby=\"fileUploadDialog\"").css("display") != "none") {
+                        closeFileUploadDialog();
+                    }
+                    document.getElementById("fileUploadProgress").innerHTML = uploadFile.name + " :<br />0% Completed.";
+                    var fullWidth = parseFloat($("#fileUploadProgressDiv").css("width"));
+                    $("#fileUploadProgressContainer").css("left", (((fullWidth - parseFloat($("#fileUploadProgressContainer").css("width"))) / 2) / fullWidth) * 100 + "%");
+                } else {
+                    launchErrorDialog(msgData["command"], status + " : " + reason);
+                }
+            } else if (state == "SENDING") {
+                document.getElementById("fileUploadProgress").innerHTML = uploadFile.name + " :<br />" + msgData["percent"].toUpperCase() + "% Completed.";
+                var fullWidth = parseFloat($("#fileUploadProgressDiv").css("width"));
+                $("#fileUploadProgressContainer").css("left", (((fullWidth - parseFloat($("#fileUploadProgressContainer").css("width"))) / 2) / fullWidth) * 100 + "%");
+            } else if (state == "UPLOAD") {
+                var status = msgData["status"].toUpperCase();
+                var typeIsPlugin = false;
+                if (status == "SUCCESS") {
+                    if (debugLevel > 0) console.log("Finished successfully");
+                    typeIsPlugin = checkIfPluginUploadAndInstall();
+
+                    stopClearFileUploadProgressTimer();
+                    if (!typeIsPlugin) {
+                        startClearFileUploadProgressTimer();
+                    } else {
+                        var fullWidth = parseFloat($("#fileUploadProgressDiv").css("width"));
+                        $("#fileUploadProgress").html("Installing plugin...");
+                        $("#fileUploadProgressContainer").css("left", (((fullWidth - parseFloat($("#fileUploadProgressContainer").css("width"))) / 2) / fullWidth) * 100 + "%");
+                    }
+                } else {
+                    if (debugLevel > 0) console.log("Finished failed");
+                    $("#fileUploadProgress").html("");
+                    $("#fileUploadProgressFeedback").html("");
+                    launchErrorDialog(msgData["command"], status + " : " + reason);
+                    stopClearFileUploadProgressTimer();
                 }
             }
         }
+        else if (msgData["command"].toUpperCase() == "PLUGININSTALL") {
+            if (msgData["status"] != null && msgData["status"] != undefined) {
+                var status = msgData["status"].toUpperCase();
+            }
+            if (status == "FAILED") {
+                launchErrorDialog(msgData["command"], status + " : " + reason);
+                stopClearFileUploadProgressTimer();
+                $("#fileUploadProgress").html("");
+                $("#fileUploadProgressFeedback").html("");
+            } else {
+                $("#fileUploadProgress").html("Plugin installation complete.");
+                stopClearFileUploadProgressTimer();
+                $("#fileUploadProgressFeedback").html(msgData["reason"]);
+                var fullWidth = parseFloat($("#fileUploadProgressDiv").css("width"));
+                $("#fileUploadProgressContainer").css("left", (((fullWidth - parseFloat($("#fileUploadProgressContainer").css("width"))) / 2) / fullWidth) * 100 + "%");
+                startClearFileUploadProgressTimer();
+            }
+        }
+        else if (msgData["command"].toUpperCase() == "USERLIST") {
+            if (msgData["status"] != null && msgData["status"] != undefined) {
+                var status = msgData["status"].toUpperCase();
+            }
+            if (status == "FAILED") {    
+                launchErrorDialog(msgData["command"], status + " : " + reason);
+            }
+            else
+            {
+                updateUsers(msgData.users);
+            }        
+        }
+        else if (msgData["command"].toUpperCase().startsWith("USER")) {
+            var status = msgData["status"].toUpperCase();
+            if (status == "FAILED") {    
+                launchErrorDialog(msgData["command"], status + " : " + reason);
+            }        
+
+        }
+
     }
+}
+
+function launchErrorDialog(command, reason)
+{
+    if (debugLevel > 0) console.log("Open Dialog:" + reason);
+    $("#err_dialog_command").html("Command : " + command.toUpperCase());
+    $("#err_dialog_feedback").html(reason);
+    $("#error_dialog").dialog("open");
+    resizeDialogWindow($(".ui-dialog[aria-describedby=\"error_dialog\"]"));    
 }
 
 function removePlugins()
@@ -464,8 +699,15 @@ function removePlugins()
 function handleRemoveListMessage(msgData) {
     var plugins = Object.keys(msgData);
     for (var j = 0; j < plugins.length; j++) {
+        $(".plugin[data-target=\"" + plugins[j] + "\"]").remove();
+    }
+}
+
+function handleRemoveDescriptionMessage(msgData) {
+    var plugins = Object.keys(msgData);
+    for (var j = 0; j < plugins.length; j++) {
         var table = $("[id=\"infoTable_" + plugins[j] + "\"");
-        if (table != null && table != undefined) {
+        if (table != null && table != undefined && table.length > 0) {
             var object = msgData[plugins[j]];
             var jsonPosArray = [];
             var pos = 0;
@@ -573,7 +815,7 @@ function handleRemoveConfigMessage(msgData) {
     var plugins = Object.keys(msgData);
     for (var j = 0; j < plugins.length; j++) {
         var table = $("[id=\"configsTable_" + plugins[j] + "\"");
-        if (table != null && table != undefined) {
+        if (table != null && table != undefined && table.length > 0) {
             var object = msgData[plugins[j]];
             var items = Object.keys(object);
             for (var i = 0; i < items.length; i++) {
@@ -600,8 +842,6 @@ function handleConfigMessage(msgData) {
     if (permissions < 1 || permissions > 3) {
         return;
     }
-//    console.log("Found Config Message");
-//    console.log(msgData);
     var plugins = Object.keys(msgData);
     for (var j = 0; j < plugins.length; j++) {
         var pluginObj = $(".plugin[data-target=\"" + plugins[j] + "\"]");
@@ -658,7 +898,6 @@ function handleConfigMessage(msgData) {
             }
         }
     }
-//    console.log("Config Finished");
     return;
 }
 
@@ -667,7 +906,7 @@ function handleRemoveStateMessage(msgData) {
     var plugins = Object.keys(msgData);
     for (var j = 0; j < plugins.length; j++) {
         var table = $("[id=\"stateTable_" + plugins[j] + "\"");
-        if (table != null && table != undefined) {
+        if (table != null && table != undefined && table.length > 0) {
             var object = msgData[plugins[j]];
             var jsonPosArray = [];
             var pos = 0;
@@ -718,7 +957,6 @@ function handleStateMessage(msgData) {
     if (permissions < 1 || permissions > 3) {
         return;
     }
-//    console.log("Found Telemetry - State Message");
     var plugins = Object.keys(msgData);
     for (var j = 0; j < plugins.length; j++) {
         var pluginObj = $(".plugin[data-target=\"" + plugins[j] + "\"]");
@@ -765,8 +1003,8 @@ function handleStateMessage(msgData) {
 
 function handleEventsMessage(msgData)
 {
-//    console.log("Found Telemetry - Events Message");
-    //console.log(msgData);
+    if (debugLevel > 0) console.log("Found Telemetry - Events Message");
+    if (debugLevel > 0) console.log(msgData);
     for (var i in msgData) 
     {
 
@@ -776,7 +1014,7 @@ function handleEventsMessage(msgData)
     $("[id=eventLogTable]").DataTable().columns.adjust().draw('full-hold');
     calculateRows();
 
-//    console.log("Events Finished");
+    if (debugLevel > 0) console.log("Events Finished");
 }
 
 function handleRemoveMessagesMessage(msgData) {
@@ -786,7 +1024,7 @@ function handleRemoveMessagesMessage(msgData) {
     var plugins = Object.keys(msgData);
     for (var j = 0; j < plugins.length; j++) {
         var table = $("[id=\"messagesTable_" + plugins[j] + "\"");
-        if (table != null && table != undefined) {
+        if (table != null && table != undefined && table.length > 0) {
             var object = msgData[plugins[j]];
             var jsonPosArray = [];
             var pos = 0;
@@ -859,7 +1097,7 @@ function handleMessagesMessage(msgData) {
     if (permissions < 1 || permissions > 3) {
         return;
     }
-    //    console.log("Found Telemetry - Messages Message");
+    if (debugLevel > 0) console.log("Found Telemetry - Messages Message");
     var plugins = Object.keys(msgData);
     for (var j = 0; j < plugins.length; j++) {
         var pluginObj = $(".plugin[data-target=\"" + plugins[j] + "\"]");
@@ -931,7 +1169,6 @@ function handleMessagesMessage(msgData) {
 }
 
 function handleRemoveStatusMessage(msgData) {
-    //    console.log("Found Telemetry - Status Message");
     var plugins = Object.keys(msgData);
     for (var j = 0; j < plugins.length; j++) {
         updateStatusObject(plugins[j], "Status", "");
@@ -939,7 +1176,6 @@ function handleRemoveStatusMessage(msgData) {
 }
 
 function handleStatusMessage(msgData) {
-//    console.log("Found Telemetry - Status Message");
     var plugins = Object.keys(msgData);
     for (var j = 0; j < plugins.length; j++) {
         updateStatusObject(plugins[j], "Status", msgData[plugins[j]]);
@@ -1016,19 +1252,27 @@ function fullTimeStamp()
 	return timeString;
 }
 
+function deletePlugin(target)
+{
+    deleteTarget = target;
+    $("#delete_plugin_dialog").dialog("open");
+    resizeDialogWindow($(".ui-dialog[aria-describedby=\"delete_plugin_dialog\"]"));
+}
+
+function sendDeletePluginCommand()
+{
+    generateAndSendCommandMessage("pluginuninstall", [{ name: "plugin", value: deleteTarget }]);
+    $("#delete_plugin_dialog").dialog("close");
+}
+
 function trimLineEndings(input)
 {
 	return input.replace(/(\r\n|\n|\r)/gm,"");
 }
 function sendClearLog()
 {
-    var d = new Date().getTime() - timeOffsetMs;
-    var msg = '{"header": {"type": "Command", "subtype": "Execute", "encoding": "jsonstring","timestamp": "' + d + '","flags": "0"},' +
-    '"payload": {"command": "clearlog", "id": "' + cmdCntr + '", "args": {}}}';
 
-    cmdCntr++;
-    console.log(msg);
-    sendCommand(msg);
+    generateAndSendCommandMessage("clearlog", []);
 }
 
 function generateAndSendCommandMessage(cmd, cmdArgs) {
@@ -1046,42 +1290,8 @@ function generateAndSendCommandMessage(cmd, cmdArgs) {
     msg += '}}}';
     cmdCntr++;
 
-    console.log(msg);
+    if (debugLevel > 0) console.log("Sending " + msg);
     sendCommand(msg);
-}
-
-function SendLoginCredentials() {
-    if ($("#uname").val() == "") {
-        $("#uname").css("background-color", "red");
-        $("#loginFeedback").html("Username required");
-        return;
-    }
-    else  $("#uname").css("background-color", "");
-    
-    if ($("#upwd").val() == "") {
-        $("#upwd").css("background-color", "red");
-        $("#loginFeedback").html("Password required");
-        return;
-    }
-    else $("#upwd").css("background-color", "");
-
-    var uname = $("#uname").val().replace(/\\(.)/mg, "").replace(/&/g, "&#038;").replace(/</g, "&#060;").replace(/>/g, "&#062;").replace(/"/g, "&#034;").replace(/'/g, "&#039;").replace(/\//g, "&#047;").replace(/\\/g, "&#092;").trim();
-    var d = new Date().getTime() - timeOffsetMs;
-    var msg = '{"header": {"type": "Command","subtype": "Execute","encoding": "jsonstring","timestamp": "' + d + '","flags": "0"},' +
-              '"payload": {"command": "login", "id": "' + cmdCntr + '", "args": {"user": "' + uname + '","password": "' + $("#upwd").val() + '"}}}';
-    currUser = uname;
-    $("#uname").val("");
-    $("#upwd").val("");
-    $("#uname").css("background-color", "");
-    $("#upwd").css("background-color", "");
-    $("#loginFeedback").html("");
-    cmdCntr++;
-
-    sendCommand(msg);
-}
-
-function SendLogoutCommand() {
-    generateAndSendCommandMessage("logout", []);
 }
 
 // Socket Functions ------------------------------------------------------
@@ -1134,7 +1344,7 @@ function updateConnected(url, connected) {
                     led.setAttribute('src', '../images/Battelle/GrayLockup.png');
                 }
                 noData(socketObj);
-                console.log("Disconnected...........");
+                if (debugLevel > 0) console.log("Disconnected...........");
                 removePlugins();
                 $("[id=\"connectingPage\"]").css("display", "");
                 $("[id=\"loginPage\"]").css("display", "none");
@@ -1154,13 +1364,10 @@ function noData(obj) {
 **/
 function connectInitial()
 {
-//	for (var i = 0; i < connections.length; i++) 
-//	{
 	    var tempConnection = connections[0];
         var tempIP = tempConnection.ip;
 
-//        setUrlCookie(tempConnection.ip);
-        console.log("Cookie URL:" + getUrlCookie());
+        if (debugLevel > 0) console.log("Cookie URL:" + getUrlCookie());
         var cookieUrl = getUrlCookie();
         if (cookieUrl != "")
         {
@@ -1169,8 +1376,9 @@ function connectInitial()
         }
         $(".ipInput").val(tempIP);
 		socketObj = createSocketObject(tempIP, tempConnection.port, tempConnection.led);
-        if (useSSL) socketObj.url = "wss://" + tempIP + ':' + socketObj.port + "/";
-        else socketObj.url = "ws://" + tempIP + ':' + socketObj.port + "/";
+        //if (useSSL)
+        socketObj.url = "wss://" + tempIP + ':' + socketObj.port + "/";
+        //else socketObj.url = "ws://" + tempIP + ':' + socketObj.port + "/";
 		connect(socketObj.url);
 	}
 
@@ -1191,6 +1399,7 @@ function connect(url)
 {
     if (!$(".ipInput").is(":focus")) {
         $(".ipInput").val(socketObj.ip);
+        $(".ipInput").attr("data-valid", "true");
     }
 
     var msgBuffer = "";
@@ -1219,6 +1428,7 @@ function connect(url)
                 $("[id=\"connectingPage\"]").css("display", "none");
                 $("[id=\"loginPage\"]").css("display", "");
                 $("[id=\"page1\"]").css("display", "none");
+                updateFileUploadFormAction(socketObj.ip, socketObj.port);
 	        }
 	        socketObj.socket.onmessage = function (e) {
 	            clearTimeout(socketObj.timeoutID);
@@ -1353,7 +1563,7 @@ function stopSoundTimer()
 }
 function SoundTimeout()
 {
-    console.log("Sound Timeout Clearing");
+    if (debugLevel > 0) console.log("Sound Timeout Clearing");
     currentAudio = -1;
 }
 
@@ -1393,11 +1603,21 @@ function changeIPAddress()
 {
     socketObj.socket.close();
 
-    console.log(socketObj.ip);
+    if (debugLevel > 0) console.log(socketObj.ip);
     setUrlCookie(socketObj.ip);
+
+    // add to previous list
+    if (!CookieUrlList.includes(socketObj.ip))
+    {
+        CookieUrlList.unshift(socketObj.ip);
+        savePreviousIPCookie();
+    }
     
-    if (useSSL) socketObj.url = "wss://" + socketObj.ip + ':' + socketObj.port + "/";
-    else socketObj.url = "ws://" + socketObj.ip + ':' + socketObj.port + "/";
+    
+    //if (useSSL)
+    socketObj.url = "wss://" + socketObj.ip + ':' + socketObj.port + "/";
+    //else
+    //socketObj.url = "ws://" + socketObj.ip + ':' + socketObj.port + "/";
     socketObj.connected = false;
     socketObj.connecting = false;
     updateConnected(socketObj.url, false);
@@ -1416,7 +1636,18 @@ function calculateRows()
     $("#messagesTable").DataTable().page.len(numRows).draw('full-hold');
     $("#eventLogTable").DataTable().page.len(numRows).draw('full-hold');    
 }
+
+function resizeDialogWindow(dialogJQuery) {
+    var windowWidth = $(window).innerWidth();
+    var windowHeight = $(window).innerHeight();
+    dialogJQuery.css("left", (windowWidth * 0.2) + "px");
+    dialogJQuery.css("width", (windowWidth * 0.6) + "px");
+    dialogJQuery.css("top", (windowHeight * 0.2) + "px");
+}
+
 $(document).ready(function () {
+
+    initializeCookieElements();
 
     if (document.getElementById('server') != null) {
         document.getElementById('server').innerHTML = connections[0].ip;
@@ -1434,6 +1665,8 @@ $(document).ready(function () {
         "bLengthChange": false,
         "order": [4, 'desc']
     });
+
+
     $('#eventLogTable').DataTable({
         "bLengthChange": false,
         "order": [3, 'desc']
@@ -1441,13 +1674,43 @@ $(document).ready(function () {
         "columns": [{
             "width": "8%"
         }, {
-            "width": "15%"
+            "width": "15%" 
         }, {
             "width": "57%"
         }, {
             "width": "20%"
         }]
     });
+
+    // Custom filter to show only the recent messages - need to make configurable
+    $.fn.dataTable.ext.search.push(
+        function( settings, data, dataIndex ) {
+            if (settings.nTable.id === 'messagesTable') {
+                if ((!msgShowKeepAliveMsg) && (data[2] == "KeepAlive")) return false;
+                var lastTime = new Date(data[4]);
+                var n = new Date().getTime();
+                var d = new Date(n - timeOffsetMs);
+                var diff = (d.getTime() + (d.getTimezoneOffset() * 60) * 1000) - lastTime.getTime();
+                if ((msgTimeFilterMs == -1) || (diff < msgTimeFilterMs)) return true;
+                return false;
+            }
+            else 
+            {
+                return true;
+            }
+        }
+    );
+
+    $( "#filter_msg_by_time" ).selectmenu( { change: 
+        function( event, ui ) { 
+            msgTimeFilterMs = $( "#filter_msg_by_time").val();
+            $("[id=messagesTable]").DataTable().draw();
+        } 
+    });
+
+    // Set value
+    $('#filter_msg_by_time').val(msgTimeFilterMs);
+    $("#filter_msg_by_time").selectmenu("refresh");
 
     $( function() {
         $('input[type="checkbox"]').checkboxradio();
@@ -1457,23 +1720,17 @@ $(document).ready(function () {
         calculateRows();
     });
 
-    window.addEventListener("keypress", function (event) {
-        if (event.which == 13) {
-            var input = $("input:focus");
-            if (input != null && input != undefined) {
-                if (input.hasClass("configInput")) {
-                    var newValue = input.val();
-                    generateAndSendCommandMessage("set", [{ name: "plugin", value: input.attr("data-plugin") }, { name: "key", value: input.attr("data-name") }, { name: "value", value: newValue.replace(/"/g, "\\\"") }]);
-                    input.val(input.attr("data-value"));
-                    input.css("background-color", "#909090");
-                    input.css("color", "white");
-                } else if (input.hasClass("ipInput")) {
-                    if (input.attr("data-valid") != "false") {
-                        socketObj.ip = input.val();
-                        changeIPAddress();
-                    }
-                }
+    $(".ipInput").on("keydown", function (event) {
+        if (event.key == "Enter") {
+            if ($(".ipInput").attr("data-valid") != "false") {
+                socketObj.ip = $(".ipInput").val();
+                changeIPAddress();
             }
+        } else if (event.key == "Escape" || event.key == "Esc") {
+            setTimeout(function () {
+                $(".ipInput").val(socketObj.ip);
+                $(".ipInput").attr("data-valid", "true");
+            }, 100);
         }
     });
 
@@ -1481,12 +1738,16 @@ $(document).ready(function () {
         var match = this.value.search(/[^\.0-9]+/g);
 
         if (match != -1) {
-            this.value = this.value.substring(0, this.value.length - 1);
+            this.value = this.value.replace(this.value[match], ""); //this.value.substring(0, this.value.length - 1);
         } else {
             var invalid = "true";
             var tokens = this.value.split(".");
             if (tokens.length > 4) {
-                this.value = this.value.substring(0, this.value.length - 1);
+                if (this.value.indexOf("..") != -1) {
+                    this.value = this.value.replace("..", ".");
+                } else {
+                    this.value = this.value.substring(0, this.value.lastIndexOf('.'));
+                }
                 return;
             } else if (tokens.length < 4 && tokens[0] != "---") {
                 invalid = "false";
@@ -1519,8 +1780,90 @@ $(document).ready(function () {
 
     connectInitial();
 
-});
+    // Request User List whenever User Tab is selected
+    $( "#tabs" ).tabs({
+        activate: function (event, ui) {
+            if (event.currentTarget != null && event.currentTarget != undefined) {
+                if (event.currentTarget.id == "userTab") {
+                    if (debugLevel > 0) console.log("User Tab Selected");
+                    sendUserRequest();
+                }
+            }
+        }
+    });
 
+    // Initialize New Configuration Parameter Dialog
+    $("#newConfigDialog").dialog({
+        title: "New Configuration Parameter",
+        autoOpen: false,
+        modal: true,
+        width: 600,
+        draggable: true,
+        resizable: true,
+        buttons: {
+            "Add": function () {
+                var target = $(".newConfigInput[data-type=\"Key\"]").attr("data-plugin");
+                AddNewConfigurationItem(target);
+
+                var btn = document.getElementById("configurationAddNewBtn_" + target);
+                if (btn != null) {
+                    OpenOrCloseNewInputs(btn, target);
+                }
+            },
+            "Cancel": function () {
+                var target = $(".newConfigInput[data-type=\"Key\"]").attr("data-plugin");
+
+                var btn = document.getElementById("configurationAddNewBtn_" + target);
+                if (btn != null) {
+                    OpenOrCloseNewInputs(btn, target);
+                }
+            }
+        }
+    });
+
+     $( "#error_dialog" ).dialog({
+        title: "Command Error",
+        autoOpen: false,
+        modal: true,
+        width: 600,
+        draggable: true,
+        resizable: true,
+        buttons: {
+            "OK": function () {
+                var errorCommand = document.getElementById("err_dialog_command");
+                if (errorCommand.innerHTML.indexOf("UPLOADFILE") != -1 || errorCommand.innerHTML.indexOf("PLUGININSTALL") != -1) {
+                    $("#uploadFileBtn").removeAttr("disabled");
+                    clearUploadFile();
+                }
+                $("#error_dialog").dialog("close");
+            }
+        }                
+    });
+
+
+    $("div[aria-describedby=\"newConfigDialog\"] > div > button[title=\"Close\"]").on("mousedown", function () {
+        var target = $(".newConfigInput[data-type=\"Key\"]").attr("data-plugin");
+
+        var btn = document.getElementById("configurationAddNewBtn_" + target);
+        if (btn != null) {
+            OpenOrCloseNewInputs(btn, target);
+        }
+    });
+
+    $("div[aria-describedby=\"error_dialog\"] > div > button[title=\"Close\"]").on("mousedown", function () {
+        var errorCommand = document.getElementById("err_dialog_command");
+        if (errorCommand.innerHTML.indexOf("UPLOADFILE") != -1 || errorCommand.innerHTML.indexOf("PLUGININSTALL") != -1) {
+            $("#uploadFileBtn").removeAttr("disabled");
+            clearUploadFile();
+            $("#fileUploadErrorFeedback").html("");
+            $("#fileUploadProgressFeedback").html("");
+        }
+    });
+
+    $(window).on("resize", function () {
+        resizeDialogWindow($(".ui-dialog"));
+    });
+});
 
 // jquery UI initialization
 $( function() {

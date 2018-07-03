@@ -3,14 +3,16 @@ var componentLibraryJsVersion = "0.0.2";
 
 function ToggleCollapsible(target) {
     if (target != null && target != undefined) {
+        var section = $('div[id="' + target + '"]');
         if (target.indexOf("configuration_") != -1) {
-            if ($('div[id="' + target + '"]').css("display") != "none") {
-                $('[id=\"configurationAddNewBtn_' + target.replace("configuration_", "") + "\"]").css("display", "none");
+            var plugin = target.replace("configuration_", "");
+            if (section.css("display") != "none") {
+                $('.configurationBtn[id=\"configurationAddNewBtn_' + plugin + "\"]").css("display", "none");
             } else {
-                var btn = $('[id=\"configurationAddNewBtn_' + target.replace("configuration_", "") + "\"]").css("display", "");
+                $('.configurationBtn[id=\"configurationAddNewBtn_' + plugin + "\"]").css("display", "");
             }
         }
-        $('div[id="' + target + '"]').slideToggle();
+        section.slideToggle();
     }
 }
 
@@ -19,13 +21,13 @@ function SendEnableCommand(target) {
 }
 
 function AddNewConfigurationItem(target) {
-    var keyInput = $(".newConfigInput[data-plugin=\"" + target + "\"][data-type=\"Key\"]");
+    var keyInput = $(".newConfigInput[data-type=\"Key\"]");
     var key = keyInput.val();
-    var valueInput = $(".newConfigInput[data-plugin=\"" + target + "\"][data-type=\"Value\"]");
+    var valueInput = $(".newConfigInput[data-type=\"Value\"]");
     var value = valueInput.val();
-    var defaultValueInput = $(".newConfigInput[data-plugin=\"" + target + "\"][data-type=\"Default Value\"]");
+    var defaultValueInput = $(".newConfigInput[data-type=\"Default Value\"]");
     var defaultValue = defaultValueInput.val();
-    var descriptionInput = $(".newConfigInput[data-plugin=\"" + target + "\"][data-type=\"Description\"]");
+    var descriptionInput = $(".newConfigInput[data-type=\"Description\"]");
     var description = descriptionInput.val();
     generateAndSendCommandMessage("set", [ { name: "plugin", value: target }, { name: "key", value: key }, { name: "value", value: value }, { name: "defaultValue", value: defaultValue }, { name: "description", value: description }]);
     keyInput.val("");
@@ -34,13 +36,24 @@ function AddNewConfigurationItem(target) {
     descriptionInput.val("");
 }
 
-function OpenNewInputs(btn, target) {
+function OpenOrCloseNewInputs(btn, target) {
     if (btn.innerHTML == "+") {
         btn.innerHTML = "-";
-        $(".newConfigDiv[data-plugin=\"" + target + "\"]").css("display", "");
+        $(".newConfigInput[data-type=\"Key\"]").attr("data-plugin", target);
+        $(".newConfigInput[data-type=\"Value\"]").attr("data-plugin", target);
+        $(".newConfigInput[data-type=\"Default Value\"]").attr("data-plugin", target);
+        $(".newConfigInput[data-type=\"Description\"]").attr("data-plugin", target);
+        $("#newConfigDialog").dialog("open");
+        resizeDialogWindow($(".ui-dialog[aria-describedby=\"newConfigDialog\"]"));
+        //$(".newConfigDiv[data-plugin=\"" + target + "\"]").css("display", "");
     } else {
         btn.innerHTML = "+";
-        $(".newConfigDiv[data-plugin=\"" + target + "\"]").css("display", "none");
+        $(".newConfigInput[data-type=\"Key\"]").attr("data-plugin", "");
+        $(".newConfigInput[data-type=\"Value\"]").attr("data-plugin", "");
+        $(".newConfigInput[data-type=\"Default Value\"]").attr("data-plugin", "");
+        $(".newConfigInput[data-type=\"Description\"]").attr("data-plugin", "");
+        $("#newConfigDialog").dialog("close");
+        //$(".newConfigDiv[data-plugin=\"" + target + "\"]").css("display", "none");
     }
 }
 
@@ -62,6 +75,8 @@ var PluginDisplay = function (component, json) {
     var headerInfoVersion = null;
     var headerInfoDescription = null;
 
+    var configurableInfo = [];
+
     while (typeof (object) == "object") {
         var items = Object.keys(object);
         for (var i = pos; i < items.length; i++) {
@@ -74,8 +89,11 @@ var PluginDisplay = function (component, json) {
                 i = 0;
                 break;
             } else {
-                info +=  "<tr><td>" + prefix + items[i] + "</td><td>" +  object[items[i]] + "</td></tr>";
-
+                if ((permissions == 2 || permissions == 3) && (prefix + items[i]).toUpperCase() == "MAXMESSAGEINTERVAL") {
+                    info += "<tr><td data-type='key'>" + prefix + items[i] + "</td><td data-type='value'><textarea class='infoInput' onfocusout='ResetDisplay(this);' data-plugin=\"" + target + "\" data-name=\"" + prefix + items[i] + "\" data-value=\"" + object[items[i]] + "\">" + object[items[i]] + "</textarea></td></tr>";
+                } else {
+                    info += "<tr><td data-type='key'>" + prefix + items[i] + "</td><td data-type='value'>" + object[items[i]] + "</td></tr>";
+                }
                 //Set the enabled status of the header.
                 if (items[i].toUpperCase() == "ENABLED") {
                     headerInfoStatus = object[items[i]];
@@ -100,14 +118,20 @@ var PluginDisplay = function (component, json) {
         }
     }
 
+    // Permissions
+    //  1 - Read Only
+    //  2 - Application Administrator
+    //  3 - System Administrator
+    
     if (permissions == 1) {
         obj.node.innerHTML = "<div id='pluginHeader_" + target + "' class='collapsibleHeader' data-target='" + target + "' onmousedown=\"ToggleCollapsible('" + target + "')\">"
 //                            + "<img id='errorImage' class='errorImage' src='../images/Common/error.jpg' />"
                             + "<div class='led pluginState'></div><div class='pluginName'>" + target + "</div>" + "<div class='headerVersion'></div>"
                             + "</div>";
-        obj.node.innerHTML += "<div id='" + target + "' style='display: none;vertical-align:middle;'>"
-                                + "<div class='pluginInfo' data-target='" + target + "'>"
-                                    + "<div id='infoHeader_" + target + "' class='collapsibleHeader subHeaderItem' data-target='info_" + target + "' onmousedown=\"ToggleCollapsible('info_" + target + "')\">Plugin Information</div>"
+        obj.node.innerHTML += "<div id='" + target + "' style='display: none;'>"
+//                                + "<div class='pluginInfo' data-target='" + target + "'>"
+                                + "<div data-target='" + target + "'>"
+                                    + "<div id='infoHeader_" + target + "' class='collapsibleHeader subHeaderItem' data-target='info_" + target + "' onmousedown=\"ToggleCollapsible('info_" + target + "')\" title=\"Plugin Information\">Plugin Information</div>"
                                     + "<div id='info_" + target + "' class='infoSection' style='display: none;'><table id='infoTable_" + target + "' class='message-table'><thead><tr><th data-type='key'>Key</th><th data-type='value'>Value</th></tr></thead><tbody>" + info + "</tbody></table></div>"
                                 + "</div>"
                                 + "<div class='messages'>"
@@ -129,9 +153,11 @@ var PluginDisplay = function (component, json) {
 //                            + "<img id='errorImage' class='errorImage' src='../images/Common/error.jpg' />"
                             + "<div class='led pluginState'></div><div class='pluginName'>" + target + "</div>" + "<div class='headerVersion'></div>"
                             + "</div>";
-        obj.node.innerHTML += "<div id='" + target + "' style='display: none;vertical-align:middle;'>"
-                                + "<div class='pluginInfo' data-target='" + target + "'>"
-                                    + "<div id='infoHeader_" + target + "' class='collapsibleHeader subHeaderItem' data-target='info_" + target + "' onmousedown=\"ToggleCollapsible('info_" + target + "')\">Plugin Information</div>"
+        obj.node.innerHTML += "<div id='" + target + "' style='display: none;'>"
+//                                + "<div class='pluginInfo' data-target='" + target + "'>"
+                                + "<div data-target='" + target + "'>"
+                                    + "<div id='infoHeader_" + target + "' class='collapsibleHeader subHeaderItem' data-target='info_" + target + "' onmousedown=\"ToggleCollapsible('info_" + target + "')\" title=\"Plugin Information\">Plugin Information</div>"
+                                    + "<button id='infoDeleteBtn_" + target + "' class=\"deletePluginButton\" onmousedown=\"deletePlugin('" + target + "')\">Remove</button>"
                                     + "<div id='info_" + target + "' class='infoSection' style='display: none;'><table id='infoTable_" + target + "' class='message-table'><thead><tr><th data-type='key'>Key</th><th data-type='value'>Value</th></tr></thead><tbody>" + info + "</tbody></table></div>"
                                 + "</div>"
                                 + "<div class='messages'>"
@@ -141,14 +167,35 @@ var PluginDisplay = function (component, json) {
                                 + "<div class='state'>"
                                     + "<div id='stateHeader_" + target + "' class='collapsibleHeader subHeader' data-target='state_" + target + "' onmousedown=\"ToggleCollapsible('state_" + target + "')\"'>State</div>"
                                     + "<div id='state_" + target + "' class='stateSection' style='display: none;'><table id='stateTable_" + target + "' class='message-table'><thead><tr><th data-type='key'>Key</th><th data-type='value'>Value</th></tr></thead><tbody></tbody></table></div>"
-                                + "</div>"
-                                + "<button id='configurationAddNewBtn_" + target + "' class='configurationBtn' onmousedown='OpenNewInputs(this, \"" + target + "\")' style='display:none;'>+</button>"
-                                + "<div class='configuration'>"
-                                    + "<div id='configurationHeader_" + target + "' class='collapsibleHeader subHeader' data-target='configuration_" + target + "' onmousedown=\"ToggleCollapsible('configuration_" + target + "')\"'>Configuration</div>"
-                                    + "<div id='configuration_" + target + "' class='configurationSection' style='display: none;'><table id='configsTable_" + target + "' class='message-table'><thead><tr><th data-type='key'>Key</th><th data-type='value'>Value</th><th data-type='defaultValue'>Default Value</th><th data-type='description'>Description</th></tr></thead><tbody></tbody></table>"
-                                    + "<div class='newConfigDiv' data-plugin='" + target + "' style='display:none;'><input class='newConfigInput' data-type=\"Key\" data-plugin='" + target + "' value=''/><input class='newConfigInput' data-type=\"Value\" data-plugin='" + target + "' value=''/><input data-type=\"Default Value\" class='newConfigInput' data-plugin='" + target + "' value=''/><input class='newConfigInput' data-type=\"Description\" data-plugin='" + target + "' value=''/><button onmousedown=\"AddNewConfigurationItem('" + target + "')\">Add</button></div></div>"
+                                + "</div>"+ "<div class='configuration'>"
+                                    + "<div id='configurationHeader_" + target + "' class='collapsibleHeader subHeader' data-target='configuration_" + target + "' onmousedown=\"ToggleCollapsible('configuration_" + target + "')\"'>Configuration"//</div>"
+                                + "<button id='configurationAddNewBtn_" + target + "' class='configurationBtn' style='display:none;'>+</button>" + "</div>"
+                                + "<div id='configuration_" + target + "' class='configurationSection' style='display: none;'><table id='configsTable_" + target + "' class='message-table'><thead><tr><th data-type='key'>Key</th><th data-type='value'>Value</th><th data-type='defaultValue'>Default Value</th><th data-type='description'>Description</th></tr></thead><tbody></tbody></table>"
+                                    //+ "<div class='newConfigDiv' data-plugin='" + target + "' style='display:none;'><input class='newConfigInput' data-type=\"Key\" data-plugin='" + target + "' value=''/><input class='newConfigInput' data-type=\"Value\" data-plugin='" + target + "' value=''/><input data-type=\"Default Value\" class='newConfigInput' data-plugin='" + target + "' value=''/><input class='newConfigInput' data-type=\"Description\" data-plugin='" + target + "' value=''/><button onmousedown=\"AddNewConfigurationItem('" + target + "')\">Add</button></div></div>"
                                 + "</div>"
                             + "</div>";
+
+        $(".configurationBtn[id*=\"configurationAddNewBtn_\"]").on("mousedown", function (e) {
+            var target = this.getAttribute("id").replace("configurationAddNewBtn_", "");
+            OpenOrCloseNewInputs(this, target);
+            e.stopPropagation();
+        });
+        $("textarea.infoInput").on("keydown", function (event) {
+            if (event.key == "Enter") {
+                event.preventDefault();
+                var target = $(event.target);
+                var newValue = target.val();
+                if (newValue.endsWith("\n")) {
+                    newValue = newValue.replace("\n", "");
+                }
+                if (newValue != target.attr("data-value")) {
+                    generateAndSendCommandMessage("set", [{ name: "plugin", value: target.attr("data-plugin") }, { name: "key", value: target.attr("data-name") }, { name: "value", value: newValue.replace(/"/g, "\\\"") }]);
+                    target.css("background-color", "#909090");
+                    target.css("color", "white");
+                }
+                target.val(target.attr("data-value"));
+            }
+        });
     }
 
     //Set the enabled status of the header.
@@ -161,7 +208,14 @@ var PluginDisplay = function (component, json) {
     }
 
     if (headerInfoDescription != null) {
-        $("div[id=\"infoHeader_" + target + "\"]").html(headerInfoDescription);
+        var fontsize = parseFloat($("div[id=\"infoHeader_" + target + "\"]").css("font-size"));
+        var width = parseFloat($("div[id=\"infoHeader_" + target + "\"]").css("width"));
+        if (headerInfoDescription.length >= 1.5 * width) {
+            $("div[id=\"infoHeader_" + target + "\"]").html(headerInfoDescription.substring(0, 1.5 * width) + "...");
+        } else {
+            $("div[id=\"infoHeader_" + target + "\"]").html(headerInfoDescription);
+        }
+        $("div[id=\"infoHeader_" + target + "\"]").attr("title", headerInfoDescription);
     }
 };
 
@@ -197,7 +251,12 @@ function RefreshPluginInfoItemDisplay(obj, val) {
 }
 
 function RefreshHeaderStatus (plugin, status)
-{       
+{
+    if (plugin == "CommandPlugin") {
+        $("button.enableButton[data-target=\"" + plugin + "\"]").addClass("hide");
+        $("#infoDeleteBtn_" + plugin).addClass("hide");
+    }
+
     var header = $("div[id=\"pluginHeader_" + plugin + "\"]");
     var messagesHeader = $("div[id=\"messagesHeader_" + plugin + "\"]"); 
     var stateHeader = $("div[id=\"stateHeader_" + plugin + "\"]"); 

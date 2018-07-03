@@ -36,8 +36,11 @@ void CswPlugin::UpdateConfigSettings() {
 
 	GetConfigValue<uint64_t>("Frequency", _frequency);
 
-	if (GetConfigValue<string>("MapFile", _mapFile))
-		_isMapFileNew = true;
+	{
+		lock_guard<mutex> lock(_mapFileLock);
+		if (GetConfigValue<string>("MapFile", _mapFile))
+			_isMapFileNew = true;
+	}
 
 	GetConfigValue<uint64_t>("Snap Interval", _snapInterval);
 	GetConfigValue<uint64_t>("Vehicle Timeout", _vehicleTimeout);
@@ -108,7 +111,7 @@ void CswPlugin::OnStateChange(IvpPluginState state) {
 }
 
 
-bool CswPlugin::LoadTim(TravelerInformation *tim)
+bool CswPlugin::LoadTim(TravelerInformation *tim, const char *mapFile)
 {
 	memset(tim, 0, sizeof(TravelerInformation));
 
@@ -122,10 +125,10 @@ bool CswPlugin::LoadTim(TravelerInformation *tim)
 
 	XmlCurveParser curveParser;
 
-	std::cout << "Loading curve file: " << _mapFile << std::endl;
+	std::cout << "Loading curve file: " << mapFile << std::endl;
 
 	// Read the curve file, which creates and populates the data frame of the TIM.
-	if (!curveParser.ReadCurveFile(_mapFile, tim))
+	if (!curveParser.ReadCurveFile(mapFile, tim))
 		return false;
 
 	// Verify that a single data frame was added by the parser.
@@ -273,62 +276,73 @@ int CswPlugin::Main() {
 	uint64_t lastUpdateTime = 0;
 
 	uint64_t lastSendTime = 0;
+	string mapFileCopy;
 
 	while (_plugin->state != IvpPluginState_error) {
 		
-		pthread_mutex_lock(&_settingsMutex);
-		uint64_t sendFrequency = _frequency;
-		pthread_mutex_unlock(&_settingsMutex);
-
-		// Load the TIM from the map file if it is new.
-		if (_isMapFileNew)
+		if (IsPluginState(IvpPluginState_registered))
 		{
-			_isMapFileNew = false;
+			pthread_mutex_lock(&_settingsMutex);
+			uint64_t sendFrequency = _frequency;
+			pthread_mutex_unlock(&_settingsMutex);
 
-			pthread_mutex_lock(&_timMutex);
-			if (_isTimLoaded)
-				ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_TravelerInformation, &_tim);
-			_isTimLoaded = LoadTim(&_tim);
-			//xer_fprint(stdout, &asn_DEF_TravelerInformation, &_tim);
-			//TestFindRegion();
-			pthread_mutex_unlock(&_timMutex);
-		}
+			// Load the TIM from the map file if it is new.
 
-		// Get system time in milliseconds.
-		uint64_t time = TimeHelper::GetMsTimeSinceEpoch();
-
-		// Update the start time of the TIM message if it is time.
-		// Since the contents of the TIM change, the packet ID is also updated.
-		// If the packet ID is not changed, a recipient may choose to ignore it.
-		if (_isTimLoaded && (time - lastUpdateTime) > updateFrequency)
-		{
-			lastUpdateTime = time;
-			pthread_mutex_lock(&_timMutex);
-			if (_isTimLoaded)
+			if (_isMapFileNew)
 			{
-				std::cout << "Updating TIM start time." << std::endl;
-				DsrcBuilder::SetPacketId(&_tim);
-				DsrcBuilder::SetStartTimeToYesterday(_tim.dataFrames.list.array[0]);
+				{
+					lock_guard<mutex> lock(_mapFileLock);
+					mapFileCopy = _mapFile;
+					_isMapFileNew = false;
+				}
+
+				pthread_mutex_lock(&_timMutex);
+				if (_isTimLoaded)
+					ASN_STRUCT_FREE_CONTENTS_ONLY(asn_DEF_TravelerInformation, &_tim);
+				_isTimLoaded = LoadTim(&_tim, mapFileCopy.c_str());
+				//xer_fprint(stdout, &asn_DEF_TravelerInformation, &_tim);
+				//TestFindRegion();
+				pthread_mutex_unlock(&_timMutex);
 			}
-			pthread_mutex_unlock(&_timMutex);
- 		}
+			// Get system time in milliseconds.
+			uint64_t time = TimeHelper::GetMsTimeSinceEpoch();
 
-		// Send out the TIM at the frequency read from the configuration.
-		if (_isTimLoaded && sendFrequency > 0 && (time - lastSendTime) > sendFrequency)
-		{
+			// Update the start time of the TIM message if it is time.
+			// Since the contents of the TIM change, the packet ID is also updated.
+			// If the packet ID is not changed, a recipient may choose to ignore it.
+			if (_isTimLoaded && (time - lastUpdateTime) > updateFrequency)
+			{
+				lastUpdateTime = time;
+				pthread_mutex_lock(&_timMutex);
+				if (_isTimLoaded)
+				{
+					std::cout << "Updating TIM start time." << std::endl;
+					DsrcBuilder::SetPacketId(&_tim);
+					DsrcBuilder::SetStartTimeToYesterday(_tim.dataFrames.list.array[0]);
+				}
+				pthread_mutex_unlock(&_timMutex);
+			}
 
-			lastSendTime = time;
-			TimMessage timMsg(_tim);
+			// Send out the TIM at the frequency read from the configuration.
+			if (_isTimLoaded && sendFrequency > 0 && (time - lastSendTime) > sendFrequency)
+			{
 
-			//PLOG(logDEBUG)<<timMsg;
-			TimEncodedMessage timEncMsg;
-			timEncMsg.initialize(timMsg);
+				PLOG(logDEBUG)<<"Send TIM";
+				lastSendTime = time;
+				TimMessage timMsg(_tim);
 
-			timEncMsg.set_flags(IvpMsgFlags_RouteDSRC);
-			timEncMsg.addDsrcMetadata(172, 0x8003);
+				PLOG(logDEBUG)<<"Send TIM 2";
 
-			routeable_message *rMsg = dynamic_cast<routeable_message *>(&timEncMsg);
-			if (rMsg) BroadcastMessage(*rMsg);
+				PLOG(logDEBUG)<<timMsg;
+				TimEncodedMessage timEncMsg;
+				timEncMsg.initialize(timMsg);
+
+				timEncMsg.set_flags(IvpMsgFlags_RouteDSRC);
+				timEncMsg.addDsrcMetadata(172, 0x8003);
+
+				routeable_message *rMsg = dynamic_cast<routeable_message *>(&timEncMsg);
+				if (rMsg) BroadcastMessage(*rMsg);
+			}
 		}
 
 		usleep(50000);

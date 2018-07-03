@@ -21,7 +21,7 @@
 using namespace xercesc;
 using namespace std;
 
-bool _debugOutput = false;
+bool _debugOutput = true;
 
 XmlCurveParser::XmlCurveParser() :
 		SpeedLimit(0)
@@ -80,14 +80,14 @@ string GetFileError()
 	return "Unknown error reading file.";
 }
 
-bool XmlCurveParser::ReadCurveFile(string& filePath, TravelerInformation *tim)
+bool XmlCurveParser::ReadCurveFile(const char *filePath, TravelerInformation *tim)
 {
 	cout<<"ReadCurveFile"<<endl;
 	// Test the file status.
 	struct stat fileStatus;
 	errno = 0;
 	// ok == 0, error == -1.
-	if (stat(filePath.c_str(), &fileStatus) == -1)
+	if (stat(filePath, &fileStatus) == -1)
 	{
 		cout << GetFileError() << " File: " << filePath << endl;
 		return false;
@@ -96,7 +96,7 @@ bool XmlCurveParser::ReadCurveFile(string& filePath, TravelerInformation *tim)
 	try
 	{
 
-		_parser->parse(filePath.c_str());
+		_parser->parse(filePath);
 
 
 		// Get the DOM document.

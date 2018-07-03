@@ -203,6 +203,16 @@ bool DsrcMessageManagerPlugin::ParseJsonMessageConfig(const std::string& json, u
 
 	try
 	{
+		//delete all MessageConfig for this client
+		for (auto it = _messageConfigMap.begin(); it != _messageConfigMap.end(); )
+		{
+			 if (it->ClientIndex == clientIndex)
+				 it = _messageConfigMap.erase(it);
+			 else
+				 ++it;
+
+		}
+
 		// Example JSON parsed:
 		// { "Messages": [ { "TmxType": "MAP-P", "SendType": "MAP", "PSID": "0x8002", "Channel": "172" }, { "TmxType": "SPAT-P", "SendType": "SPAT", "PSID": "0x8002" } ] }
 		// The strings below (with extra quotes escaped) can be used for testing.
@@ -241,7 +251,7 @@ bool DsrcMessageManagerPlugin::ParseJsonMessageConfig(const std::string& json, u
 					", Channel: " << config.Channel;
 
 			// Add the message configuration to the map.
-			_messageConfigMap[config.TmxType] = config;
+			_messageConfigMap.push_back(config);
 		}
 	}
 	catch(std::exception const & ex)
@@ -255,11 +265,10 @@ bool DsrcMessageManagerPlugin::ParseJsonMessageConfig(const std::string& json, u
 
 void DsrcMessageManagerPlugin::SendMessageToRadio(IvpMessage *msg)
 {
+	bool foundMessageType = false;
 	static FrequencyThrottle<std::string> _statusThrottle(chrono::milliseconds(2000));
 
 	lock_guard<mutex> lock(_mutexUdpClient);
-
-	std::map<std::string, MessageConfig>::iterator it = _messageConfigMap.find(msg->subtype);
 
 	int msgCount = 0;
 
@@ -278,7 +287,60 @@ void DsrcMessageManagerPlugin::SendMessageToRadio(IvpMessage *msg)
 		SetStatus<int>(msg->subtype, msgCount);
 	}
 
-	if (it == _messageConfigMap.end())
+	// Convert the payload to upper case.
+	for (int i = 0; i < (int)(strlen(msg->payload->valuestring)); i++)
+		msg->payload->valuestring[i] = toupper(msg->payload->valuestring[i]);
+
+
+	//loop through all MessageConfig and send to each with the proper TmxType
+	for (int configIndex = 0;configIndex < _messageConfigMap.size();configIndex++)
+	{
+		if (_messageConfigMap[configIndex].TmxType == msg->subtype)
+		{
+			foundMessageType = true;
+
+			// Format the message using the protocol defined in the
+			// USDOT ROadside Unit Specifications Document v 4.0 Appendix C.
+
+			stringstream os;
+
+			os << "Version=0.7" << "\n";
+			os << "Type=" << _messageConfigMap[configIndex].SendType << "\n" << "PSID=" << _messageConfigMap[configIndex].Psid << "\n";
+			if (_messageConfigMap[configIndex].Channel.empty())
+				os << "Priority=7" << "\n" << "TxMode=CONT" << "\n" << "TxChannel=" << msg->dsrcMetadata->channel << "\n";
+			else
+				os << "Priority=7" << "\n" << "TxMode=CONT" << "\n" << "TxChannel=" << _messageConfigMap[configIndex].Channel << "\n";
+			os << "TxInterval=0" << "\n" << "DeliveryStart=\n" << "DeliveryStop=\n";
+			os << "Signature= "<< _signature << "\n" << "Encryption=False\n";
+			os << "Payload=" << msg->payload->valuestring << "\n";
+
+			string message = os.str();
+
+			// Send the message using the configured UDP client.
+
+			for (uint i = 0; i < _udpClientList[_messageConfigMap[configIndex].ClientIndex].size(); i++)
+			{
+				//cout << message << endl;
+
+				if (_udpClientList[_messageConfigMap[configIndex].ClientIndex][i] != NULL)
+				{
+					PLOG(logDEBUG2) << _logPrefix << "Sending - TmxType: " << _messageConfigMap[configIndex].TmxType << ", SendType: " << _messageConfigMap[configIndex].SendType
+						<< ", PSID: " << _messageConfigMap[configIndex].Psid << ", Client: " << _messageConfigMap[configIndex].ClientIndex
+						<< ", Channel: " << (_messageConfigMap[configIndex].Channel.empty() ? ::to_string( msg->dsrcMetadata->channel) : _messageConfigMap[configIndex].Channel)
+						<< ", Port: " << _udpClientList[_messageConfigMap[configIndex].ClientIndex][i]->GetPort();
+
+					_udpClientList[_messageConfigMap[configIndex].ClientIndex][i]->Send(message);
+				}
+				else
+				{
+					SetStatus<uint>(Key_SkippedInvalidUdpClient, ++_skippedInvalidUdpClient);
+					PLOG(logWARNING) << "UDP Client Invalid. Cannot send message. TmxType: " << _messageConfigMap[configIndex].TmxType;
+				}
+			}
+		}
+	}
+
+	if (!foundMessageType)
 	{
 		SetStatus<uint>(Key_SkippedNoMessageRoute, ++_skippedNoMessageRoute);
 		PLOG(logWARNING) << "TMX Subtype not found in configuration.  Message Ignored: " <<
@@ -286,51 +348,7 @@ void DsrcMessageManagerPlugin::SendMessageToRadio(IvpMessage *msg)
 		return;
 	}
 
-	// Convert the payload to upper case.
-	for (int i = 0; i < (int)(strlen(msg->payload->valuestring)); i++)
-		msg->payload->valuestring[i] = toupper(msg->payload->valuestring[i]);
 
-	// Format the message using the protocol defined in the
-	// USDOT ROadside Unit Specifications Document v 4.0 Appendix C.
-
-	stringstream os;
-
-	os << "Version=0.7" << "\n";
-	os << "Type=" << it->second.SendType << "\n" << "PSID=" << it->second.Psid << "\n";
-	if (it->second.Channel.empty())
-		os << "Priority=7" << "\n" << "TxMode=CONT" << "\n" << "TxChannel=" << msg->dsrcMetadata->channel << "\n";
-	else
-		os << "Priority=7" << "\n" << "TxMode=CONT" << "\n" << "TxChannel=" << it->second.Channel << "\n";
-	os << "TxInterval=0" << "\n" << "DeliveryStart=\n" << "DeliveryStop=\n";
-	os << "Signature= "<< _signature << "\n" << "Encryption=False\n";
-	os << "Payload=" << msg->payload->valuestring << "\n";
-
-	string message = os.str();
-
-	// Send the message using the configured UDP client.
-
-	for (uint i = 0; i < _udpClientList[it->second.ClientIndex].size(); i++)
-	{
-		//cout << message << endl;
-
-		if (_udpClientList[it->second.ClientIndex][i] != NULL)
-		{
-			cout << _logPrefix << "Sending - TmxType: " << it->second.TmxType << ", SendType: " << it->second.SendType;
-			cout << ", PSID: " << it->second.Psid << ", Client: " << it->second.ClientIndex;
-			if (it->second.Channel.empty())
-				cout << ", Channel: " << msg->dsrcMetadata->channel;
-			else
-				cout << ", Channel: " << it->second.Channel;
-
-			cout << ", Port: " << _udpClientList[it->second.ClientIndex][i]->GetPort() << endl;
-			_udpClientList[it->second.ClientIndex][i]->Send(message);
-		}
-		else
-		{
-			SetStatus<uint>(Key_SkippedInvalidUdpClient, ++_skippedInvalidUdpClient);
-			PLOG(logWARNING) << "UDP Client Invalid. Cannot send message. TmxType: " << it->second.TmxType;
-		}
-	}
 }
 
 

@@ -77,7 +77,7 @@ public:
 	 * @param uniqId - A one-byte unique identifier for the source in the group
 	 * @param timestamp - The timestamp of the message, if not the current time.
 	 */
-	void IncomingMessage(const tmx::byte_t *bytes, size_t size, const char *encoding,
+	void IncomingMessage(const tmx::byte_t *bytes, size_t size, const char *encoding = tmx::messages::api::ENCODING_ASN1_UPER_STRING,
 						 tmx::byte_t groupId = 0, tmx::byte_t uniqId = 0, uint64_t timestamp = 0);
 
 	/**

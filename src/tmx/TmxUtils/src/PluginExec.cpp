@@ -129,10 +129,20 @@ int run(std::string name, int argc, char *argv[], Runnable &runnable, bool newTh
 	boost::program_options::positional_options_description p;
 	p.add(runnable.inFileParam, -1);
 
-	store(command_line_parser(argc, argv).options(desc).positional(p).run(), opts);
-	notify(opts);
+	bool optInvalid = false;
 
-	bool optInvalid = opts.count("help") || !runnable.ProcessOptions(opts);
+	try {
+		store(command_line_parser(argc, argv).options(desc).positional(p).run(), opts);
+		notify(opts);
+
+		optInvalid = opts.count("help") || !runnable.ProcessOptions(opts);
+	}
+	catch (exception &ex) {
+
+		// Unable to process arguments
+		std::cerr << ex.what() << std::endl << std::endl;
+		optInvalid = true;
+	}
 
 	if (optInvalid)
 	{

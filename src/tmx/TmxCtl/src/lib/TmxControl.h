@@ -19,9 +19,10 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <boost/regex.hpp>
 
 #ifndef DEFAULT_PLUGINDIRECTORY
-#define DEFAULT_PLUGINDIRECTORY /var/www/plugins
+#define DEFAULT_PLUGINDIRECTORY "/var/www/plugins"
 #endif
 
 namespace tmxctl {
@@ -64,8 +65,21 @@ public:
 	bool events(pluginlist &, ...);
 	bool clear_event_log(pluginlist &, ...);
 	bool system_config(pluginlist &, ...);
-	bool user_info();
+	bool user_info(bool showPassword = false);
+	bool user_info(pluginlist &, ...);
 	bool set_system(pluginlist &, ...);
+	bool all_users_info(bool showPassword = false);
+	bool all_users_info(pluginlist &, ...);
+	bool user_delete();
+	bool user_delete(pluginlist &, ...);
+	bool user_add();
+	bool user_add(pluginlist &, ...);
+	bool user_update();
+	bool user_update(pluginlist &, ...);
+	bool plugin_install();
+	bool plugin_install(pluginlist &, ...);
+	bool plugin_remove();
+	bool plugin_remove(pluginlist &, ...);
 
 	//methods for using the class in other applications
 	void SetConnectionUrl(std::string url);
@@ -83,6 +97,7 @@ private:
 
 	bool checkPerm();
 	std::string add_constraint(std::string, pluginlist &, std::string col = "pluginId");
+	std::string add_subconstraint(std::string, pluginlist &);
 };
 
 } /* namespace tmxctl */

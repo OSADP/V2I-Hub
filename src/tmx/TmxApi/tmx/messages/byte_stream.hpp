@@ -56,6 +56,21 @@ inline std::istream &operator>>(std::istream &is, tmx::byte_stream &bytes)
 	return is;
 }
 
+inline std::string byte_stream_encode(const tmx::byte_stream &bytes)
+{
+	std::ostringstream oss;
+	operator<<(oss, bytes);
+	return oss.str();
+}
+
+inline tmx::byte_stream byte_stream_decode(const std::string &str)
+{
+	tmx::byte_stream bytes;
+	std::istringstream iss(str);
+	operator>>(iss, bytes);
+	return bytes;
+}
+
 } /* End namespace tmx */
 
 namespace battelle {
@@ -64,19 +79,13 @@ namespace attributes {
 template <>
 inline std::string attribute_lexical_cast<std::string, tmx::byte_stream>(const tmx::byte_stream &bytes)
 {
-	std::stringstream ss;
-	tmx::operator<<(ss, bytes);
-	return ss.str();
+	return tmx::byte_stream_encode(bytes);
 }
 
 template <>
 inline tmx::byte_stream attribute_lexical_cast<tmx::byte_stream, std::string>(const std::string &str)
 {
-	tmx::byte_stream bytes;
-	std::stringstream ss;
-	ss.str(str);
-	tmx::operator>>(ss, bytes);
-	return bytes;
+	return tmx::byte_stream_decode(str);
 }
 
 } /* End namespace attributes */

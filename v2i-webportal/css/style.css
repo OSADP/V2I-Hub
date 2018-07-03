@@ -27,7 +27,11 @@ body{
     font-size: 1.3vw !important;
     margin:0em;
 }
------------------ */
+/*----------------- */
+#tabs {
+    border:none;
+}
+
 .v2iTabs
 {
     font-size: .7em !important;
@@ -37,9 +41,23 @@ body{
 {
     font-size: .7em !important;
 }
-.filterLabel
+
+#filterLabel
 {
-    font-size: .7em !important;
+    font-size: 1em !important;
+    margin-bottom: .5em;
+    margin-right: 1.5em;
+    font-weight: bold;
+}
+
+#filterDiv
+{
+    border-color: #0079CF;
+    border-radius: 0.2em;
+    border-width: 1px;
+    border-style: double;
+    height:50%;
+    padding: 0.75%;
 }
 
 /* ------------------ Keyboard --------------------- */
@@ -76,10 +94,19 @@ body{
 }
 .mainEventLogTable {
     width:100% !important;
+    word-break: break-all;
 }
 /* ------------------- End Table ------------------- */
 
 /* -------------------- Button --------------------- */
+#uploadFileBtn {
+    float:right;
+    width: 12%;
+    padding: 0.25%;
+    height: 10%;
+    margin-top: 0.75%;
+}
+
 .confirmbutton
 {
     background-color: #303030 !important;
@@ -115,6 +142,10 @@ body{
     height: 3.5em !important;
     margin: 0.5em 0em 0.5em 0.5em;
 }
+
+.activeFileOption {
+    background: gray;
+}
 /* ----------------- End Button -------------------- */
 
 /* --------------------- Text ---------------------- */
@@ -144,6 +175,10 @@ body{
 }
 
 /* ------------------- Containers ------------------ */
+#pluginList {
+    margin-top: 1%;
+}
+
 .buttoncontainer{
     vertical-align: middle;
     display: table-cell;
@@ -265,9 +300,53 @@ body{
     z-index: 1 !important;
 }
 
-.absoluteForefront 
-{
+.absoluteForefront {
     z-index: 1000 !important;
+}
+
+#uploadFilesDiv {
+    margin-top:1%;
+}
+
+.uploadFilesLabel {
+    font-weight:bold;
+    margin-bottom: 2%;
+}
+
+#uploadFiles {
+    width: 100%;
+    margin-bottom: 1%;
+}
+
+#fileUploadProgressDiv {
+    width: 100%;
+}
+
+#fileDestPathLabel {
+    margin-top: 1%;
+    font-weight:bold;
+}
+
+#fileDestPathInput {
+    margin-top: 1%;    
+    border: 1px solid #666666;
+    border-radius: 4px;
+    height:2em;
+    width:77%;
+    display:inline-block;
+    padding-left: 1%;
+    padding-right: 1%;
+}
+
+#fileUploadProgressContainer {
+    position: fixed;
+    bottom: 1%;
+    text-align: center;
+    background: white;
+}
+
+#fileUploadErrorFeedback {
+    margin-top: 2%;
 }
 /* ---------------- End Containers ------------------ */
 
@@ -357,6 +436,7 @@ body{
   width:22em;
   margin-top: 3em;
 }
+
 .loginInput {
   border: 1px solid #a1a3a3;
   border-radius: 4px;
@@ -488,6 +568,15 @@ li > a {
     margin-left: .5em !important;
     margin-top: .25em !important;
 }
+.versionlabel
+{
+    float: right;
+    color:#FFF;
+    vertical-align: middle !important;
+    margin-left: .5em !important;
+    margin-top: .25em !important;
+    margin-right: 1em !important;
+}
 .logoContainer{
     margin-right: .5em;
     margin-top: .5em;
@@ -507,10 +596,15 @@ li > a {
 }
 
 .ipInput {
-    margin-top: -.3em; 
+    /*margin-top: -.3em; */
     border-radius: 0.2em !important;
     text-align: center;
     vertical-align: middle;
+}
+.prevIPs {
+    border-radius: 0.2em !important;
+    text-align: center;
+    vertical-align: middle;    
 }
 .sslButton 
 {
@@ -551,13 +645,33 @@ li > a {
 
 .userLabel {
     display: inline;
-    font-weight: bold;
     color:#FFF;
+}
+
+.addUserBtn {
+    display:block !important;
+    margin-right: 3em !important;
+    margin-left: auto !important;
+    font-size:0.8em !important;
+    width:10em;
+    height:2.5em;
+    margin-top: 0.25%;
+}
+
+.userBtn {
+    float:left;
+    margin-right: 2em;
+    margin-left: 1em;
+    width:12em;
+    height:3em;
+    font-size:0.8em !important;
+    margin-top: 0.25%;
 }
 
 .permissionsLabel {
     display: inline;
     color:#FFF;
+    font-size:0.6em !important;
 }
 
 .logoutBtn {
@@ -573,11 +687,135 @@ li > a {
     color:#FFF;
 }
 
-/* ------------------ End Page ----
+.configurationBtn {
+    float:right;
+    height: 97%;
+    width:5%;
+    margin-right:2%;
+}
+
+#fileButtonOptions {
+    height: 3em;
+}
+
+#fileButtonOptions > button { 
+    margin-right: 1%;
+    width: 25%;
+    height: 80%;
+}
+#fileButtonOptions > button[disabled="true"] { 
+    color: #FFF;
+}
+
+.site-dialog {
+    margin-top: .2em !important; 
+    font-size:0.8em !important;    
+}
+
+.changePasswordDialogLabel, .changeUserAccessDialogLabel, .addUserDialogLabel {
+    margin-bottom: 2%;
+    margin-right: 2%;
+    font-weight:bold;
+    width: 30%;
+    display:inline-block;
+    text-align:right;
+}
+
+.passwordInputs {
+    margin: 1.5% 0% 1.5% 0%;
+}
+
+.newUsernameInput, .userLoginInput, .newConfigInput {
+  border: 1px solid #666666;
+  border-radius: 4px;
+  height:2em;
+  width:60%;
+  display:inline-block;
+  padding-left: 1%;
+  padding-right: 1%;
+}
+
+#change_user_Access-button
+{
+    width: 58%;
+    /* See copyright in jquery-ui.theme.css */
+    background: #0079CF url("images/ui-bg_gloss-wave_50_0079CF_500x100.png") 50% 50% repeat-x !important;
+}
+
+#new_user_Access-button
+{
+    width: 58%;
+    /* See copyright in jquery-ui.theme.css */
+    background: #0079CF url("images/ui-bg_gloss-wave_50_0079CF_500x100.png") 50% 50% repeat-x !important;
+}
+
+#filterMsgDiv {
+    width: 50%;
+    border-color: #0079CF;
+    border-radius: 0.2em;
+    border-width: 1px;
+    border-style: solid;
+    height:2em;
+    padding: 0.75%;
+}
+
+label.messageSelect {
+    font-weight: bold;
+    font-size: 0.9em !important;
+    width:25%;
+}
+
+#filter_msg_by_time-button
+{
+    width:45%;
+    /* See copyright in jquery-ui.theme.css */
+    background: #0079CF url("images/ui-bg_gloss-wave_50_0079CF_500x100.png") 50% 50% repeat-x !important;
+}
+#filter_msg_by_time-button > .ui-selectmenu-text
+{
+    font-size:0.8em !important;
+}
+.timeFilterButton 
+{
+    color: #eaf5f7;
+    border: 1px solid #0079CF;
+    font-size: 0.8em !important;
+/*    background: #0079CF; */
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-top-left-radius: 5px;
+    height: 2.3em;
+    width:25%;
+}
+.timeFilterButton[data-state="true"] 
+{
+    /* See copyright in jquery-ui.theme.css */
+    background: #0079CF url("images/ui-bg_gloss-wave_50_0079CF_500x100.png") 50% 50% repeat-x !important;
+}
+.timeFilterButton[data-state="false"] 
+{
+    background: #565A5C;
+}
+
+.ui-menu-item
+{
+    font-size:0.8em !important;
+}
+/*
+#new_user_Access-button > .ui-selectmenu-text
+{
+    color: black !important;
+}
+*/
+/* ------------------ End Page ---- */
 
 /* Wide screen Images */
 @media all and (min-aspect-ratio: 16/12) 
 { 
+.deletePluginButton {
+    margin-top: .3%;
+}
 
 /*----- header ----*/
 li > a {
@@ -590,7 +828,7 @@ li > a {
 }
 
 .permissionsLabel {
-    font-size: 75% !important;
+    font-size: 60% !important;
     margin-top: 0em !important;
 }
 
@@ -598,14 +836,22 @@ li > a {
     font-size: 65% !important;
     margin-top: 0em !important;
 }
-    .sslButton 
-    {
-        width: 6em;
-        font-size: 75% !important;
 
-    }
+.configurationBtn{
+    font-size:80% !important;
+}
+
+.sslButton 
+{
+    width: 6em;
+    font-size: 75% !important;
+
+}
 .ipInput {
-    margin-top: -.3em; 
+    /*margin-top: -.3em; */
+    font-size: 75% !important;
+}
+.prevIPs {
     font-size: 75% !important;
 }
 .mainpage{
@@ -641,6 +887,10 @@ li > a {
 {
     font-size: .5em !important;
 }
+.versionlabel
+{
+    font-size: .5em !important;
+}
 .logoContainer{
     height: .5em;
 }
@@ -655,12 +905,18 @@ li > a {
 }
 
 .ipInput {
-    margin-top: -.3em; 
+    /*margin-top: -.3em; */
     border-radius: 0.2em !important;
     font-size: 75% !important;
     text-align: center;
     vertical-align: middle;
 }
+.prevIPs {
+    font-size: 75% !important;
+    text-align: center;
+    vertical-align: middle;
+}
+
 
     .layered_stack {
         position: absolute;
@@ -708,7 +964,19 @@ li > a {
 /* 4:3 screen */
 @media not all and (min-aspect-ratio: 16/12) 
 { 
+#filterMsgDiv {
+    width:55%;
+}
+
+.timeFilterButton{
+    width:27%;
+}
+
 /*----- header ----*/
+.deletePluginButton {
+    margin-top: .15%;
+}
+
 li > a {
   font-size: 100% !important;
 }
@@ -718,8 +986,12 @@ li > a {
     margin-top: .5em !important;
 }
 
+.configurationBtn{
+    font-size:60% !important;
+}
+
 .permissionsLabel {
-    font-size: 125% !important;
+    font-size: 100% !important;
     margin-top: .5em !important;
 }
 
@@ -739,6 +1011,10 @@ li > a {
 {
     font-size: 1em !important;
 }
+.versionlabel
+{
+    font-size: 1em !important;
+}
 .logoContainer{
     height: .5em;
 }
@@ -746,7 +1022,12 @@ li > a {
     height: 3em;
 }
 .ipInput {
-    margin-top: -.3em; 
+    margin-top: .1em;
+    font-size: 125% !important;
+}
+
+.prevIPs {
+    margin-top: .1em;
     font-size: 125% !important;
 }
 

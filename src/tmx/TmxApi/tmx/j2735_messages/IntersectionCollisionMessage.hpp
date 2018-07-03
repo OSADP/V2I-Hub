@@ -18,4 +18,25 @@ TMX_J2735_DECLARE(IntersectionCollision, IntersectionCollision, api::intersectio
 TMX_J2735_DECLARE(IntersectionCollision, IntersectionCollision, api::intersectionCollision, api::MSGSUBTYPE_INTERSECTIONCOLLISION_STRING)
 #endif
 
+// Specialize the unique key function
+TMX_J2735_NAMESPACE_START(tmx)
+TMX_J2735_NAMESPACE_START(messages)
+TMX_J2735_NAMESPACE_START(j2735)
+
+template <>
+inline int get_j2735_message_key<tmx::messages::IntersectionCollisionMessage>(std::shared_ptr<IntersectionCollision> message) {
+	if (message) {
+		tmx::byte_stream bytes(fmax(message->id.size, sizeof(int)));
+		::memcpy(bytes.data(), message->id.buf, bytes.size());
+		return *((int *)bytes.data());
+	}
+
+	return 0;
+}
+
+TMX_J2735_NAMESPACE_END(j2735)
+TMX_J2735_NAMESPACE_END(messages)
+TMX_J2735_NAMESPACE_END(tmx)
+
+
 #endif /* TMX_J2735_MESSAGES_INTERSECTIONCOLLISIONMESSAGE_HPP_ */

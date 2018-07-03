@@ -6,6 +6,7 @@
  */
 
 #include "BsmConverter.h"
+#include "PluginLog.h"
 
 namespace tmx {
 namespace utils {
@@ -150,7 +151,7 @@ void BsmConverter::ToBasicSafetyMessage(tmx::messages::DecodedBsmMessage &decode
 	uint16_t uint16Temp;
 	uint16_t uint16Temp2;
 	uint32_t uint32Temp;
-	uint32_t uint32Temp2;
+	int32_t int32Temp2;
 
 #if SAEJ2735_SPEC < 63
 
@@ -171,19 +172,19 @@ void BsmConverter::ToBasicSafetyMessage(tmx::messages::DecodedBsmMessage &decode
 	// The value 1800000001 indicates that longitude is not available.
 
 	if (decoded.get_IsLocationValid())
-		uint32Temp2 = (int32_t)(decoded.get_Latitude() * 10000000.0);
+		int32Temp2 = (int32_t)(decoded.get_Latitude() * 10000000.0);
 	else
-		uint32Temp2 = 900000001;
+		int32Temp2 = 900000001;
 
-	uint32Temp = htonl(uint32Temp2);
+	uint32Temp = htonl(int32Temp2);
 	memcpy(bsm.blob1.buf + 7,  &uint32Temp, 4);
 
 	if (decoded.get_IsLocationValid())
-		uint32Temp2 = (int32_t)(decoded.get_Longitude() * 10000000.0);
+		int32Temp2 = (int32_t)(decoded.get_Longitude() * 10000000.0);
 	else
-		uint32Temp2 = 1800000001;
+		int32Temp2 = 1800000001;
 
-	uint32Temp = htonl(uint32Temp2);
+	uint32Temp = htonl(int32Temp2);
 	memcpy(bsm.blob1.buf + 11,  &uint32Temp, 4);
 
 	// Elevation is in units of 10 cm steps.
@@ -282,18 +283,18 @@ void BsmConverter::ToBasicSafetyMessage(tmx::messages::DecodedBsmMessage &decode
 	// The value 1800000001 indicates that longitude is not available.
 
 	if (decoded.get_IsLocationValid())
-		uint32Temp2 = (int32_t)(decoded.get_Latitude() * 10000000.0);
+		int32Temp2 = (int32_t)(decoded.get_Latitude() * 10000000.0);
 	else
-		uint32Temp2 = 900000001;
+		int32Temp2 = 900000001;
 
-	bsm.coreData.lat = uint32Temp2;
+	bsm.coreData.lat = int32Temp2;
 
 	if (decoded.get_IsLocationValid())
-		uint32Temp2 = (int32_t)(decoded.get_Longitude() * 10000000.0);
+		int32Temp2 = (int32_t)(decoded.get_Longitude() * 10000000.0);
 	else
-		uint32Temp2 = 1800000001;
+		int32Temp2 = 1800000001;
 
-	bsm.coreData.Long = uint32Temp2;
+	bsm.coreData.Long = int32Temp2;
 
 	// Elevation is in units of 10 cm steps.
 	// max and min values are limited as set below.

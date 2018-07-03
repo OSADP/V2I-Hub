@@ -8,7 +8,7 @@
 #ifndef SRC_BSMCONVERTER_H_
 #define SRC_BSMCONVERTER_H_
 
-#include <BasicSafetyMessage.h>
+#include <tmx/j2735_messages/BasicSafetyMessage.hpp>
 #include <DecodedBsmMessage.h>
 
 namespace tmx {

@@ -12,7 +12,7 @@ using namespace std;
 namespace tmx {
 namespace utils {
 
-std::string System::ExecCommand(const std::string& command)
+std::string System::ExecCommand(const std::string& command, int *exitCode)
 {
     std::string result;
 
@@ -24,7 +24,9 @@ std::string System::ExecCommand(const std::string& command)
         result += buffer;
     }
 
-    pclose(pipe);
+    int x = pclose(pipe);
+    if (exitCode != NULL)
+    	*exitCode = x;
 
     // Trim the last line
     result = result.substr(0, result.size() - 1);

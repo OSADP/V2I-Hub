@@ -84,13 +84,20 @@ TmxControl::TmxControl(): Runnable("plugin", "The plugin to control"), _opts(NUL
 	REG_FN(clear_event_log, NULL, "Clear out event log in database.");
 	REG_FN(system_config, NULL, "Return the current system configuration parameters.");
 	REG_FN(set_system, NULL, "Set a system configuration value.  Must also set --key and --value.");
+	REG_FN(user_info, NULL, "Display user information for a user. Must set --username.");
+	REG_FN(all_users_info, NULL, "Display user information for all users.");
+	REG_FN(user_add, NULL, "Add a TMX user. Must set --username, --password, and --access-level.");
+	REG_FN(user_update, NULL, "Update a TMX users info. Must set --username, --password, and --access-level.");
+	REG_FN(user_delete, NULL, "Delete a TMX user.");
 
 	// These have arguments
-	REG_FN_ARG(max_message_interval, "M", "Set the max message interval for the plugin", uint32_t);
+	REG_FN_ARG(max_message_interval, "M", "Set the max message interval for the plugin", std::string);
 	REG_FN_ARG(plugin_log_level, "L", "Set the log level for a running plugin", std::string);
 	REG_FN_ARG(plugin_log_output, "O", "Redirect the logging of a running plugin to the specified file", std::string);
 	REG_FN_ARG(args, "a", "Set the command line arguments for the plugin", std::string);
 	REG_FN_ARG(load_manifest, "m", "(Re-)load the plugin manifest to the database", std::string);
+	REG_FN_ARG(plugin_install, NULL, "Decompress and install the specified plugin install file on this system.", std::string);
+	REG_FN_ARG(plugin_remove, NULL, "Delete the specified plugin on this system.  No wildcards accepted.", std::string);
 
 #undef REG_FN_ARG
 #undef REG_FN
@@ -119,11 +126,23 @@ TmxControl::TmxControl(): Runnable("plugin", "The plugin to control"), _opts(NUL
 				boost::program_options::value<string>()->default_value("3306"),
 				"The MySQL DB port, if different than the default 3306")
 			("plugin-directory,d",
-				boost::program_options::value<string>()->default_value(quoted_attribute_name(DEFAULT_PLUGINDIRECTORY)),
+				boost::program_options::value<string>()->default_value(DEFAULT_PLUGINDIRECTORY),
 				"Directory to find the plugins")
 			("eventTime",
 				boost::program_options::value<string>()->default_value(""),
-				"Event log entries greater than this time returned");
+				"Event log entries greater than this time returned")
+			("username",
+				boost::program_options::value<string>(),
+				"A TMX system user")
+			("password",
+				boost::program_options::value<string>(),
+				"A TMX system users password")
+			("access-level",
+				boost::program_options::value<string>(),
+				"A TMX system users access level. 1 = ReadOnly, 2 = ApplicationAdministrator, 3 = SystemAdministrator")
+			("rowLimit",
+				boost::program_options::value<string>(),
+				"Max number of rows to return");
 }
 
 TmxControl::~TmxControl() {}
@@ -265,14 +284,29 @@ string TmxControl::add_constraint(string query, TmxControl::pluginlist &plugins,
 			if (i > 0)
 				query += " OR ";
 
-			query += "lower(name) like ";
-			query += "'";
-			query += plugins[i];
-			query += "'";
+			query += "lower(name) like ?";
+
 		}
 		query += " )";
 	}
 
+	return query;
+}
+
+string TmxControl::add_subconstraint(string query, TmxControl::pluginlist &plugins)
+{
+	if (plugins.size() > 0)
+	{
+		query += " WHERE ";
+
+		for (size_t i = 0; i < plugins.size(); i++)
+		{
+			if (i > 0)
+				query += " OR ";
+
+			query += "lower(name) like ?";
+		}
+	}
 	return query;
 }
 

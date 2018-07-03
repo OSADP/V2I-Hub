@@ -11,6 +11,7 @@
 #include "LockFreeThread.h"
 #include "ThreadGroup.h"
 
+#include <condition_variable>
 #include <tmx/j2735_messages/J2735MessageFactory.hpp>
 
 #define MAX_USEC_SLEEP 50000
@@ -64,8 +65,12 @@ std::atomic<bool> outRun;
 static std::thread *outThread;
 
 std::mutex _threadLock;
+std::mutex _waitLock;
 
+// This static factory initializes the map data for future use
 static tmx::messages::J2735MessageFactory factory;
+
+static std::condition_variable cv;
 
 bool IsByteHexEncoded(const char *encoding)
 {
@@ -119,13 +124,16 @@ void RxThread::doWork(rawIncomingMessage &msg) {
 			bytes = static_cast<tmx::byte_stream *>(msg.message);
 			if (bytes) {
 				if (IsByteHexEncoded(msg.encoding)) {
+					// New factory needed to avoid race conditions
+					tmx::messages::J2735MessageFactory myFactory;
+
 					FILE_LOG(logDEBUG4) << this->get_id() << ": Decoding from bytes " << *bytes;
 
 					// Bytes are encoded.  First try to convert to a J2735 message
-					routeableMsg = factory.NewMessage(*bytes);
+					routeableMsg = myFactory.NewMessage(*bytes);
 
 					if (!routeableMsg) {
-						FILE_LOG(logDEBUG4) << "Not a J2735 message: " << factory.get_event();
+						FILE_LOG(logDEBUG4) << "Not a J2735 message: " << myFactory.get_event();
 
 						// Set the bytes directly as unknown type
 						routeableMsg = new routeable_message();
@@ -186,22 +194,32 @@ void RxThread::doWork(rawIncomingMessage &msg) {
 	out.uniqId = msg.uniqId;
 	out.msg = NULL;
 	this->push_out(out);
-
-	//FILE_LOG(logDEBUG2) << "Done with incoming message on " << this->get_id() << ", queue size is now " << this->inQueueSize();
+	cv.notify_one();
 
 	// If items are queued already, use a multiplicative decrease
 	// This should be thread-safe since doWork and idle are mutually exclusive
-	if (this->inQueueSize() > 1)
+	if (this->inQueueSize() > 1 && usecSleep > 0)
 		usecSleep *= sleepDec;
+
+	this_thread::yield();
 }
 
 void RxThread::idle() {
+	this_thread::yield();
+
 	usleep((uint32_t)usecSleep);
 
 	// If no items are queued, use an additive increase
 	// This should be thread-safe since doWork and idle are mutually exclusive
 	if (this->inQueueSize() < 1 && usecSleep < MAX_USEC_SLEEP)
 		usecSleep += sleepInc;
+}
+
+bool available_messages() {
+	for (size_t i = 0; i < workerThreads.size(); i++)
+		if (workerThreads[i].outQueueSize()) return true;
+
+	return false;
 }
 
 /**
@@ -213,15 +231,15 @@ void RunOutputThread(TmxMessageManager *mgr) {
 
 	rawOutgoingMessage outMsg;
 
-	double usecSleep = 0;
-
 	while (run) {
-		bool more = false;
+		unique_lock<mutex> lock(_waitLock);
+		cv.wait(lock, available_messages);
 
 		// Loop over each thread in the thread group
 		for (size_t i = 0; i < workerThreads.size(); i++) {
 			if (workerThreads[i].pop(outMsg)) {
 				if (outMsg.msg) {
+					outMsg.msg->flush();
 					if (mgr)
 						mgr->OutgoingMessage(*(outMsg.msg), true);
 					delete outMsg.msg;
@@ -230,20 +248,7 @@ void RunOutputThread(TmxMessageManager *mgr) {
 				if (mgr)
 					mgr->Cleanup(outMsg.groupId, outMsg.uniqId);
 			}
-
-			//FILE_LOG(logDEBUG2) << "Done with output " << workerThreads[i].get_id() << ", queue size is now " << workerThreads[i].outQueueSize();
-			if (workerThreads[i].outQueueSize() >= 1) {
-				// Multiplicative decrease
-				usecSleep -= sleepDec;
-				more = true;
-			} else if (usecSleep < MAX_USEC_SLEEP) {
-				// Additive increase
-				usecSleep += sleepInc;
-			}
 		}
-
-		if (!more)
-			usleep(usecSleep);
 	}
 }
 
@@ -306,7 +311,7 @@ void TmxMessageManager::IncomingMessage(const tmx::byte_t *bytes, size_t size, c
 	in.mgr = this;
 	in.message = copy;
 	in.type = type_RawBytes;
-	in.encoding = strdup(encoding);
+	in.encoding = encoding ? strdup(encoding) : NULL;
 
 	PLOG(logDEBUG4) << "Assigning message bytes " << *copy << " as " << (int)groupId << ":" << (int)uniqId;
 	workerThreads.assign(groupId, uniqId, in);
@@ -350,6 +355,9 @@ void TmxMessageManager::OutgoingMessage(const tmx::routeable_message &msg, bool 
 	out.uniqId = 0;
 	out.msg = new tmx::routeable_message(msg);
 	workerThreads[id].push_out(out);
+	cv.notify_one();
+
+	this_thread::yield();
 }
 
 void TmxMessageManager::OnMessageReceived(tmx::routeable_message &msg) {

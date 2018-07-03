@@ -253,7 +253,7 @@ public:
 	 */
 	bool is_format(std::string type)
 	{
-		std::transform(type.begin(), type.end(), type.begin(), toupper);
+		std::transform(type.begin(), type.end(), type.begin(), ::toupper);
 		return (format() == type);
 	}
 

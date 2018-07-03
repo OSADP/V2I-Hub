@@ -173,19 +173,28 @@ struct uper
 	{
 		int id;
 
-		static uper<MessageFrameMessage> decoder;
 		MessageFrameMessage::message_type *frame = NULL;
+		asn_TYPE_descriptor_t *descriptor = NULL;
 
-		asn_TYPE_descriptor_t *descriptor = MessageFrameMessage::get_descriptor();
+#if SAEJ2735_SPEC < 63
+		static uper<MessageFrameMessage> decoder;
+
+		descriptor = MessageFrameMessage::get_descriptor();
 
 		asn_dec_rval_t ret = decoder.decode((void **)&frame, bytes, descriptor);
 		if (ret.code != RC_OK || frame == NULL)
 			return -1;
 
-#if SAEJ2735_SPEC < 63
 		id = frame->contentID;
 #else
-		id = frame->messageId;
+		// Message ID is encoded directly in the message frame, first two bytes
+		if (bytes.size() > 1)
+			id = bytes[0];
+
+		if (bytes.size() > 2) {
+			id <<= 8;
+			id |= bytes[1];
+		}
 #endif
 
 		if (descriptor)
@@ -211,6 +220,7 @@ public:
 
 	virtual tmx::xml_message get_payload() = 0;
 	virtual int get_msgId() = 0;
+	virtual int get_msgKey() = 0;
 
 	tmx::byte_stream get_data()
 	{
@@ -497,6 +507,14 @@ public:
 			return id;
 		else
 			return MsgType::get_default_messageId();
+	}
+
+	int get_msgKey()
+	{
+		if (!_decoded)
+			decode_j2735_message();
+
+		return _decoded->get_messageKey();
 	}
 
 	/**

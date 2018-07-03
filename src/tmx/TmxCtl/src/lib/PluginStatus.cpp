@@ -44,6 +44,22 @@
 	SELECT IVP.user.id, IVP.user.username, IVP.user.password, IVP.user.accessLevel \
 	FROM IVP.user"
 
+#define USER_UPDATE_QUERY "\
+	UPDATE IVP.user \
+	SET"
+
+#define USER_ADD_QUERY "\
+	INSERT INTO IVP.user \
+	(username, password, accessLevel ) \
+	SELECT DISTINCT ?, ?, ? \
+	FROM DUAL \
+	WHERE NOT EXISTS ( \
+	SELECT username FROM IVP.user \
+	WHERE username = ? )"
+
+#define USER_DELETE_QUERY "\
+	DELETE FROM IVP.user"
+
 #define SYSTEM_CONFIG_QUERY "\
 	SELECT IVP.systemConfigurationParameter.key, IVP.systemConfigurationParameter.value, IVP.systemConfigurationParameter.defaultValue \
 	FROM IVP.systemConfigurationParameter \
@@ -72,8 +88,13 @@ bool TmxControl::list(pluginlist &plugins, ...)
 		_output.get_storage().get_tree().clear();
 
 		DbConnection conn = _pool.Connection();
-		unique_ptr<Statement> stmt(conn.Get()->createStatement());
-		unique_ptr<ResultSet> rs(stmt->executeQuery(query));
+
+		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
+		for (size_t i = 0; i < plugins.size(); i++)
+		{
+			stmt->setString(i + 1, plugins[i]);
+		}
+		unique_ptr<ResultSet> rs(stmt->executeQuery());
 
 		while (rs->next())
 		{
@@ -153,8 +174,12 @@ bool TmxControl::state(pluginlist &plugins, ...)
 
 		_output.get_storage().get_tree().clear();
 		DbConnection conn = _pool.Connection();
-		unique_ptr<Statement> stmt(conn.Get()->createStatement());
-		unique_ptr<ResultSet> rs(stmt->executeQuery(query));
+		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
+		for (size_t i = 0; i < plugins.size(); i++)
+		{
+			stmt->setString(i + 1, plugins[i]);
+		}
+		unique_ptr<ResultSet> rs(stmt->executeQuery());
 
 		while (rs->next())
 		{
@@ -186,13 +211,17 @@ bool TmxControl::max_message_interval(pluginlist &plugins, ...)
 
 	try
 	{
-		uint32_t val = (*_opts)["max-message-interval"].as<uint32_t>();
+		string val = (*_opts)["max-message-interval"].as<string>();
 
 		PLOG(logDEBUG1) << "Executing query (?1 = " << val << ")" << query;
 
 		DbConnection conn = _pool.Connection();
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
-		stmt->setUInt(1, val);
+		stmt->setString(1, val);
+		for (size_t i = 0; i < plugins.size(); i++)
+		{
+			stmt->setString(i + 2, plugins[i]);
+		}
 		return stmt->execute();
 	}
 	catch (exception &ex)
@@ -243,6 +272,10 @@ bool TmxControl::args(pluginlist &plugins, ...)
 		DbConnection conn = _pool.Connection();
 		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
 		stmt->setString(1, val);
+		for (size_t i = 0; i < plugins.size(); i++)
+		{
+			stmt->setString(i + 2, plugins[i]);
+		}
 		return stmt->execute();
 	}
 	catch (exception &ex)
@@ -266,8 +299,13 @@ bool TmxControl::messages(pluginlist &plugins, ...)
 		_output.get_storage().get_tree().clear();
 
 		DbConnection conn = _pool.Connection();
-		unique_ptr<Statement> stmt(conn.Get()->createStatement());
-		unique_ptr<ResultSet> rs(stmt->executeQuery(query));
+
+		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
+		for (size_t i = 0; i < plugins.size(); i++)
+		{
+			stmt->setString(i + 1, plugins[i]);
+		}
+		unique_ptr<ResultSet> rs(stmt->executeQuery());
 
 		message payload;
 
@@ -310,13 +348,31 @@ bool TmxControl::messages(pluginlist &plugins, ...)
 bool TmxControl::events(pluginlist &, ...)
 {
 	string query = EVENT_LOG_QUERY;
+	bool haveEventTime = false;
+	bool haveRowLimit = false;
 	if (_opts->count("eventTime") > 0 && (*_opts)["eventTime"].as<string>() != "")
 	{
-		query += " WHERE IVP.eventLog.timestamp > '";
-		query += (*_opts)["eventTime"].as<string>();
-		query += "'";
+		query += " WHERE IVP.eventLog.timestamp > ?";
+		query += " ORDER BY IVP.eventLog.timestamp";
+		haveEventTime = true;
 	}
-	query += " ORDER BY IVP.eventLog.timestamp";
+	else
+	{
+		if (_opts->count("rowLimit") > 0 && (*_opts)["rowLimit"].as<string>() != "" && boost::regex_match((*_opts)["rowLimit"].as<string>(), boost::regex("[0-9]+")))
+		{
+			query += " ORDER BY IVP.eventLog.timestamp DESC";
+			query += " LIMIT ?";
+			string innerQuery = query;
+			query = "SELECT e.* FROM (";
+			query += innerQuery;
+			query += ") e ORDER BY e.timestamp ASC";
+			haveRowLimit = true;
+		}
+		else
+		{
+			query += " ORDER BY IVP.eventLog.timestamp";
+		}
+	}
 
 	try
 	{
@@ -325,8 +381,15 @@ bool TmxControl::events(pluginlist &, ...)
 		_output.get_storage().get_tree().clear();
 
 		DbConnection conn = _pool.Connection();
-		unique_ptr<Statement> stmt(conn.Get()->createStatement());
-		unique_ptr<ResultSet> rs(stmt->executeQuery(query));
+
+		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
+
+		if (haveEventTime)
+			stmt->setString(1, (*_opts)["eventTime"].as<string>());
+		if (haveRowLimit)
+			stmt->setInt(1, stoi((*_opts)["rowLimit"].as<string>()));
+
+		unique_ptr<ResultSet> rs(stmt->executeQuery());
 
 		message payload;
 
@@ -428,14 +491,74 @@ bool TmxControl::clear_event_log(pluginlist &, ...)
 	return true;
 }
 
-bool TmxControl::user_info()
+bool TmxControl::user_info(pluginlist &, ...)
+{
+	if (!checkPerm())
+		return false;
+	return user_info();
+}
+
+bool TmxControl::user_info(bool showPassword)
 {
 	string query = USER_INFO_QUERY;
 	if (_opts->count("username") == 0 || (*_opts)["username"].as<string>() == "")
 		return false;
-	query += " WHERE IVP.user.username = '";
-	query += (*_opts)["username"].as<string>();
-	query += "'";
+	query += " WHERE IVP.user.username = ?";
+
+	try
+	{
+		PLOG(logDEBUG1) << "Executing query " << query;
+
+		_output.get_storage().get_tree().clear();
+
+		DbConnection conn = _pool.Connection();
+		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
+		stmt->setString(1, (*_opts)["username"].as<string>());
+		unique_ptr<ResultSet> rs(stmt->executeQuery());
+
+
+		message payload;
+
+		while (rs->next())
+		{
+			string id = rs->getString(1).asStdString();
+			string username = rs->getString(2);
+			string password = rs->getString(3);
+			string accessLevel = rs->getString(4).asStdString();
+
+			message_tree_type tmpTree;
+			tmpTree.put("id", id);
+			tmpTree.put("username", username);
+			if (showPassword)
+				tmpTree.put("password", password);
+			tmpTree.put("accessLevel", accessLevel);
+
+			message tmpSubTree;
+			tmpSubTree.set_contents(tmpTree);
+
+			payload.add_array_element("UserInfo", tmpSubTree);
+		}
+		_output = payload.get_container();
+	}
+	catch (exception &ex)
+	{
+		PLOG(logERROR) << TmxException(ex);
+		return false;
+	}
+
+	return true;
+}
+
+bool TmxControl::all_users_info(pluginlist &, ...)
+{
+	if (!checkPerm())
+		return false;
+	return all_users_info();
+}
+
+bool TmxControl::all_users_info(bool showPassword)
+{
+	string query = USER_INFO_QUERY;
 
 	try
 	{
@@ -459,7 +582,8 @@ bool TmxControl::user_info()
 			message_tree_type tmpTree;
 			tmpTree.put("id", id);
 			tmpTree.put("username", username);
-			tmpTree.put("password", password);
+			if (showPassword)
+				tmpTree.put("password", password);
 			tmpTree.put("accessLevel", accessLevel);
 
 			message tmpSubTree;
@@ -476,6 +600,175 @@ bool TmxControl::user_info()
 	}
 
 	return true;
+}
+
+bool TmxControl::user_add(pluginlist &plugins, ...)
+{
+	if (!checkPerm())
+		return false;
+	return user_add();
+}
+
+bool TmxControl::user_add()
+{
+	if (_opts->count("username") == 0 || (*_opts)["username"].as<string>() == "")
+		return false;
+	if (_opts->count("password") == 0)
+		return false;
+	if (_opts->count("access-level") == 0 || (*_opts)["access-level"].as<string>() == "" || !boost::regex_match((*_opts)["access-level"].as<string>(), boost::regex("[0-9]+")))
+		return false;
+
+    string username = (*_opts)["username"].as<string>();
+    string password = (*_opts)["password"].as<string>();
+    int access_level = stoi((*_opts)["access-level"].as<string>());
+
+	PLOG(logDEBUG1) << "Setting " << username << " = " << password << ", " << access_level;
+
+	try
+	{
+		string query = USER_ADD_QUERY;
+
+		PLOG(logDEBUG1) << "Executing query (?1 = " << username << ", ?2 = " << password <<
+				", ?3 = " << access_level << ", ?4 = " << username << "): " << query;
+
+		DbConnection conn = _pool.Connection();
+		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
+		stmt.reset(conn.Get()->prepareStatement(query));
+		stmt->setString(1, username);
+		stmt->setString(2, password);
+		stmt->setInt(3, access_level);
+		stmt->setString(4, username);
+		int inserted = stmt->executeUpdate();
+
+		if (inserted > 0)
+			return true;
+	}
+	catch (exception &ex)
+	{
+		PLOG(logERROR) << TmxException(ex);
+		return false;
+	}
+
+
+	return false;
+}
+
+bool TmxControl::user_update(pluginlist &plugins, ...)
+{
+	if (!checkPerm())
+		return false;
+	return user_update();
+}
+
+bool TmxControl::user_update()
+{
+	bool havePassword = false;
+	bool haveAccess = false;
+	string password = "";
+	int access_level = -1;
+	if (_opts->count("username") == 0 || (*_opts)["username"].as<string>() == "")
+		return false;
+	if ((_opts->count("password") == 0) && (_opts->count("access-level") == 0 || (*_opts)["access-level"].as<string>() == "" || !boost::regex_match((*_opts)["access-level"].as<string>(), boost::regex("[0-9]+"))))
+		return false;
+    string username = (*_opts)["username"].as<string>();
+	if (_opts->count("password") != 0)
+	{
+		havePassword = true;
+		password = (*_opts)["password"].as<string>();
+	}
+	if (_opts->count("access-level") != 0 && (*_opts)["access-level"].as<string>() != "" && boost::regex_match((*_opts)["access-level"].as<string>(), boost::regex("[0-9]+")))
+	{
+		haveAccess = true;
+		access_level = stoi((*_opts)["access-level"].as<string>());
+	}
+
+	PLOG(logDEBUG1) << "Setting " << username << " = " << password << ", " << access_level;
+
+	try
+	{
+		string query = USER_UPDATE_QUERY;
+		if (havePassword)
+			query += "  password = ?";
+		if (haveAccess)
+		{
+			if (havePassword)
+				query += ",  accessLevel = ?";
+			else
+				query += "  accessLevel = ?";
+		}
+		query += " WHERE username = ?";
+		PLOG(logDEBUG1) << "Executing query : " << query;
+
+		DbConnection conn = _pool.Connection();
+		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
+		if (havePassword)
+		{
+			stmt->setString(1, password);
+			if (haveAccess)
+			{
+				stmt->setInt(2, access_level);
+				stmt->setString(3, username);
+			}
+			else
+			{
+				stmt->setString(2, username);
+			}
+		}
+		else
+		{
+			stmt->setInt(1, access_level);
+			stmt->setString(2, username);
+		}
+		int updated = stmt->executeUpdate();
+
+		if (updated > 0)
+			return true;
+	}
+	catch (exception &ex)
+	{
+		PLOG(logERROR) << TmxException(ex);
+		return false;
+	}
+
+
+	return false;
+}
+
+bool TmxControl::user_delete(pluginlist &, ...)
+{
+	if (!checkPerm())
+		return false;
+	return user_delete();
+}
+
+bool TmxControl::user_delete()
+{
+	string query = USER_DELETE_QUERY;
+	if (_opts->count("username") == 0 || (*_opts)["username"].as<string>() == "")
+		return false;
+	query += " WHERE IVP.user.username = ?";
+
+	try
+	{
+		PLOG(logDEBUG1) << "Executing query " << query;
+
+		_output.get_storage().get_tree().clear();
+
+		DbConnection conn = _pool.Connection();
+		unique_ptr<PreparedStatement> stmt(conn.Get()->prepareStatement(query));
+		stmt->setString(1, (*_opts)["username"].as<string>());
+		int deleted = stmt->executeUpdate();
+
+		if (deleted > 0)
+			return true;
+	}
+	catch (exception &ex)
+	{
+		PLOG(logERROR) << TmxException(ex);
+		return false;
+	}
+
+	return false;
 }
 
 } /* namespace tmxctl */

@@ -75,6 +75,7 @@ class Ntcip1202
 		bool getPhaseGreensStatus(int phaseNumber);
 
 		bool getPhaseFlashingStatus(int phaseNumber);
+		bool getOverlapFlashingStatus(int phaseNumber);
 
 		bool getPhaseDontWalkStatus(int phaseNumber);
 		bool getPhasePedClearsStatus(int phaseNumber);
@@ -93,12 +94,17 @@ class Ntcip1202
 		uint16_t getPedMinTime(int phaseNumber);
 		uint16_t getPedMaxTime(int phaseNumber);
 
+		uint16_t getOverlapMinTime(int phaseNumber);
+		uint16_t getOverlapMaxTime(int phaseNumber);
+
 		bool ToJ2735r41SPAT(SPAT* spat, char* intersectionName, IntersectionID_t intersectionId);
 
 		void printDebug();
 	private:
 
 		Ntcip1202Ext ntcip1202Data;
+		std::map<uint8_t, int> _phaseToIndexMapping;
+
 		std::mutex _spat_lock;
 
 		list<SignalGroupMapping> signalGroupMappingList;
@@ -108,6 +114,7 @@ class Ntcip1202
 
 		void populateVehicleSignalGroup(MovementState *movement, int phase);
 		void populatePedestrianSignalGroup(MovementState *movement, int phase);
+		void populateOverlapSignalGroup(MovementState *movement, int phase);
 
 		long getAdjustedTime(unsigned int offset);
 };

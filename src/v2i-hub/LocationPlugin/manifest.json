@@ -27,6 +27,11 @@
         	"key":"GPSSource",
         	"default":"localhost",
         	"description":"Host where the GPSd is running"
+        },
+        {
+        	"key":"SendRawNMEA",
+        	"default":"true",
+        	"description":"Route the raw NMEA strings from GPSd through TMX"
         }
     ]
 }
