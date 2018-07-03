@@ -131,35 +131,41 @@ The binary and the manifest file are the minimum number of files needed for any 
 
 Installation Instructions
 -------------------------
+Installation Instructions
 - install lamp-server
 $ sudo apt-get install lamp-server^
-
-enter a root password (i.e. ivp)
-
+	enter a root password (i.e. ivp)
 - install database
-- - modify the install_db.sh script.  Modify the value for DBROOTPASS to the password that was used for root during the
-previous step
-- - save and execute the script
-
-$ cd DatabaseSetup
+  - modify the install_db.sh script.  Modify the value for DBROOTPASS to the password that was used for root during the previous step
+  - save the script
+  - execute the script using the following commands
+$ chmod +x install_db.sh
 $ sudo ./install_db.sh
-
-
-- run tmxcore locally from /usr/local/bin as sudo (i.e. $ sudo /usr/local/bin/tmxcore )
-
-the portal uses a self signed ssl certificate.  You must accept the certificate in your web browser before accessing the web site.  You do this once for your browser.
-
-- open firefox and navigate to https://localhost:19760
-- click advanaced, the click add exception
-- a popup will open, and click confirm security exception
-
-portal can be accessed at: http://localhost/admin/admin.html.  In the text box on the left, change the ip address to 127.0.0.1.  Make sure SSL is enabled (SSL button should be blue).
+- To setup a service to start tmxcore on Ubuntu copy the tmxcore.service file to the “/lib/systemd/system/” directory. Execute the following commands to enable the application at startup.
+$ sudo systemctl daemon-reload
+$ sudo systemctl enable tmxcore.service
+$ sudo systemctl start tmxcore.service
 
 
 Set Up and Configuration Instructions
--------------------------------------
 
-NOTE: The MAP plugin comes with the map for Turner Faribank already configured. 
+The CommandPlugin plugin must be running to access the Administration Portal. Follow the instructions above to build the CommandPlugin.zip package and then refer to Chapter 3 of the V2I Hub Administration Portal User Guide for installation and configuration instructions.
 
-More documentation will be available soon for configuration for the plugins.
+Instructions can be found to install additional plugins in the V2I Hub Software Configuration Guide.
+
+Administration Portal
+
+The Administrator Portal can be launched by opening the v2i-webportal/index.html file with either Chrome or Firefox. Further instructions for hosting the portal on a web server can be found in the V2I_Hub_AdministrationPortalUserGuide.pdf.
+
+
+NOTE: The MAP plugin will need an input file in order to run.  A sample input file for Turner Fairbank has been included in this deployment in the Sample MAP Input folder.
+
+
+- Copy sample MAP input file
+$ sudo cp Sample MAP Input\ STOL_MAP.xml /var/www/plugins/MAPr41/
+$ cd /var/www/plugins/MAP/
+$ sudo chmod 644 STOL_MAP.xml
+$ sudo chown www-data STOL_MAP.xml
+$ sudo chgrp www-data STOL_MAP.xml
+$ cd src
 

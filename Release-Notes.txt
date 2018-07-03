@@ -17,3 +17,13 @@ V2I Hub Version 3.0
 - Migrated to J2735 2016
 - Updated plugins to support latest message set
 - New web portal, can be deployed anywhere on network
+
+V2I Hub Version 3.1
+- Fixed Security Issues
+   - Fixed SQL injection vulnerabilities in tmxctl application and library
+- Added missing functionality to Web Portal
+   - Plugin Installation
+   - File Transfer
+   - User Administration
+- Moved BSMReceiver to more generic MessageReceiver
+- Updated Documentation
