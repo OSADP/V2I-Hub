@@ -26,4 +26,6 @@ V2I Hub Version 3.1
    - File Transfer
    - User Administration
 - Moved BSMReceiver to more generic MessageReceiver
+- Added simulator source code
 - Updated Documentation
+- Various stability and bug fixes
