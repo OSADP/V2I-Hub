@@ -35,4 +35,4 @@ V2I Hub Version 3.2
 - Fixed issues with ISD json MAP
 - Added Virtual Conflict Monitor to the SPAT Plugin
 - Complete RTCM messaging support through RtcmPlugin
-	- RTCM 2.3 and 3.X binary encodings
+	- RTCM 2.3 and 3.X binary encodings 
