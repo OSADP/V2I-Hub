@@ -16,13 +16,13 @@ security best practices and IT protocols.
 
 For configuration and maintenance, the V2I Hub software includes an Administration Portal that runs 
 in a web browser on the host device. The default Username for accessing this Administration Portal is 
-v2iadmin and the default password is V2iHub#123. It is strongly recommended that the ivpadmin 
+v2iadmin and the default password is V2iHub#123. It is strongly recommended that the v2iadmin 
 password be changed with the first login to the Administration Portal via the menu on the left. 
 Passwords must be a minimum of 8 characters, with at least 1 number, 1 uppercase letter, 1 lowercase, 
 and 1 special character.  Additional users can be created using the Administration Portal by selecting 
 Manage Users from the left menu.  While managing users, you can add new users and delete the 
-default user ivpadmin.  If you want to delete the ivpadmin default user, It is recommended that you 
-create a new user with admin privileges, login as that user, then delete the ivpadmin default user.
+default user v2iadmin.  If you want to delete the v2iadmin default user, It is recommended that you 
+create a new user with admin privileges, login as that user, then delete the v2iadmin default user.
 
 
 License information
@@ -111,17 +111,18 @@ The V2I Hub supplied plugins have a dependency on a version of libwebsockets tha
 $ cd <some tmp dir>
 $ git clone https://libwebsockets.org/repo/libwebsockets
 $ cd libwebsockets
+$ git checkout tags/v3.0.0
 $ cmake -DLWS_WITH_SHARED=OFF .
 $ make 
 $ sudo make install
 
 The new libwebsockets static library should now be available in /usr/local to build against.
 
-Now, run the following from the V2I-HUB directory
+Now, run the following from the v2i-hub directory
 $ cmake .
 $ make
 
-This will create a bin directory that contains the plugin executable, as well as a directory for each plugin.  However, a V2I Hub plugin must be packaged in a ZIP file to be installed to a system.  In order to package up any one of the plugins from the V2I-HUB directory, do the following:
+This will create a bin directory that contains the plugin executable, as well as a directory for each plugin.  However, a V2I Hub plugin must be packaged in a ZIP file to be installed to a system.  In order to package up any one of the plugins from the v2i-hub directory, do the following:
 
 $ ln -s ../bin <PluginName>/bin
 $ zip <PluginName>.zip <PluginName>/bin/<PluginName> <PluginName>/manifest.json
@@ -136,12 +137,12 @@ Installation Instructions
 $ sudo apt-get install lamp-server^
 	enter a root password (i.e. ivp)
 - install database
-  - modify the install_db.sh script.  Modify the value for DBROOTPASS to the password that was used for root during the previous step
+  - modify the install_db.sh script located in the DatabaseSetup directory.  Modify the value for DBROOTPASS to the password that was used for root during the previous step
   - save the script
   - execute the script using the following commands
 $ chmod +x install_db.sh
 $ sudo ./install_db.sh
-- To setup a service to start tmxcore on Ubuntu copy the tmxcore.service file to the “/lib/systemd/system/” directory. Execute the following commands to enable the application at startup.
+- To setup a service to start tmxcore on Ubuntu copy the tmxcore.service file located in the "src/tmx/TmxCore" directory to the “/lib/systemd/system/” directory. Execute the following commands to enable the application at startup.
 $ sudo systemctl daemon-reload
 $ sudo systemctl enable tmxcore.service
 $ sudo systemctl start tmxcore.service
