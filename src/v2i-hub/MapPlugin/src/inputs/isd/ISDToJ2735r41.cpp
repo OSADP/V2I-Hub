@@ -32,12 +32,8 @@ void add_layer<LayerType_intersectionData>(MapData *map, ISDDataAdaptor &adaptor
 		IntersectionGeometry* intersection = NULL;
 		allocate(intersection);
 		intersection->id.id = geom.get_intersectionID();
-		intersection->revision =
-#if SAEJ2735_SPEC < 63
-				geom.get_msgCount();
-#else
-				geom.get_revision();
-#endif
+		PLOG(logDEBUG) << "Intersection revision is " << geom.get_msgCount();
+		intersection->revision = geom.get_msgCount();
 		intersection->refPoint.Long = geom.get_referenceLon() * 10000000;
 		intersection->refPoint.lat = geom.get_referenceLat() * 10000000;
 
@@ -53,15 +49,17 @@ void add_layer<LayerType_intersectionData>(MapData *map, ISDDataAdaptor &adaptor
 			string type = approach.get_approachType();
 			int id = atoi(approach.get_approachID().c_str());
 
-			if (type != "none" && id > 0)
+			if (type != "none")
 			{
-				for (auto driveLane : approach.get_drivingLanes())
+				std::vector<DrivingLaneAdaptor> driveLanes = (type == "Crosswalk" ? approach.get_crosswalkLanes() : approach.get_drivingLanes());
+				for (auto driveLane : driveLanes)
 				{
 					GenericLane* lane = NULL;
 					allocate(lane);
 
 					lane->laneID = atol(driveLane.get_laneID().c_str());
 					string laneType = driveLane.get_laneType();
+					PLOG(logDEBUG) << "Adding " << laneType << " lane " << lane->laneID << " to intersection " << intersection->id.id;
 
 					bitset<2> ld;
 					bitset<16> attrs = driveLane.get_typeAttributes();
@@ -78,46 +76,51 @@ void add_layer<LayerType_intersectionData>(MapData *map, ISDDataAdaptor &adaptor
 						ld[LaneDirection_egressPath] = true;
 					}
 
+					BIT_STRING_t *bStr = NULL;
+
 					if (laneType == "Vehicle")
 					{
 						lane->laneAttributes.laneType.present = LaneTypeAttributes_PR_vehicle;
-						addValue(lane->laneAttributes.laneType.choice.vehicle, attrs);
+						bStr = &(lane->laneAttributes.laneType.choice.vehicle);
 					}
 					else if (laneType == "Crosswalk")
 					{
 						lane->laneAttributes.laneType.present = LaneTypeAttributes_PR_crosswalk;
-						addValue(lane->laneAttributes.laneType.choice.crosswalk, attrs);
+						bStr = &(lane->laneAttributes.laneType.choice.crosswalk);
 					}
 					else if (laneType == "Bikelane")
 					{
 						lane->laneAttributes.laneType.present = LaneTypeAttributes_PR_bikeLane;
-						addValue(lane->laneAttributes.laneType.choice.bikeLane, attrs);
+						bStr = &(lane->laneAttributes.laneType.choice.bikeLane);
 					}
 					else if (laneType == "Sidewalk")
 					{
 						lane->laneAttributes.laneType.present = LaneTypeAttributes_PR_sidewalk;
-						addValue(lane->laneAttributes.laneType.choice.sidewalk, attrs);
+						bStr = &(lane->laneAttributes.laneType.choice.sidewalk);
 					}
 					else if (laneType == "Median")
 					{
 						lane->laneAttributes.laneType.present = LaneTypeAttributes_PR_median;
-						addValue(lane->laneAttributes.laneType.choice.median, attrs);
+						bStr = &(lane->laneAttributes.laneType.choice.median);
 					}
 					else if (laneType == "Striping")
 					{
 						lane->laneAttributes.laneType.present = LaneTypeAttributes_PR_striping;
-						addValue(lane->laneAttributes.laneType.choice.striping, attrs);
+						bStr = &(lane->laneAttributes.laneType.choice.striping);
 					}
 					else if (laneType == "TrackedVehicle")
 					{
 						lane->laneAttributes.laneType.present = LaneTypeAttributes_PR_trackedVehicle;
-						addValue(lane->laneAttributes.laneType.choice.trackedVehicle, attrs);
+						bStr = &(lane->laneAttributes.laneType.choice.trackedVehicle);
 					}
 					else if (laneType == "Parking")
 					{
 						lane->laneAttributes.laneType.present = LaneTypeAttributes_PR_parking;
-						addValue(lane->laneAttributes.laneType.choice.parking, attrs);
+						bStr = &(lane->laneAttributes.laneType.choice.parking);
 					}
+
+					if (bStr)
+						addValue(*bStr, attrs);
 
 					addValue(lane->laneAttributes.directionalUse, ld);
 					addValue(lane->laneAttributes.sharedWith, driveLane.get_sharedWith());
@@ -247,7 +250,7 @@ MapData *ISDToJ2735r41::to_map() {
     map->msgIssueRevision = 0;
 
     // Layer type from string
-    decodeEnumFromString(map->layerType, asn_DEF_LayerType, adaptor.get_layerType(), "layerType");
+    decodeEnumFromString(map->layerType, asn_DEF_LayerType, adaptor.get_layerType(), asn_DEF_LayerType.xml_tag);
     if (!map->layerType)
     	return map;
 

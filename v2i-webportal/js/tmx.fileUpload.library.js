@@ -88,10 +88,10 @@ function createFileUploadDialog(accessLevel) {
 
         if (accessLevel == "2") {
             $("#fileButtonOptions > button[data-type=\"plugin\"]").on("mousedown", function () { setFileTypesForAndOpenFileUploadForm("plugin", accessLevel, ".deb,.zip,.tar.gz,.tgz") });
-            $("#fileButtonOptions > button[data-type=\"map\"]").on("mousedown", function () { setFileTypesForAndOpenFileUploadForm("map", accessLevel, ".xml") });
+            $("#fileButtonOptions > button[data-type=\"map\"]").on("mousedown", function () { setFileTypesForAndOpenFileUploadForm("map", accessLevel, ".xml,.json,.txt") });
         } else if (accessLevel == "3") {
             $("#fileButtonOptions > button[data-type=\"plugin\"]").on("mousedown", function () { setFileTypesForAndOpenFileUploadForm("plugin", accessLevel, ".deb,.zip,.tar.gz,.tgz") });
-            $("#fileButtonOptions > button[data-type=\"map\"]").on("mousedown", function () { setFileTypesForAndOpenFileUploadForm("map", accessLevel, ".xml") });
+            $("#fileButtonOptions > button[data-type=\"map\"]").on("mousedown", function () { setFileTypesForAndOpenFileUploadForm("map", accessLevel, ".xml,.json,.txt") });
             $("#fileButtonOptions > button[data-type=\"other\"]").on("mousedown", function () { setFileTypesForAndOpenFileUploadForm("other", accessLevel, null) });
         }
     }

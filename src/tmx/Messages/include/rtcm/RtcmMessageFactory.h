@@ -23,32 +23,23 @@ namespace rtcm {
 
 class RtcmMessageFactory {
 public:
-	static TmxRtcmMessage *create(const tmx::byte_stream &bytes, RTCM_VERSION version = UNKNOWN, msgtype_type type = 0) {
-		auto factory = get_Instance();
-		TmxRtcmMessage *ptr = NULL;
+	TmxRtcmMessage *create(RTCM_VERSION version = UNKNOWN, msgtype_type type = 0) {
+		if (!_types[rtcm::UNKNOWN].size()) {
+			registerTypes<RTCM_EOF>();
+		}
 
-		if (type < factory._types[version].size() &&
-			factory._types[version][type])
-			ptr = factory._types[version][type]->allocate();
+		// This could be a stream of messages.  Go until there are no more bytes
+		if (type < _types[version].size() && _types[version][type])
+			return _types[version][type]->allocate();
 		else
-			ptr = factory._types[version][0]->allocate();
-
-		if (ptr)
-			ptr->set_contents(bytes);
-		return ptr;
+			return _types[version][0]->allocate();
 	}
 
-	static TmxRtcmMessage *create(const tmx::byte_stream &bytes, std::string version, msgtype_type type = 0) {
-		return create(bytes, RtcmVersion(version), type);
-	}
-
-	static TmxRtcmMessage *create(TmxRtcmMessage *other) {
-		if (!other) return NULL;
-		return create(other->get_contents(), other->get_Version(), other->get_MessageType());
+	TmxRtcmMessage *create(std::string version, msgtype_type type = 0) {
+		return create(RtcmVersion(version), type);
 	}
 
 private:
-
 	/**
 	 * Base template for allocator
 	 */
@@ -94,9 +85,6 @@ private:
 		static RtcmMessageFactory factory;
 
 		// Initialize the types, if not done already
-		if (!factory._types[rtcm::UNKNOWN].size()) {
-			factory.registerTypes<RTCM_EOF>();
-		}
 
 		return factory;
 	}

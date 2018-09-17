@@ -322,11 +322,15 @@ void LocationPlugin::MonitorGPS()
 
 					if (line[line.length() - 1] == '\r')
 						line.erase(line.length() - 1);
+					PLOG(logDEBUG3) << "Scanning '" << line << "'";
 
 					TmxNmeaMessage msg;
 					const string baseST = msg.get_subtype();
 
 					msg.set_sentence(line);
+
+					PLOG(logDEBUG3) << "Sentence=" << msg.get_sentence() << ",subtype=" << msg.get_subtype();
+
 					if (!msg.get_subtype().empty() && msg.get_subtype() != baseST)
 						BroadcastMessage(static_cast<const routeable_message &>(msg));
 				}

@@ -13,10 +13,11 @@ EVENT_LOG=0
 MESSAGE_LOG=0
 DEBUG_LOG=0
 REMOVE=0
+OVERWRITE=0
 DATE=`date +"%d-%b-%Y"`
 
 function Usage {
-	echo "Usage: $PROGRAM_NAME [ -a ] [ -c ] [ -e ] [ -l ] [ -m ] [ -r ]" >&2
+	echo "Usage: $PROGRAM_NAME [ -a ] [ -c ] [ -e ] [ -l ] [ -m ] [ -r ] [ -O ]" >&2
 	echo "                     [ -d <date> ] [ -o <outputfile > ]" >&2
 	echo >&2
 	echo "-a => Grab all the logs" >&2
@@ -26,6 +27,7 @@ function Usage {
 	echo "-l => Grab the debug log from upstart" >&2
 	echo "-m => Grab the message log from the database." >&2
 	echo "-r => Remove the log files after archival.  Default is false" >&2
+	echo "-O => Overwrite existing archive file if one exists.  Normally, the archive will be updated." >&2
 	echo "-d <date> => Specifies which date to pull from (dd-Mon-YYYY).  Default is today (e.g. ${DATE})" >&2
 	echo "-o <outputfile> => Specifies what archive file to build" >&2
 }
@@ -43,6 +45,7 @@ while getopts :acd:elmro: opt; do
 		l)	DEBUG_LOG=1;;
 		m)  MESSAGE_LOG=1;;
 		r)	REMOVE=1;;
+		O)  OVERWRITE=1;;
 		o)  OUT_FILE="$OPTARG";;
 		*)	Usage; exit 1;;
 	esac
@@ -64,12 +67,16 @@ if [ -z "${OUT_FILE}" ]; then
 fi
 
 if [ -f "${OUT_FILE}" ]; then
-	ZIP_ARG="-u"
+i	if [ "${OVERWRITE} -gt 0 ]; then
+		rm -f "${OUT_FILE}"
+	else
+		ZIP_ARG="-u"
+	fi
 fi
 
 ZIP_CMD="zip ${ZIP_ARG} ${OUT_FILE}"
 
-if [ ${PCAP_LOG} -gt 0 ]; then
+if [ ${PCAP_LOG} -gt 0 && -d /mnt/ubi/log ]; then
 	cd /mnt/ubi/log
 	${ZIP_CMD} -r `date --date="${TODAY}" +"%Y.%m%d.*"`
 	
@@ -78,12 +85,22 @@ if [ ${PCAP_LOG} -gt 0 ]; then
 fi
 
 if [ ${DEBUG_LOG} -gt 0 ]; then
-	cd /var/log/upstart
-
-	sudo ${ZIP_CMD} tmxcore.log
-	[ $? -eq 0 -a ${REMOVE} -gt 0 ] && sudo rm -f tmxcore.log
+	if which journalctl >/dev/null 2>&1; then
+		journalctl -t tmxcore -S "${TODAY}" -U "${TOMORROW}" >> /tmp/tmxcore.log
+		cd /tmp
+		
+		sudo ${ZIP_CMD} tmxcore.log
+		[ $? -eq 0 -a ${REMOVE} -gt 0 ] && sudo rm -f tmxcore.log
+			
+		sudo chown `id -u`:`id -g` "${OUT_FILE}"
+	elif [ -d /var/log/upstart ]; then
+		cd /var/log/upstart
 	
-	sudo chown `id -u`:`id -g` "${OUT_FILE}"
+		sudo ${ZIP_CMD} tmxcore.log
+		[ $? -eq 0 -a ${REMOVE} -gt 0 ] && sudo rm -f tmxcore.log
+		
+		sudo chown `id -u`:`id -g` "${OUT_FILE}"
+	fi
 fi
 
 TODAY_YRFIRST=`date --date="${TODAY}" +"%Y-%m-%d"`

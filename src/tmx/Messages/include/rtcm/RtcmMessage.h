@@ -15,6 +15,7 @@
 #ifndef INCLUDE_RTCM_RTCMMESSAGE_H_
 #define INCLUDE_RTCM_RTCMMESSAGE_H_
 
+#include <atomic>
 #include <bitset>
 #include <tuple>
 
@@ -45,7 +46,7 @@ public:
 		tmx::message(contents) { }
 	TmxRtcmMessage(const TmxRtcmMessage &other):
 		tmx::message(other) { }
-	virtual ~TmxRtcmMessage() { }
+	virtual ~TmxRtcmMessage() { clear(); }
 
 	static constexpr const char *MessageType = tmx::messages::RtcmMessage::MessageSubType;
 	static constexpr const char *MessageSubType = "Unknown";
@@ -53,19 +54,20 @@ public:
 	// Virtual functions.
 	virtual rtcm::RTCM_VERSION get_Version() { return rtcm::RTCM_VERSION::UNKNOWN; };
 	virtual rtcm::msgtype_type get_MessageType() { return 0; };
+	virtual size_t size() { return _bytes.size(); }
 	virtual void set_contents(const tmx::byte_stream &bytes) { _bytes = bytes; }
 	virtual tmx::byte_stream get_contents() { return _bytes; }
 	virtual bool is_Valid() { return _valid; }
+	virtual tmx::messages::RtcmMessage get_RtcmMessage() { static tmx::messages::RtcmMessage blank; return blank; }
 
 	// Pre-defined functions
 	std::string get_VersionName() { return rtcm::RtcmVersionName(get_Version()); }
 
+	using tmx::message::set_contents;
 	void clear() { _bytes.clear(); tmx::message::clear(); }
-
 protected:
 	void invalidate() { _valid = false; }
 	tmx::byte_stream &getBytes() { return _bytes; }
-
 private:
 	bool _valid = true;
 	tmx::byte_stream _bytes;

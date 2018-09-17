@@ -135,6 +135,10 @@ public:
 		return this->template get_array<DrivingLaneAdaptor>("drivingLanes");
 	}
 
+	std::vector<DrivingLaneAdaptor> get_crosswalkLanes() {
+		return this->template get_array<DrivingLaneAdaptor>("crosswalkLanes");
+	}
+
 	marshalfuncs(LaneListAdaptor);
 
 	attribute(std::string, approachType, "");
@@ -174,7 +178,7 @@ private:
 #if SAEJ2735_SPEC < 63
     ro_attribute(this->msg, reference_point_attribute<msgCount>, MsgCount_t, msgCount, get_, 0);
 #else
-    ro_attribute(this->msg, reference_point_attribute<revision>, DSRC_MsgCount_t, revision, get_, 0);
+    ro_attribute(this->msg, reference_point_attribute<msgCount>, DSRC_MsgCount_t, msgCount, get_, 0);
 #endif
     ro_attribute(this->msg, reference_point_attribute<masterLaneWidth>, LaneWidth_t, masterLaneWidth, get_, -1L);
     ro_attribute(this->msg, reference_point_attribute<referenceLat>, double, referenceLat, get_, 0.0);

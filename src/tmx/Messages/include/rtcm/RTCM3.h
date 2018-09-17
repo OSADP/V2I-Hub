@@ -150,33 +150,61 @@ public:
 	virtual rtcm::msgtype_type get_MessageType() { return this->get_MessageNumber(); }
 	void clear() { TmxRtcmMessage::clear(); mgr.clearData(); }
 
+	using tmx::message::set_contents;
+
 	virtual void set_contents(const tmx::byte_stream &in) {
 		TmxRtcmMessage::set_contents(in);
 
 		tmx::byte_stream &bytes = getBytes();
 
+		bool valid = false;
+		size_t consumed = 0;
+
 		try {
-			// Start the the minimal header
-			size_t consumed = mgr.assignData(getBytes(),
-					_Preamble,
-					_Reserved,
-					_MessageLength
-					);
+			do {
+				// Look for the first header word in the incoming bytes
+				while(bytes.size() > 0 && bytes[0] != Preamble::default_value())
+					bytes.erase(bytes.begin());
 
-			bytes.erase(bytes.begin(), bytes.begin() + consumed);
+				if (headerBytes > bytes.size()) {
+					this->invalidate();
+					return;
+				}
 
-			// Next, read the CRC from the end
-			auto start = bytes.begin() + get_MessageLength();
-			auto end = start + (CRC::size / mgr.byteSize());
-			tmx::byte_stream crc(start, end);
-			mgr.assignData(crc, _CRC);
-			bytes.erase(start, bytes.end());
+				// Start the the minimal header
+				consumed = mgr.assignData(bytes,
+						_Preamble,
+						_Reserved,
+						_MessageLength
+						);
 
-			// Read the rest of the bytes
+				// Make sure there are enough bytes left
+				if (get_MessageLength() + consumed + crcBytes > bytes.size()) {
+					this->invalidate();
+					return;
+				}
+
+				// Next, read the CRC from the end
+				auto start = bytes.begin() + consumed + get_MessageLength();
+				auto end = start + crcBytes;
+				tmx::byte_stream crc(start, end);
+				mgr.assignData(crc, _CRC);
+
+				valid = get_Preamble() == Preamble::default_value() &&
+						check_Parity(bytes);
+
+				if (!valid) {
+					// Reset for next try
+					bytes.insert(start, crc.begin(), crc.end());
+					bytes.erase(bytes.begin());
+				}
+			} while (!valid);
+
+			// Load the rest of the data bytes
+			bytes.erase(bytes.begin(), bytes.begin() + headerBytes);
 			mgr.loadData(bytes, get_MessageLength());
 
-			// Assign the other header data
-			consumed = mgr.assignData(_MessageNumber, _ReferenceStationID);
+			mgr.assignData(_MessageNumber, _ReferenceStationID);
 		} catch (TmxException &ex) {
 			this->invalidate();
 			return;
@@ -185,7 +213,7 @@ public:
 
 	virtual tmx::byte_stream get_contents() {
 		tmx::byte_stream bytes = mgr.extractAllData(
-				get_MessageLength() - ((MessageNumber::size + ReferenceStationID::size) / mgr.byteSize()),
+				get_MessageLength() - attrBytes,
 				_Preamble,
 				_Reserved,
 				_MessageLength,
@@ -198,20 +226,89 @@ public:
 		return bytes;
 	}
 
+	tmx::messages::RtcmMessage get_RtcmMessage() {
+		tmx::byte_stream msgContents = get_contents();
+
+#if SAEJ2735_SPEC < 63
+		RTCM_Corrections *rtcm = (RTCM_Corrections *)calloc(1, sizeof(RTCM_Corrections));
+		memset(rtcm, 0, sizeof(RTCM_Corrections));
+
+		rtcm->msgID = DSRCmsgID_rtcmCorrections;
+		rtcm->rev = RTCM_Revision_rtcmRev3_0;
+
+		// Set the header
+		rtcm->rtcmHeader.buf = (uint8_t *)malloc(5*sizeof(uint8_t));
+		rtcm->rtcmHeader.size = 5;
+		rtcm->rtcmHeader.buf[0] = 0x0E;
+		rtcm->rtcmHeader.buf[1] = 0x00;
+		rtcm->rtcmHeader.buf[2] = 0x00;
+		rtcm->rtcmHeader.buf[3] = 0x00;
+		rtcm->rtcmHeader.buf[4] = 0x00;
+
+		// Copy the message bytes
+		RTCMmsg *rtcmMessage = (RTCMmsg*)calloc(1, sizeof(RTCMmsg));
+		rtcmMessage->payload.size = msgContents.size();
+		rtcmMessage->payload.buf = (byte_t *)calloc(rtcmMessage->payload.size, sizeof(byte_t));
+		memcpy(rtcmMessage->payload.buf, msgContents.data(), rtcmMessage->payload.size);
+
+		ASN_SET_ADD(&rtcm->rtcmSets.list, rtcmMessage);
+#else
+		RTCMcorrections *rtcm = (RTCMcorrections *)calloc(1, sizeof(RTCMcorrections));
+		memset(rtcm, 0, sizeof(RTCMcorrections));
+
+		rtcm->rev = RTCM_Revision_rtcmRev3;
+
+		// Copy the message bytes
+		RTCMmessage_t *rtcmMessage = (RTCMmessage_t *)calloc(1, sizeof(RTCMmessage_t));
+		rtcmMessage->size = msgContents.size();
+		rtcmMessage->buf = (byte_t *)calloc(rtcmMessage->size, sizeof(byte_t));
+		memcpy(rtcmMessage->buf, msgContents.data(), rtcmMessage->size);
+
+		ASN_SET_ADD(&rtcm->msgs.list, rtcmMessage);
+#endif
+		rtcm->msgCnt = 0;
+
+		return tmx::messages::RtcmMessage(rtcm);
+	}
+
 	virtual bool is_Valid() {
-		const tmx::byte_stream &data = get_contents();
-		return TmxRtcmMessage::is_Valid() &&
-				this->get_Preamble() == Preamble::default_value() &&
-				this->get_CRC() == crc24q_hash(data.data(), data.size() - (CRC::size / mgr.byteSize()));
+		if (!TmxRtcmMessage::is_Valid()) return false;
+
+		try {
+			const tmx::byte_stream data = get_contents();
+			return this->get_Preamble() == Preamble::default_value() && check_Parity(data);
+		} catch (TmxException &ex) {
+			return false;
+		}
 	}
 
 	void Validate() {
-		const tmx::byte_stream &data = get_contents();
-		this->set_CRC(crc24q_hash(data.data(), data.size() - (CRC::size / mgr.byteSize())));
+		const tmx::byte_stream data = get_contents();
+		this->set_CRC(get_Parity(data));
+	}
+
+	size_t size() {
+		return headerBytes + crcBytes + get_MessageLength();
+	}
+
+protected:
+	typedef typename CRC::data_type crc_type;
+
+	crc_type get_Parity(const tmx::byte_stream &bytes) {
+		return crc24q_hash(bytes.data(), size() <= bytes.size() ? size() - crcBytes : bytes.size());
+	}
+
+	bool check_Parity(const tmx::byte_stream &bytes) {
+		if (size() > bytes.size())
+			return false;
+		else
+			return this->get_CRC() == get_Parity(bytes);
 	}
 
 private:
-	typedef typename CRC::data_type crc_type;
+	static constexpr size_t headerBytes { (Preamble::size + Reserved::size + MessageLength::size) / datamgr_type::byteSize() };
+	static constexpr size_t crcBytes { CRC::size / datamgr_type::byteSize() };
+	static constexpr size_t attrBytes { (MessageNumber::size + ReferenceStationID::size) / datamgr_type::byteSize() };
 
 	// Take from gpsd/crc24q.c per the GPSD license.
 
@@ -307,7 +404,91 @@ private:
 typedef RTCMMessage<rtcm::SC10403_3> RTCM3Message;
 typedef RTCMMessageType<rtcm::SC10403_3, 0> RTCM3UnknownMessage;
 
+template <>
+class RTCMMessageType<rtcm::SC10403_3, 0>: public RTCM3Message {
+public:
+	RTCMMessageType<rtcm::SC10403_3, 0>(): RTCM3Message() { }
+	RTCMMessageType<rtcm::SC10403_3, 0>(const TmxRtcmMessage &other): RTCM3Message(other) { }
+
+	using tmx::message::set_contents;
+
+	void set_contents(const tmx::byte_stream &in) {
+		RTCM3Message::set_contents(in);
+
+		// Add an array of the data bytes to the container
+		message_tree_type children;
+		for (size_t i = 0; i < mgr.numDataWords(); i++) {
+			data_type val = mgr.getData(i);
+			char buf[13];
+			sprintf(buf, "0x%02x", val);
+			children.push_back(std::make_pair("", message_tree_type(std::string(buf))));
+		}
+
+		if (!children.empty())
+			this->as_tree().get().add_child("data", children);
+	}
+};
+
+typedef RTCMMessageType<rtcm::SC10403_3, rtcm::RTCM3_MESSAGE_TYPE::AntennaDescriptor> RTCM3AntennaDescriptorMessage;
+
+/*
+ * Some pre-defined message types for RTCM 2.3 that may be useful
+ */
+template <>
+class RTCMMessageType<rtcm::SC10403_3, rtcm::RTCM3_MESSAGE_TYPE::AntennaDescriptor>: public RTCM3Message {
+public:
+	RTCMMessageType<rtcm::SC10403_3, rtcm::RTCM3_MESSAGE_TYPE::AntennaDescriptor>(): RTCM3Message() { }
+	RTCMMessageType<rtcm::SC10403_3, rtcm::RTCM3_MESSAGE_TYPE::AntennaDescriptor>(const TmxRtcmMessage &other): RTCM3Message(other) { }
+
+	using tmx::message::set_contents;
+
+	std_rtcm_attribute(this->msg, rtcm::uint8, DescriptorCounter, 0, );
+	std_attribute(this->msg, std::string, AntennaDescriptor, "", );
+	std_rtcm_attribute(this->msg, rtcm::uint8, SetupID, 0, );
+
+	void set_contents(const tmx::byte_stream &in) {
+		RTCM3Message::set_contents(in);
+
+		mgr.assignData(_DescriptorCounter);
+
+		std::string antDesc;
+		for (size_t i = 0; i < get_DescriptorCounter(); i++)
+			antDesc.push_back(mgr.getData(i));
+
+		this->set_AntennaDescriptor(antDesc);
+
+		mgr.eraseData(get_DescriptorCounter());
+
+		mgr.assignData(_SetupID);
+	}
+
+	tmx::byte_stream get_contents() {
+		// Rebuild the data buffer
+		tmx::byte_stream bytes = mgr.extractData(_DescriptorCounter);
+		mgr.loadData(bytes);
+
+		bytes = mgr.extractData(_SetupID);
+
+		std::string antDesc = this->get_AntennaDescriptor();
+		bytes.insert(bytes.begin(), antDesc.begin(), antDesc.end());
+		mgr.loadData(bytes, bytes.size());
+
+		return RTCM3Message::get_contents();
+	}
+};
+
 namespace rtcm {
+
+/**
+ * Available RTCM 3 message types
+ */
+template <>
+struct RtcmMessageTypeBox<SC10403_3> {
+	typedef std::tuple<
+				tmx::messages::RTCM3UnknownMessage,
+				tmx::messages::RTCM3AntennaDescriptorMessage
+			> types;
+};
 
 } /* End namespace rtcm */
 

@@ -8,6 +8,7 @@
 #ifndef TMX_TMXNMEA_HPP_
 #define TMX_TMXNMEA_HPP_
 
+#include <boost/regex.hpp>
 #include <cstring>
 #include <tmx/messages/routeable_message.hpp>
 #include "IvpNmea.h"
@@ -38,20 +39,27 @@ public:
 	{
 		this->set_payload(sentence);
 
-		if(::strstr(sentence.c_str(), "$GPGGA") != NULL)
+		if(boost::regex_match(sentence, ggaExpr))
 			this->set_subtype("GGA");
-		if(::strstr(sentence.c_str(), "$GPGSA") != NULL)
+		if(boost::regex_match(sentence, gsaExpr))
 			this->set_subtype("GSA");
-		if(::strstr(sentence.c_str(), "$GPRMC") != NULL)
+		if(boost::regex_match(sentence, rmcExpr))
 			this->set_subtype("RMC");
-		if(::strstr(sentence.c_str(), "$GPGSV") != NULL)
+		if(boost::regex_match(sentence, gsvExpr))
 			this->set_subtype("GSV");
-		if(::strstr(sentence.c_str(), "$GPVTG") != NULL)
+		if(boost::regex_match(sentence, vtgExpr))
 			this->set_subtype("VTG");
-		if(::strstr(sentence.c_str(), "$GPVTG") != NULL)
+		if(boost::regex_match(sentence, gllExpr))
 			this->set_subtype("GLL");
 
 	}
+private:
+	boost::regex ggaExpr {"\\$G[LNP]GGA,.*"};
+	boost::regex gsaExpr {"\\$G[LNP]GSA,.*"};
+	boost::regex rmcExpr {"\\$G[LNP]RMC,.*"};
+	boost::regex gsvExpr {"\\$G[LNP]GSV,.*"};
+	boost::regex vtgExpr {"\\$G[LNP]VTG,.*"};
+	boost::regex gllExpr {"\\$G[LNP]GLL,.*"};
 };
 
 } /* End namespace messages */

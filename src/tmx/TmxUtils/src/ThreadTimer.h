@@ -9,6 +9,7 @@
 #define SRC_THREADTIMER_H_
 
 #include <chrono>
+#include <functional>
 #include <mutex>
 #include <vector>
 

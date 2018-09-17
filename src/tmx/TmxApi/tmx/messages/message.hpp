@@ -173,7 +173,7 @@ public:
 	template <typename DataType>
 	DataType get(message_path_type path, DataType default_value)
 	{
-		return this->as_tree().get().get<DataType>(path, default_value);
+		return this->as_tree().get().template get<DataType>(path, default_value);
 	}
 
 	message_value_type get_untyped(message_path_type path, message_value_type default_value)

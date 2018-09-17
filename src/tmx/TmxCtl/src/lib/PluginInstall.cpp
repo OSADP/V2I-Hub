@@ -10,6 +10,7 @@
 #include <boost/filesystem.hpp>
 #include <libgen.h>
 #include <System.h>
+#include <sys/stat.h>
 
 #ifndef PLUGINDIRECTORY_ENV
 #define PLUGINDIRECTORY_ENV "TMX_PLUGIN_DIRECTORY"

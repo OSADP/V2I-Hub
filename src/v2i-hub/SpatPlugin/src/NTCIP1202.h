@@ -97,6 +97,9 @@ class Ntcip1202
 		uint16_t getOverlapMinTime(int phaseNumber);
 		uint16_t getOverlapMaxTime(int phaseNumber);
 
+		bool isFlashingStatus();
+		bool isPhaseFlashing();
+
 		bool ToJ2735r41SPAT(SPAT* spat, char* intersectionName, IntersectionID_t intersectionId);
 
 		void printDebug();

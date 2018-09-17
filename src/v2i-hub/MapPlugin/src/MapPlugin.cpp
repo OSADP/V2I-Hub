@@ -289,7 +289,10 @@ int MapPlugin::Main() {
 				rMsg->set_payload_bytes(bytes); // TODO: Translate to R63 bytes
 			}
 
-			if (rMsg) BroadcastMessage(*rMsg);
+			if (rMsg) {
+				rMsg->refresh_timestamp();
+				BroadcastMessage(*rMsg);
+			}
 		}
 
 		// Wake up a few times before next cycle, in case there is something to do
@@ -320,6 +323,8 @@ bool MapPlugin::LoadMapFiles()
 
 					if (fn.substr(fn.size() - 5) == ".json")
 						inType = "ISD";
+					else if (fn.substr(fn.size() - 4) == ".txt")
+						inType = "TXT";
 					else
 						inType = "XML";
 
@@ -329,6 +334,25 @@ bool MapPlugin::LoadMapFiles()
 						mapFile.set_Bytes(converter.to_encoded_message().get_payload_str());
 
 						PLOG(logINFO) << fn << " ISD file encoded as " << mapFile.get_Bytes();
+					}
+					else if (inType == "TXT")
+					{
+						byte_stream bytes;
+						ifstream in(fn);
+						in >> bytes;
+
+						PLOG(logINFO) << fn << " MAP encoded bytes are " << bytes;
+
+						MapDataMessage *mapMsg = MapDataEncodedMessage::decode_j2735_message<codec::uper<MapDataMessage> >(bytes);
+						if (mapMsg) {
+							PLOG(logDEBUG) << "Map is " << *mapMsg;
+
+							MapDataEncodedMessage mapEnc;
+							mapEnc.encode_j2735_message(*mapMsg);
+							mapFile.set_Bytes(mapEnc.get_payload_str());
+
+							PLOG(logINFO) << fn << " J2735 message bytes encoded as " << mapFile.get_Bytes();
+						}
 					}
 					else if (inType == "XML")
 					{

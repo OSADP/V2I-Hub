@@ -44,6 +44,7 @@ void allocate(T *&ptr, size_t num = 1)
 template <typename T, typename ValT>
 void addValue(T &ref, const ValT value)
 {
+	std::cout << "Setting " << battelle::attributes::type_name<T>() << " value to " << value << std::endl;
 	ref = static_cast<T>(value);
 }
 
@@ -56,8 +57,11 @@ inline void addValue<OCTET_STRING_t, std::string>(OCTET_STRING_t &octetStr, cons
 }
 
 template <size_t N>
-inline void addValue(BIT_STRING_t &bitStr, const std::bitset<N> bits)
+inline void addValue(BIT_STRING_t &bitStr, const std::bitset<N> in)
 {
+	// Encode the bit string in little-endian
+	std::string inStr = in.to_string();
+	std::bitset<N> bits(std::string(inStr.rbegin(), inStr.rend()));
 	constexpr size_t numBytes = bits.size() / 8 + (bits.size() % 8 ? 1 : 0);
 
 	allocate(bitStr.buf, numBytes);

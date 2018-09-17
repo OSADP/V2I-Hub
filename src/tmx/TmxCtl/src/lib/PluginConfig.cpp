@@ -8,6 +8,7 @@
 #include "TmxControl.h"
 #include <libgen.h>
 #include <tmx/messages/auto_message.hpp>
+#include <sys/stat.h>
 
 #define CONFIG_QUERY "\
 	SELECT name, `key`, value, defaultValue, IVP.pluginConfigurationParameter.description \

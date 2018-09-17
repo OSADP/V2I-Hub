@@ -19,95 +19,136 @@ namespace tmx {
 namespace messages {
 
 class TmxRtcmEncodedMessage: public tmx::routeable_message {
+	typedef std::vector<TmxRtcmMessage *> rtcm_container;
+
 public:
-	TmxRtcmEncodedMessage(): tmx::routeable_message() { }
+	TmxRtcmEncodedMessage(): tmx::routeable_message() {
+		tmx::routeable_message::initialize(blank);
+	}
 	TmxRtcmEncodedMessage(const tmx::routeable_message &other):
-		tmx::routeable_message(other) { this->reinit();	}
-	virtual ~TmxRtcmEncodedMessage() { }
+		tmx::routeable_message(other) {
+		this->reinit();
+	}
+	virtual ~TmxRtcmEncodedMessage() { clear_container(); }
 
-	std::shared_ptr<TmxRtcmMessage> get_rtcm_payload() {
-		if (!_decoded) {
-			_decoded.reset(factory.create(this->get_payload_bytes(), this->get_subtype()));
+	size_t size() {
+		return get_container().size();
+	}
 
-			// Try to build the correct type if one is known
-			if (_decoded && _decoded->get_Version() == rtcm::UNKNOWN) {
-				_decoded.reset();
-				// The message pointer must be initialized and have valid message
-				int v = (int)rtcm::RTCM_EOF - 1;
-				for (; v >= 0 && (!_decoded || !_decoded->is_Valid()); v--) {
-					_decoded.reset(factory.create(this->get_payload_bytes(), (rtcm::RTCM_VERSION)v));
-					std::cout << "Created " << rtcm::RtcmVersionName(_decoded->get_Version()) << " message of type " << _decoded->get_MessageType() << std::endl;
-					std::cout << *_decoded << std::endl;
-					std::cout << (_decoded->is_Valid() ? "It is valid" : "It is not valid") << std::endl;
-				}
-			}
+	typename rtcm_container::iterator begin() {
+		return get_container().begin();
+	}
 
-			if (_decoded && _decoded->get_MessageType() != 0) {
-				_decoded.reset(factory.create(_decoded.get()));
-			}
-
-			if (_decoded)
-				this->set_subtype(rtcm::RtcmVersionName(_decoded->get_Version()));
-		}
-
-		return _decoded;
+	typename rtcm_container::iterator end() {
+		return get_container().end();
 	}
 
 	template <rtcm::RTCM_VERSION Version>
-	void set_rtcm_payload(RTCMMessage<Version> &msg) {
-		set_rtcm_payload(&msg);
-
-		if (!this->get_payload_str().empty())
-			_decoded.reset(new RTCMMessageType<Version, 0>(msg));
+	void set_rtcm_message(RTCMMessage<Version> &msg) {
+		set_rtcm_message(&msg);
 	}
 
 	template <rtcm::RTCM_VERSION Version, rtcm::msgtype_type Type>
-	void set_rtcm_payload(RTCMMessageType<Version, Type> &msg) {
-		set_rtcm_payload(&msg);
-
-		if (!this->get_payload_str().empty())
-			_decoded.reset(new RTCMMessageType<Version, Type>(msg));
+	void set_rtcm_message(RTCMMessageType<Version, Type> &msg) {
+		set_rtcm_message(&msg);
 	}
 
 	template <rtcm::RTCM_VERSION Version>
 	void initialize(RTCMMessage<Version> &msg, const std::string source = "", unsigned int sourceId = 0, unsigned int flags = 0) {
 		tmx::routeable_message::initialize(RTCMMessage<Version>::MessageType, msg.get_VersionName(), source, sourceId, flags);
-		set_rtcm_payload(msg);
+		set_rtcm_message(msg);
 	}
 
 	template <rtcm::RTCM_VERSION Version, rtcm::msgtype_type Type>
 	void initialize(RTCMMessageType<Version, Type> &msg, const std::string source = "", unsigned int sourceId = 0, unsigned int flags = 0) {
 		tmx::routeable_message::initialize(RTCMMessageType<Version, Type>::MessageType, msg.get_VersionName(), source, sourceId, flags);
-		set_rtcm_payload(msg);
+		set_rtcm_message(msg);
 	}
 
 	void initialize(TmxRtcmMessage &msg, const std::string source = "", unsigned int sourceId = 0, unsigned int flags = 0) {
 		tmx::routeable_message::initialize(TmxRtcmMessage::MessageType, msg.get_VersionName(), source, sourceId, flags);
-		set_rtcm_payload(&msg);
+		set_rtcm_message(&msg);
 	}
-private:
-	rtcm::RtcmMessageFactory factory;
 
-	void set_rtcm_payload(TmxRtcmMessage *msg) {
+private:
+	TmxRtcmMessage blank;
+
+	rtcm_container _myMessages;
+
+	rtcm_container &get_container() {
+		static rtcm::RtcmMessageFactory factory;
+		rtcm::RTCM_VERSION thisVer = rtcm::RtcmVersion(this->get_subtype());
+
+		if (_myMessages.size() <= 0) {
+			// Fill the container
+			tmx::byte_stream copy(this->get_payload_bytes());
+
+			while (copy.size() > 0) {
+				TmxRtcmMessage *ptr = NULL;
+
+				rtcm::RTCM_VERSION v = (thisVer ? thisVer : (rtcm::RTCM_VERSION)((int)rtcm::RTCM_EOF - 1));
+				do {
+					ptr = factory.create(v);
+
+					if (ptr)
+						ptr->set_contents(copy);
+
+					v = (rtcm::RTCM_VERSION)((int)v - 1);
+				} while (!(ptr && ptr->is_Valid()) && v > thisVer);
+
+				if (ptr->is_Valid()) {
+					// Help with decoding in the future by setting the known version
+					this->set_subtype(ptr->get_VersionName());
+					thisVer = ptr->get_Version();
+
+					// Reconstruct the message as specific to the type
+					if (ptr->get_MessageType()) {
+						auto tmp = factory.create(thisVer, ptr->get_MessageType());
+						if (tmp) {
+							tmp->set_contents(ptr->get_contents());
+
+							if (tmp->is_Valid()) {
+								delete ptr;
+								ptr = tmp;
+							}
+						}
+					}
+
+					_myMessages.push_back(ptr);
+				} else {
+					delete ptr;
+					ptr = NULL;
+				}
+
+				size_t n = copy.size();
+				if (ptr && ptr->size() <= copy.size()) n = ptr->size();
+
+				copy.erase(copy.begin(), copy.begin() + n);
+			}
+		}
+
+		return _myMessages;
+	}
+
+	void clear_container() {
+		for (size_t i = 0; i < _myMessages.size(); i++) {
+			delete _myMessages[i];
+			_myMessages[i] = NULL;
+		}
+
+		_myMessages.clear();
+	}
+
+	void set_rtcm_message(TmxRtcmMessage *msg) {
+		clear_container();
 		if (msg) this->set_payload_bytes(msg->get_contents());
 		else this->set_payload("");
 	}
 
-	std::shared_ptr<TmxRtcmMessage> _decoded;
 };
 
 
 } /* End namespace messages */
-
-template <> template <>
-inline messages::TmxRtcmMessage routeable_message::get_payload<messages::TmxRtcmMessage>()
-{
-	messages::TmxRtcmEncodedMessage encMsg(*this);
-	auto ptr = encMsg.get_rtcm_payload();
-	if (ptr) return *ptr;
-	return messages::TmxRtcmMessage();
-}
-
 } /* End namespace tmx */
 
 

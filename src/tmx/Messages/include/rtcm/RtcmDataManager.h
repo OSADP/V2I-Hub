@@ -77,6 +77,13 @@ public:
 		_data.clear();
 	}
 
+	/**
+	 * Erases a portion of the data buffer
+	 */
+	void eraseData(size_t num) {
+		_data.erase(_data.begin(), _data.begin() + num);
+	}
+
 	template <typename... RtcmAttrs>
 	static constexpr size_t countBits() {
 		return size_checker<RtcmAttrs...>::size;
@@ -95,6 +102,11 @@ public:
 			return _data[word];
 		else
 			return 0;
+	}
+
+	void replaceData(size_t word, data_type value) {
+		if (word < _data.size())
+			_data[word] = value;
 	}
 
 	/**
@@ -139,14 +151,14 @@ public:
 	}
 
 	/**
-	 * Extracts the assigned data from the given attributes and builds a stream of bytes out of those
-	 * words.  This operation does not affect the data buffer.
+	 * Extracts the assigned data from the given attributes back to an array of data words.  This
+	 * operation does not affect the data buffer.
 	 *
-	 * @aparam attrs... The set of RTCM attributes to extract
-	 * @return The byte stream of attribute data
+	 * @param attrs... The set of RTCM attributes to extract
+	 * @return The set of data words in order of the extracted attributes
 	 */
 	template <typename... RtcmAttrs>
-	tmx::byte_stream extractData(RtcmAttrs... attrs) {
+	std::vector<data_type> extractWords(RtcmAttrs... attrs) {
 		static constexpr size_t numWords = countWords<RtcmAttrs...>();
 
 		uintmax_t value = 0;
@@ -155,6 +167,20 @@ public:
 		std::vector<data_type> words;
 		for (size_t w = 0; w < numWords; w++)
 			splitWord<rtcm_word>(words, value, (numWords - w - 1));
+
+		return words;
+	}
+
+	/**
+	 * Extracts the assigned data from the given attributes and builds a stream of bytes out of those
+	 * words.  This operation does not affect the data buffer.
+	 *
+	 * @aparam attrs... The set of RTCM attributes to extract
+	 * @return The byte stream of attribute data
+	 */
+	template <typename... RtcmAttrs>
+	tmx::byte_stream extractData(RtcmAttrs... attrs) {
+		std::vector<data_type> words = extractWords(attrs...);
 
 		tmx::byte_stream bytes;
 		for (size_t i = 0; i < words.size(); i++)

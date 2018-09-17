@@ -174,6 +174,16 @@ bool Ntcip1202::getSpatPedestrianCall(int phaseNumber)
 	return (bool)((ntohs(ntcip1202Data.spatPedestrianCall) >> (phaseNumber - 1))&0x01);
 }
 
+bool Ntcip1202::isFlashingStatus()
+{
+	return (bool)(ntohs(ntcip1202Data.spatIntersectionStatus) >> 7);
+}
+
+bool Ntcip1202::isPhaseFlashing()
+{
+	return (bool)ntcip1202Data.flashingOutputPhaseStatus;
+}
+
 void Ntcip1202::printDebug()
 {
 	//printf("phase %d spatVehMinTimeToChange: %02x\r\n",1, ntcip1202Data.phaseTimes[1].spatVehMinTimeToChange);
@@ -322,11 +332,11 @@ void Ntcip1202::populateVehicleSignalGroup(MovementState *movement, int phase)
 	MovementEvent *stateTimeSpeed = (MovementEvent *) calloc(1, sizeof(MovementEvent));
 
 	bool isFlashing = getPhaseFlashingStatus(phase);
+	bool forceFlashing = isFlashingStatus() && !isPhaseFlashing();
 
-
-	if(getPhaseRedStatus(phase))
+	if(forceFlashing || getPhaseRedStatus(phase))
 	{
-		if(isFlashing)
+		if(forceFlashing || isFlashing)
 			stateTimeSpeed->eventState = MovementPhaseState_stop_Then_Proceed;
 		else
 			stateTimeSpeed->eventState = MovementPhaseState_stop_And_Remain;

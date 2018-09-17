@@ -8,6 +8,7 @@
 #include "TmxControl.h"
 #include <cstdarg>
 #include <sys/wait.h>
+#include <sys/stat.h>
 
 #define PLUGIN "plugin"
 
