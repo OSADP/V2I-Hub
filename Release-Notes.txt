@@ -36,3 +36,7 @@ V2I Hub Version 3.2
 - Added Virtual Conflict Monitor to the SPAT Plugin
 - Complete RTCM messaging support through RtcmPlugin
 	- RTCM 2.3 and 3.X binary encodings 
+
+V2I Hub Version 3.2.1
+- Fixed issue with Administration Portal not updating configuration parameters on the Chromium Browser
+- Modified the ODE Plugin Manifest file to use local host

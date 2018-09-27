@@ -215,7 +215,7 @@ function updateListObject(plugin, name, value) {
                 $("[id=\"infoTable_" + plugin + "\"]").append("<tr><td data-type='key'>" + name + "</td><td data-type='value'><textarea class='infoInput' onfocusout='ResetDisplay(this);' data-plugin=\"" + plugin + "\" data-name=\"" + name + "\" data-value=\"" + value + "\">" + value + "</textarea></td></tr>");
 
                 $("textarea.infoInput").on("keydown", function (event) {
-                    if (event.key == "Enter") {
+                    if (event.keyCode == 13) {
                         event.preventDefault();
                         var target = $(event.target);
                         var newValue = target.val();
@@ -369,7 +369,9 @@ function updateConfigurationObject(plugin, name, value, defaultValue, Descriptio
             //$("[id=\"configsTable_" + plugin + "\"]").append("<tr><td data-type='key'>" + name + "</td><td data-type='value'><input class='configInput' onfocusout='ResetDisplay(this);' data-plugin='" + plugin + "' data-name='" + name + "' data-value='" + value + "' value='" + value + "'/></td><td data-type='defaultValue'>" + defaultValue + "</td><td data-type='description'>" + Description + "</td></tr>");}
             
             $("textarea.configInput[data-plugin=\"" + plugin + "\"][data-name=\"" + name + "\"]").on("keydown", function (event) {
-                if (event.key == "Enter") {
+                console.log("Event Key:" + event.key);
+//                if (event.key == "Enter") {
+                if (event.keyCode == 13) {
                     event.preventDefault();
                     var target = $(event.target);
                     var newValue = target.val();
@@ -1721,7 +1723,7 @@ $(document).ready(function () {
     });
 
     $(".ipInput").on("keydown", function (event) {
-        if (event.key == "Enter") {
+        if (event.keyCode == 13) {
             if ($(".ipInput").attr("data-valid") != "false") {
                 socketObj.ip = $(".ipInput").val();
                 changeIPAddress();

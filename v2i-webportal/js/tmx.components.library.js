@@ -181,7 +181,7 @@ var PluginDisplay = function (component, json) {
             e.stopPropagation();
         });
         $("textarea.infoInput").on("keydown", function (event) {
-            if (event.key == "Enter") {
+            if (event.keyCode == 13) {
                 event.preventDefault();
                 var target = $(event.target);
                 var newValue = target.val();

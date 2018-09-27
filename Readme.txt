@@ -1,7 +1,7 @@
 Open Source Overview
 ============================
 V2I Hub
-Version 3.2
+Version 3.2.1
 V2I Hub was developed to support jurisdictions in deploying connected vehicle technology by reducing 
 integration issues and enabling use of their existing transportation management hardware and systems. 
 V2I Hub is a software platform that utilizes plugins to translate messages between different devices 
@@ -157,10 +157,15 @@ Instructions can be found to install additional plugins in the V2I Hub Software 
 Administration Portal
 
 The Administrator Portal can be launched by opening the v2i-webportal/index.html file with either Chrome or Firefox. Further instructions for hosting the portal on a web server can be found in the V2I_Hub_AdministrationPortalUserGuide.pdf.
+The installation of the lamp-server package will install the Apache web server. 
 
+Copy all directories and files for the admin portal to the /var/www/html directory.
+The Administration Portal can then be reached by using the system’s IP address. 
+The index.html file will automatically forward the browser to the Administration Portal.
 
-NOTE: The MAP plugin will need an input file in order to run.  A sample input file for Turner Fairbank has been included in this deployment in the Sample MAP Input folder.
+http://<ip address>
 
+NOTE: The MAP plugin will need an input file in order to run.  A sample XML input file for Turner Fairbank has been included in this deployment in the Sample MAP Input folder.
 
 - Copy sample MAP input file
 $ sudo cp Sample MAP Input\ STOL_MAP.xml /var/www/plugins/MAPr41/
@@ -170,3 +175,6 @@ $ sudo chown www-data STOL_MAP.xml
 $ sudo chgrp www-data STOL_MAP.xml
 $ cd src
 
+ISD Map Creator UPER File
+
+The input needed by the MAP plugin can alternatively be created by using the ISD Message Creator tool to export binary (UPER Hex) data, saved to a file with a .txt extension and uploaded via the admin portal.  The next section explains the map input files in more detail. The input file(s) to be used must be placed in the /var/www/plugings/MAP directory and the permissions and owners changed via the commands above substituting your file name with the .txt extension.
