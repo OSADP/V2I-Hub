@@ -1,3 +1,8 @@
+V2I Hub is no longer maintained; for an updated and supported version of this software, please visit the V2X Hub project.
+
+https://github.com/usdot-fhwa-OPS/V2X-Hub
+
+
 Open Source Overview
 ============================
 V2I Hub
